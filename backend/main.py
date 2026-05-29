@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.api.routes import router
+from backend.database import close_db, init_db
 
 # ── Application metadata ────────────────────────────────────────────
 APP_TITLE = "ARGOS SLOPE 4.0 — Deformation Velocity Engine"
@@ -69,6 +70,21 @@ async def validation_exception_handler(
     )
 
 
+# ── Lifecycle events ────────────────────────────────────────────────
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    """Initialise the database connection pool and create tables."""
+    await init_db()
+
+
+@app.on_event("shutdown")
+async def on_shutdown() -> None:
+    """Gracefully close the database connection pool."""
+    await close_db()
+
+
 # ── Mount routers ───────────────────────────────────────────────────
 app.include_router(router)
 
@@ -88,5 +104,14 @@ async def root():
             "POST /api/growth/alert": "Growth alert check",
             "POST /api/deformation/velocity": "Deformation velocity",
             "POST /api/deformation/register": "Image registration",
+            "GET /api/fisuras": "List fisuras",
+            "GET /api/fisuras/{id}": "Fisura detail + measurements",
+            "GET /api/fisuras/{id}/mediciones": "Daily measurements",
+            "GET /api/resumen": "Dashboard summary",
+            "GET /api/alertas": "List alerts",
+            "PUT /api/alertas/{id}/reconocer": "Acknowledge alert",
+            "GET /api/configuracion": "Get config",
+            "PUT /api/configuracion/{clave}": "Update config",
+            "POST /api/seed": "Seed sample data",
         },
     }

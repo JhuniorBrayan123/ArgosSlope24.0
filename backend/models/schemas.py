@@ -202,3 +202,82 @@ class ErrorResponse(BaseModel):
     """Standard error response body."""
 
     error: str = Field(..., description="Error description")
+
+
+# ──────────────────────────────────────────────
+# Dashboard / Fisura Response Models
+# ──────────────────────────────────────────────
+
+
+class FisuraResponse(BaseModel):
+    """Public representation of a fissure for the API."""
+
+    id: int
+    roi_id: str
+    fecha_deteccion: datetime
+    largo_mm: float
+    ancho_mm: float
+    area_mm2: float
+    orientacion: Optional[str] = None
+    tipo: Optional[str] = None
+    coordenadas: Optional[str] = None
+    imagen_original: Optional[str] = None
+    imagen_segmentada: Optional[str] = None
+
+
+class MedicionResponse(BaseModel):
+    """Public representation of a daily measurement."""
+
+    id: int
+    fisura_id: int
+    fecha: datetime
+    largo_mm: float
+    ancho_mm: float
+    area_mm2: float
+    delta_porcentaje: Optional[float] = None
+    es_critica: bool
+
+
+class AlertaResponse(BaseModel):
+    """Public representation of an alert."""
+
+    id: int
+    fisura_id: Optional[int] = None
+    fecha: datetime
+    tipo: str
+    mensaje: str
+    umbral_superado: float
+    valor_actual: float
+    reconocida: bool
+
+
+class ConfigResponse(BaseModel):
+    """Public representation of a configuration entry."""
+
+    clave: str
+    valor: str
+    descripcion: Optional[str] = None
+
+
+class ResumenResponse(BaseModel):
+    """Dashboard summary statistics."""
+
+    total_fisuras: int
+    alertas_criticas: int
+    rpi_conectada: bool
+    deformacion_promedio: float
+
+
+class FisuraDetalleResponse(BaseModel):
+    """Detailed fissure information including its measurements."""
+
+    fisura: FisuraResponse
+    mediciones: list[MedicionResponse]
+    total_mediciones: int
+    alertas: list[AlertaResponse]
+
+
+class ValorConfigRequest(BaseModel):
+    """Request body to update a single configuration value."""
+
+    valor: str = Field(..., description="New value for the configuration key")

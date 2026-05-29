@@ -60,7 +60,7 @@ function ConfigIcon() {
 }
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: <DashboardIcon /> },
+  { href: '/', label: 'Panel Principal', icon: <DashboardIcon /> },
   { href: '/historial', label: 'Historial de Fisuras', icon: <HistorialIcon /> },
   { href: '/configuracion', label: 'Configuración del Robot', icon: <ConfigIcon /> },
 ];
