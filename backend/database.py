@@ -42,9 +42,23 @@ async_session_factory = async_sessionmaker(
 
 
 async def init_db() -> None:
-    """Create all tables defined by SQLModel ``table=True`` models."""
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+    """Create all tables defined by SQLModel ``table=True`` models.
+
+    If the database is unreachable (e.g. PostgreSQL is not running), the
+    error is logged but **not** re-raised so the application can still
+    serve non-DB endpoints (RQD, convert, growth, deformation, health).
+    """
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Database unavailable — skipping table creation. "
+            "DB-dependent endpoints will return 500. "
+            "Error: %s",
+            exc,
+        )
 
 
 async def close_db() -> None:
