@@ -1,0 +1,40 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ARGOS SLOPE 4.0 — Edge / Raspberry Pi dependencies
+# ─────────────────────────────────────────────────────────────────────────────
+# Instalar con: pip install -r edge/requirements.txt
+
+# ── Core ──────────────────────────────────────────────────────────────────
+opencv-python==4.10.0.84
+numpy==1.26.4
+Pillow>=10.0.0
+
+# ── MQTT ──────────────────────────────────────────────────────────────────
+paho-mqtt==2.1.0
+
+# ── ML (PyTorch — MiDaS depth estimation, CPU-only) ────────────────────────
+# Instalación opcional: si no está disponible, el pipeline 3D se omite
+# con un warning (graceful fallback).
+torch>=2.0.0
+torchvision>=0.15.0
+
+# ── ML (ONNX Runtime — ligero para Raspberry Pi) ───────────────────────────
+# Instalación opcional: descomentar cuando se tenga un modelo .onnx
+# onnxruntime==1.19.2
+# onnxruntime-silicon==1.19.2   # Para Apple Silicon (laptop)
+# onnxruntime-extensions==0.11.0
+
+# ── Edge ML (TFLite — para Raspberry Pi) ──────────────────────────────────
+# Instalación opcional: descomentar para deploy en RPi con modelo .tflite
+# tflite-runtime==2.14.0
+
+# ── WebRTC (aiortc para streaming de video en vivo) ──────────────────────
+# Nota: en Raspberry Pi 4, instalar con:
+#   pip install aiortc aiohttp
+# Si hay problemas con av/ffmpeg: sudo apt install libavdevice-dev libavfilter-dev
+aiortc==1.10.0
+aiohttp==3.10.11
+av==13.1.0
+
+# ── Utilidades ────────────────────────────────────────────────────────────
+python-dotenv==1.0.1
+pyyaml==6.0.2

@@ -1,0 +1,23 @@
+# ARGOS SLOPE 4.0 — Crack Detection Dataset
+# Formato YOLOv8
+#
+# Estructura esperada:
+#   ml/dataset/
+#   ├── data.yaml
+#   ├── train/
+#   │   ├── images/    # imágenes .jpg de entrenamiento
+#   │   └── labels/    # etiquetas .txt (formato YOLO: class x_center y_center width height)
+#   └── val/
+#       ├── images/    # imágenes .jpg de validación
+#       └── labels/    # etiquetas .txt
+
+path: ../dataset  # ruta relativa a ml/
+train: train/images
+val: val/images
+
+# Clases de fisuras según espesor
+nc: 3
+names:
+  0: fisura_fina
+  1: fisura_media
+  2: fisura_gruesa

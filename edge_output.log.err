@@ -1,0 +1,5 @@
+Using cache found in C:\Users\USER/.cache\torch\hub\intel-isl_MiDaS_master
+C:\Users\USER\AppData\Local\Programs\Python\Python310\lib\site-packages\timm\models\layers\__init__.py:49: FutureWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", FutureWarning)
+Using cache found in C:\Users\USER/.cache\torch\hub\rwightman_gen-efficientnet-pytorch_master
+Using cache found in C:\Users\USER/.cache\torch\hub\intel-isl_MiDaS_master

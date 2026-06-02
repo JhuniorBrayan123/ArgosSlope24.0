@@ -1,12 +1,3 @@
-"""
-FastAPI router for ARGOS SLOPE 4.0 deformation engine endpoints.
-
-Provides REST endpoints for RQD calculation, pixel-to-mm conversion,
-growth alert evaluation, image registration, deformation velocity,
-fissure/measurement CRUD, alerts, configuration, and dashboard summary.
-All endpoints return HTTP 400 with ``{"error": "message"}`` on invalid input.
-"""
-
 from __future__ import annotations
 
 import math
@@ -39,12 +30,6 @@ from backend.models.schemas import (
 from backend.services import db_service, deformation, growth_alert, image_registration, rqd
 
 router = APIRouter(prefix="/api", tags=["Deformation Engine"])
-
-
-# ──────────────────────────────────────────────
-# RQD — Rock Quality Designation
-# ──────────────────────────────────────────────
-
 
 @router.get(
     "/rqd",
@@ -90,12 +75,6 @@ async def get_rqd(
 
     return RQDResponse(rqd_percent=rqd_value)
 
-
-# ──────────────────────────────────────────────
-# Convert — Pixel to mm conversion
-# ──────────────────────────────────────────────
-
-
 @router.post(
     "/convert",
     response_model=ConvertResponse,
@@ -122,10 +101,6 @@ async def convert_pixels_to_mm(request: ConvertRequest):
 
     return ConvertResponse(length_mm=length_mm)
 
-
-# ──────────────────────────────────────────────
-# Growth Alert — Check crack growth threshold
-# ──────────────────────────────────────────────
 
 
 @router.post(
@@ -156,12 +131,6 @@ async def check_growth_alert(request: GrowthAlertRequest):
         is_critical=result["is_critical"],
         delta_percent=result["delta_percent"],
     )
-
-
-# ──────────────────────────────────────────────
-# Deformation Velocity
-# ──────────────────────────────────────────────
-
 
 @router.post(
     "/deformation/velocity",
@@ -194,12 +163,6 @@ async def deformation_velocity(request: VelocityRequest):
         velocity_mm_per_day=result["velocity_mm_per_day"],
     )
 
-
-# ──────────────────────────────────────────────
-# Image Registration
-# ──────────────────────────────────────────────
-
-
 @router.post(
     "/deformation/register",
     response_model=RegistrationResponse,
@@ -231,12 +194,6 @@ async def register_deformation_images(request: RegistrationRequest):
         inliers_count=result["inliers_count"],
         message=f"Registration successful: {result['matches_count']} matches, {result['inliers_count']} inliers",
     )
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# Dashboard — Fisuras
-# ═══════════════════════════════════════════════════════════════════════
-
 
 @router.get(
     "/fisuras",
@@ -300,12 +257,6 @@ async def get_mediciones(
     mediciones = await db_service.obtener_mediciones(session, fisura_id, dias=dias)
     return [MedicionResponse(**m.model_dump()) for m in mediciones]
 
-
-# ═══════════════════════════════════════════════════════════════════════
-# Dashboard — Resumen
-# ═══════════════════════════════════════════════════════════════════════
-
-
 @router.get(
     "/resumen",
     response_model=ResumenResponse,
@@ -318,12 +269,6 @@ async def get_resumen(
 ):
     """Obtener estadísticas de resumen para el panel principal."""
     return await db_service.obtener_resumen(session)
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# Dashboard — Alertas
-# ═══════════════════════════════════════════════════════════════════════
-
 
 @router.get(
     "/alertas",
@@ -363,12 +308,6 @@ async def reconocer_alerta(
         )
     return AlertaResponse(**alerta.model_dump())
 
-
-# ═══════════════════════════════════════════════════════════════════════
-# Dashboard — Configuración
-# ═══════════════════════════════════════════════════════════════════════
-
-
 @router.get(
     "/configuracion",
     response_model=list[ConfigResponse],
@@ -399,12 +338,6 @@ async def update_configuracion(
     """Actualizar un valor de configuración."""
     entry = await db_service.actualizar_configuracion(session, clave, body.valor)
     return ConfigResponse(**entry.model_dump())
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# Seed data (development only)
-# ═══════════════════════════════════════════════════════════════════════
-
 
 @router.post(
     "/seed",
@@ -543,12 +476,6 @@ async def seed_database(
         "fisuras_creadas": len(created_fisuras),
         "configuracion_default": len(config_defaults),
     }
-
-
-# ──────────────────────────────────────────────
-# Health Check
-# ──────────────────────────────────────────────
-
 
 @router.get(
     "/health",

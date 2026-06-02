@@ -22,10 +22,14 @@ venv/
 # Images / Data
 images/
 data/
+capturas_hd/
 *.png
 *.jpg
 *.jpeg
 *.bmp
+*.obj
+*.ply
+*.mtl
 
 # Environment
 .env

@@ -1,5 +1,6 @@
 import { Inter } from 'next/font/google';
 import Sidebar from '@/components/Sidebar';
+import { MonitorProvider } from '@/context/MonitorContext';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -15,8 +16,10 @@ export default function RootLayout({ children }) {
       <body
         className={`${inter.className} bg-dark-primary text-dark-text antialiased`}
       >
-        <Sidebar />
-        <main className="ml-60 min-h-screen p-8">{children}</main>
+        <MonitorProvider>
+          <Sidebar />
+          <main className="ml-60 min-h-screen p-8">{children}</main>
+        </MonitorProvider>
       </body>
     </html>
   );

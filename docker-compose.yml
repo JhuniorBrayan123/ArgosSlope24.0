@@ -1,0 +1,118 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# ARGOS SLOPE 4.0 — Docker Compose
+#
+# Inicia todos los servicios del sistema:
+#   - PostgreSQL 16 (base de datos)
+#   - Mosquitto (MQTT broker)
+#   - .NET Backend (API + MQTT subscriber)
+#   - Edge Python (procesamiento de video — opcional, para laptop)
+#
+# Uso:
+#   docker compose up -d
+#   docker compose logs -f
+#
+# Para desarrollo sin edge:
+#   docker compose up -d postgres mosquitto backend-dotnet
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  # ── PostgreSQL ────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: argos-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: mineriadb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Mosquitto (MQTT Broker) ───────────────────────────────────────
+  mosquitto:
+    image: eclipse-mosquitto:2-openssl
+    container_name: argos-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"  # WebSocket (para futuros clientes web)
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    configs:
+      - source: mosquitto_config
+        target: /mosquitto/config/mosquitto.conf
+
+  # ── .NET Backend ──────────────────────────────────────────────────
+  backend-dotnet:
+    build:
+      context: .
+      dockerfile: backend-dotnet/src/ArgosSlope.Api/Dockerfile
+    container_name: argos-backend-dotnet
+    restart: unless-stopped
+    ports:
+      - "8000:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      DATABASE_URL: "Host=postgres;Database=mineriadb;Username=postgres;Password=postgres"
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      CORS_ORIGINS: "http://localhost:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+
+  # ── Edge Python (opcional, para laptop) ───────────────────────────
+  edge-python:
+    build:
+      context: .
+      dockerfile: edge/Dockerfile
+    container_name: argos-edge
+    restart: unless-stopped
+    ports:
+      - "8081:8081"  # WebRTC signaling server
+    environment:
+      CAMERA_SOURCE: "0"
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      MQTT_TOPIC_PREFIX: argos/slope-01
+      DETECTOR_METHOD: opencv
+      FRAME_WIDTH: 640
+      FRAME_HEIGHT: 480
+      FPS: "10"
+      LOG_LEVEL: INFO
+      EDGE_WEBRTC_ENABLED: "true"
+      EDGE_WEBRTC_PORT: "8081"
+      EDGE_WEBRTC_FPS: "15"
+      EDGE_WEBRTC_FRAME_WIDTH: "640"
+      EDGE_WEBRTC_FRAME_HEIGHT: "480"
+    devices:
+      - "/dev/video0:/dev/video0"  # USB camera pass-through
+    depends_on:
+      - mosquitto
+      - backend-dotnet
+    profiles:
+      - edge  # Solo se inicia con: docker compose --profile edge up
+
+volumes:
+  postgres_data:
+  mosquitto_data:
+  mosquitto_log:
+
+configs:
+  mosquitto_config:
+    content: |
+      listener 1883
+      allow_anonymous true
+      listener 9001
+      protocol websockets
+      allow_anonymous true
