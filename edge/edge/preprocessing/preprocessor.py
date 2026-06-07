@@ -17,8 +17,8 @@ import cv2
 import numpy as np
 from numpy.typing import NDArray
 
-from edge.edge.calibration.calibrate_camera import CameraCalibrator
-from edge.edge.config import EdgeConfig
+from edge.calibration.calibrate_camera import CameraCalibrator
+from edge.config import EdgeConfig
 
 logger = logging.getLogger(__name__)
 

@@ -6,6 +6,6 @@ Provides configurable preprocessing pipeline for rock-face images:
 - CLAHE contrast enhancement
 """
 
-from edge.edge.preprocessing.preprocessor import EdgePreprocessor
+from edge.preprocessing.preprocessor import EdgePreprocessor
 
 __all__ = ["EdgePreprocessor"]
