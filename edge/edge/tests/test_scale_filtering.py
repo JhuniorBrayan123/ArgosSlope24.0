@@ -104,8 +104,9 @@ class TestScaleFilterWithMockCalibration(unittest.TestCase):
 
     def test_sub_mm_contour_rejected(self) -> None:
         """A contour smaller than min thresholds in mm should be rejected."""
-        detector = self._make_detector_with_scale(10.0)
-        # 2 px × 2 px → 0.2 mm × 0.2 mm
+        detector = self._make_detector_with_scale(100.0)
+        # 2 px × 2 px → 0.02 mm × 0.02 mm (boundingRect +1 gives 3px → 0.03mm)
+        # width_mm=0.03 < min_width_mm=0.1 AND height_mm=0.03 < min_length_mm=10.0
         cnt = _make_rect_contour(2, 2)
         passed, reason = detector._check_min_size(cnt)
         self.assertFalse(passed, "Sub-mm contour should be rejected")
@@ -119,6 +120,23 @@ class TestScaleFilterWithMockCalibration(unittest.TestCase):
         cnt = _make_rect_contour(100, 1)
         passed, reason = detector._check_min_size(cnt)
         self.assertTrue(passed, f"Wide contour should pass, got '{reason}'")
+
+    def test_oversized_contour_rejected_mm(self) -> None:
+        """A contour wider than max_real_width_mm (50mm) must be rejected."""
+        detector = self._make_detector_with_scale(10.0)
+        # 600 px → 60 mm width → exceeds filter_max_width_mm (50.0)
+        cnt = _make_rect_contour(600, 50)
+        passed, reason = detector._check_min_size(cnt)
+        self.assertFalse(passed, "Oversized contour should be rejected")
+        self.assertEqual(reason, "max_width_mm")
+
+    def test_oversized_contour_edge_passes(self) -> None:
+        """A contour exactly at max_width_mm boundary should pass."""
+        detector = self._make_detector_with_scale(10.0)
+        # 499 px boundingRect gives w=500 → 50.0 mm width → equal to max
+        cnt = _make_rect_contour(499, 50)
+        passed, reason = detector._check_min_size(cnt)
+        self.assertTrue(passed, f"Boundary contour should pass, got '{reason}'")
 
 
 if __name__ == "__main__":

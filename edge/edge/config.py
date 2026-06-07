@@ -190,7 +190,9 @@ class EdgeConfig:
         os.getenv("FILTER_MIN_LENGTH_MM", "10.0")
     )
     # Minimum crack width in mm (requires calibration)
-    filter_min_width_mm: float = float(os.getenv("FILTER_MIN_WIDTH_MM", "0.5"))
+    filter_min_width_mm: float = float(os.getenv("FILTER_MIN_WIDTH_MM", "0.1"))
+    # Maximum crack width in mm — rejects oversized contours (rock edges)
+    filter_max_width_mm: float = float(os.getenv("FILTER_MAX_WIDTH_MM", "50.0"))
     # Fallback min length in px (when calibration not available)
     filter_min_length_px: int = int(os.getenv("FILTER_MIN_LENGTH_PX", "30"))
     # Fallback min width in px

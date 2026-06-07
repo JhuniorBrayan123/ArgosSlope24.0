@@ -385,6 +385,8 @@ class OpenCvDetector(BaseDetector):
             # Real-world units (mm)
             width_mm = w * (1.0 / self._pixels_per_mm)
             height_mm = h * (1.0 / self._pixels_per_mm)
+            if width_mm > config.filter_max_width_mm:  # noqa: E501
+                return (False, "max_width_mm")
             if width_mm < config.filter_min_width_mm and height_mm < config.filter_min_length_mm:  # noqa: E501
                 return (False, "min_size_mm")
         else:
