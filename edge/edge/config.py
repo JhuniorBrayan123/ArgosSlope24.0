@@ -198,6 +198,50 @@ class EdgeConfig:
     # Fallback min width in px
     filter_min_width_px: int = int(os.getenv("FILTER_MIN_WIDTH_PX", "3"))
 
+    # ── Temporal Analysis (Sprint 4) ────────────────────────────────
+    # Enable temporal comparison pipeline (registration + tracking + velocity)
+    temporal_enabled: bool = (
+        os.getenv("TEMPORAL_ENABLED", "true").lower() == "true"
+    )
+    # Path to the reference frame for image registration.
+    # If empty, the first processed frame is used as reference.
+    temporal_reference_path: str = os.getenv(
+        "TEMPORAL_REFERENCE_PATH", ""
+    )
+    # Minimum ORB feature matches for RANSAC homography
+    temporal_min_matches: int = int(
+        os.getenv("TEMPORAL_MIN_MATCHES", "10")
+    )
+    # ORB features to detect per frame
+    temporal_orb_features: int = int(
+        os.getenv("TEMPORAL_ORB_FEATURES", "2000")
+    )
+    # IoU threshold for crack track matching (0.0–1.0)
+    temporal_iou_threshold: float = float(
+        os.getenv("TEMPORAL_IOU_THRESHOLD", "0.3")
+    )
+    # Max frames a track can be unseen before removal
+    temporal_max_missed_frames: int = int(
+        os.getenv("TEMPORAL_MAX_MISSED_FRAMES", "30")
+    )
+    # Min days between measurements to compute velocity
+    temporal_min_days: float = float(
+        os.getenv("TEMPORAL_MIN_DAYS", "2.0")
+    )
+    # EMA alpha for velocity smoothing (0.0–1.0)
+    temporal_ema_alpha: float = float(
+        os.getenv("TEMPORAL_EMA_ALPHA", "0.3")
+    )
+    # Path for crack history persistence file
+    temporal_history_path: str = os.getenv(
+        "TEMPORAL_HISTORY_PATH", "crack_history.json"
+    )
+    # Interval in frames between temporal pipeline runs
+    # (registration + tracking are expensive; run every N frames)
+    temporal_interval_frames: int = int(
+        os.getenv("TEMPORAL_INTERVAL_FRAMES", "10")
+    )
+
     # ── WebRTC ──────────────────────────────────────────────────────
     # Enable WebRTC video streaming
     webrtc_enabled: bool = (

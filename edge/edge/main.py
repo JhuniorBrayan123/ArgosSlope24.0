@@ -30,6 +30,7 @@ import os
 import sys
 import time
 import threading
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -43,7 +44,6 @@ from edge.mqtt.publisher import MqttPublisher
 from edge.preprocessing.preprocessor import EdgePreprocessor
 from edge.webrtc.shared_frame import shared_frame
 
-# 3D pipeline modules (optional — controlled by config flags)
 if config.depth_enabled:
     from edge.depth.midas_depth import MidasDepthEstimator
 if config.pointcloud_enabled:
@@ -52,8 +52,14 @@ if config.simulator_enabled:
     from edge.simulator.crack_simulator import CrackSimulator
 if config.hd_capture_enabled:
     from edge.capture_hd.manager import HdCaptureManager
-
-# ── Logging setup ────────────────────────────────────────────────────
+if config.temporal_enabled:
+    from edge.temporal import (
+        CrackSnapshot,
+        ImageRegistrator,
+        CrackTracker,
+        VelocityCalculator,
+        JsonCrackHistoryStore,
+    )
 
 logging.basicConfig(
     level=getattr(logging, config.log_level.upper(), logging.INFO),
@@ -64,7 +70,6 @@ logging.basicConfig(
 logger = logging.getLogger("edge.main")
 
 
-# ── Camera helpers ───────────────────────────────────────────────────
 
 
 def open_camera(source: str) -> cv2.VideoCapture:
@@ -302,6 +307,40 @@ def main() -> None:
         crack_simulator = CrackSimulator()
         logger.info("Crack simulator initialized.")
 
+    # ── 1c. Temporal pipeline (registration + tracking + velocity) ──
+    registrator: ImageRegistrator | None = None
+    crack_tracker: CrackTracker | None = None
+    velocity_calc: VelocityCalculator | None = None
+    history_store: JsonCrackHistoryStore | None = None
+    reference_frame: np.ndarray | None = None
+    last_temporal_frame: int = 0
+
+    if config.temporal_enabled:
+        from edge.temporal.registration import RegistrationConfig
+
+        reg_config = RegistrationConfig(
+            min_matches=config.temporal_min_matches,
+            nfeatures=config.temporal_orb_features,
+        )
+        registrator = ImageRegistrator(reg_config)
+        crack_tracker = CrackTracker(
+            iou_threshold=config.temporal_iou_threshold,
+            max_missed_frames=config.temporal_max_missed_frames,
+        )
+        velocity_calc = VelocityCalculator(
+            min_days=config.temporal_min_days,
+            ema_alpha=config.temporal_ema_alpha,
+        )
+        history_store = JsonCrackHistoryStore(config.temporal_history_path)
+        logger.info(
+            "Temporal pipeline enabled: interval=%d frames, "
+            "iou=%.2f, orb=%d, min_days=%.1f",
+            config.temporal_interval_frames,
+            config.temporal_iou_threshold,
+            config.temporal_orb_features,
+            config.temporal_min_days,
+        )
+
     # ── 2. Open camera ──────────────────────────────────────────────
     cap = open_camera(config.camera_source)
 
@@ -401,6 +440,74 @@ def main() -> None:
                     proc_frame, "post_detection", cracks, rejected
                 )
                 debug_drawer.save_stage(annotated, "final", frame_count)
+
+            # ── Temporal pipeline (registration + tracking + velocity) ──
+            # Runs periodically to associate cracks across frames.
+            if (
+                config.temporal_enabled
+                and registrator is not None
+                and crack_tracker is not None
+                and velocity_calc is not None
+                and history_store is not None
+                and frame_count - last_temporal_frame >= config.temporal_interval_frames
+            ):
+                last_temporal_frame = frame_count
+
+                # Set reference frame on first temporal run
+                if reference_frame is None:
+                    reference_frame = roi_frame.copy()
+                    logger.info("Reference frame captured at frame %d", frame_count)
+
+                # Register current frame to reference
+                H_reg, aligned = registrator.register(reference_frame, roi_frame)
+
+                # Track cracks (assign track_id)
+                tracked_cracks = crack_tracker.update(
+                    cracks, H_reg, frame_count
+                )
+
+                # Compute velocities and persist
+                now_ts = datetime.now(timezone.utc)
+                for tc in tracked_cracks:
+                    v = velocity_calc.add_measurement(
+                        track_id=tc.track_id,
+                        width_mm=tc.width_mm,
+                        timestamp=now_ts,
+                        length_mm=tc.length_mm,
+                        area_mm2=tc.area_mm2,
+                    )
+                    vel_str = f"{v:.4f}" if v is not None else "N/A"
+                    logger.debug(
+                        "Track %d: width=%.4f mm, velocity=%s mm/day",
+                        tc.track_id,
+                        tc.width_mm,
+                        vel_str,
+                    )
+
+                    # Persist snapshot
+                    snapshot = CrackSnapshot(
+                        tracking_id=tc.track_id,
+                        timestamp=now_ts.isoformat(),
+                        width_mm=tc.width_mm,
+                        length_mm=tc.length_mm,
+                        area_mm2=tc.area_mm2,
+                        classification=tc.classification.value
+                        if hasattr(tc.classification, "value")
+                        else str(tc.classification),
+                        is_new=False,
+                        velocity_mm_day=v,
+                        frame_number=frame_count,
+                    )
+                    history_store.save_snapshot(snapshot)
+
+                # Log velocity summary
+                all_v = velocity_calc.get_all_velocities()
+                if all_v:
+                    logger.info(
+                        "Temporal: %d tracks active, velocities=%s",
+                        len(all_v),
+                        {tid: f"{v:.4f}" if v else "N/A" for tid, v in all_v.items()},
+                    )
 
             # ── 3D Pipeline (Depth + Point Cloud) ───────────────────
             # Depth estimation is throttled to depth_fps to save CPU.

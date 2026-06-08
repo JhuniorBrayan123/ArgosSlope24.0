@@ -116,10 +116,12 @@ class CrackResult:
     """Detection confidence (ML models) or heuristic score (OpenCV)."""
     contour_points: int = 0
     """Number of contour points (diagnostic)."""
+    track_id: Optional[int] = None
+    """Persistent track ID for temporal tracking (assigned by CrackTracker)."""
 
     def to_dict(self) -> dict:
         """Serialize to JSON-safe dict for MQTT publishing."""
-        return {
+        d = {
             "roi_id": self.roi_id,
             "x": self.x,
             "y": self.y,
@@ -134,6 +136,9 @@ class CrackResult:
             "orientation_deg": round(self.orientation_deg, 1),
             "confidence": round(self.confidence, 4),
         }
+        if self.track_id is not None:
+            d["track_id"] = self.track_id
+        return d
 
 
 # ── Detector interface ────────────────────────────────────────────────
