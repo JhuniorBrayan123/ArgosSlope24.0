@@ -34,6 +34,9 @@ from edge.config import config
 
 logger = logging.getLogger(__name__)
 
+# Calibration file path (can be overridden for testing)
+CALIBRATION_PATH = Path("calibration/calibration.json")
+
 
 # ── Data types ─────────────────────────────────────────────────────────
 
@@ -178,19 +181,6 @@ class OpenCvDetector(BaseDetector):
         self._blur_ksize = config.blur_ksize
         self._morph_ksize = config.morph_ksize
         self._min_area = config.min_contour_area_px
-        self._focal_mm = config.focal_length_mm
-        self._distance_mm = config.sensor_distance_m * 1000.0  # m → mm
-        self._pixel_um = config.sensor_pixel_um
-
-        # Precompute pixel-to-mm ratio
-        #   pixel_size_mm = sensor_pixel_um / 1_000_000 (µm → mm)
-        #   GSD = (pixel_size_mm * distance_mm) / focal_mm   (Ground Sampling Distance)
-        pixel_size_mm = self._pixel_um / 1_000_000.0  # µm → mm
-        self._pixel_to_mm = (
-            (pixel_size_mm * self._distance_mm) / self._focal_mm
-            if self._focal_mm > 0
-            else 1.0
-        )
 
         # ── Geometric Filter Config ──────────────────────────────────
         self._filter_config = GeometricFilterConfig(
@@ -203,8 +193,20 @@ class OpenCvDetector(BaseDetector):
 
         # ── Calibration scale (pixels_per_mm) ────────────────────────
         self._pixels_per_mm: Optional[float] = None
+        self._fx_px: Optional[float] = None
         self._scale_available: bool = False
         self._load_calibration_scale()
+
+        # Fallback theoretical pixel-to-mm ratio (DEPRECATED: used only when calibration unavailable)
+        self._focal_mm = config.focal_length_mm
+        self._distance_mm = config.sensor_distance_m * 1000.0  # m → mm
+        self._pixel_um = config.sensor_pixel_um
+        pixel_size_mm = self._pixel_um / 1_000_000.0  # µm → mm
+        self._pixel_to_mm = (
+            (pixel_size_mm * self._distance_mm) / self._focal_mm
+            if self._focal_mm > 0
+            else 1.0
+        )
 
         # ── Rejected contours accumulator (reset on each process()) ──
         self._rejected_contours: list[tuple[np.ndarray, str]] = []
@@ -212,7 +214,7 @@ class OpenCvDetector(BaseDetector):
         logger.info(
             "OpenCvDetector initialized: "
             "pixel_to_mm=%.6f, min_area=%d, blur=%d, block=%d, C=%d, "
-            "filters=%s, scale=%s",
+            "filters=%s, scale=%s, fx_px=%s",
             self._pixel_to_mm,
             self._min_area,
             self._blur_ksize,
@@ -220,15 +222,13 @@ class OpenCvDetector(BaseDetector):
             self._adaptive_c,
             "enabled" if self._filter_config.enabled else "disabled",
             "available" if self._scale_available else "unavailable",
+            self._fx_px,
         )
 
     def _load_calibration_scale(self) -> None:
-        """Load ``pixels_per_mm`` from calibration.json if available."""
-        cal_path = (
-            Path(__file__).resolve().parent.parent
-            / "calibration"
-            / "calibration.json"
-        )
+        """Load ``pixels_per_mm`` and ``fx_px`` from calibration.json if available."""
+        # Use module-level path (can be overridden for testing)
+        cal_path = CALIBRATION_PATH
         if not cal_path.exists():
             logger.debug("Calibration file not found: %s", cal_path)
             return
@@ -236,6 +236,8 @@ class OpenCvDetector(BaseDetector):
         try:
             with open(cal_path, "r") as f:
                 data = json.load(f)
+            
+            # Load pixels_per_mm for scale
             ppmm = data.get("pixels_per_mm")
             if ppmm is not None and ppmm > 0:
                 self._pixels_per_mm = float(ppmm)
@@ -247,6 +249,26 @@ class OpenCvDetector(BaseDetector):
                 logger.debug(
                     "Calibration file exists but pixels_per_mm is null/zero."
                 )
+            
+            # Load fx_px (focal length in pixels) from camera matrix
+            fx_px = data.get("fx_px")
+            if fx_px is not None and fx_px > 0:
+                self._fx_px = float(fx_px)
+                logger.info("Calibration fx_px loaded: %.2f", self._fx_px)
+            else:
+                # Fallback: try to extract from camera_matrix[0][0]
+                cam_matrix = data.get("camera_matrix")
+                if (
+                    cam_matrix
+                    and isinstance(cam_matrix, list)
+                    and len(cam_matrix) > 0
+                    and len(cam_matrix[0]) > 0
+                ):
+                    fx_val = cam_matrix[0][0]
+                    if fx_val is not None and fx_val > 0:
+                        self._fx_px = float(fx_val)
+                        logger.info("Calibration fx_px loaded from camera_matrix: %.2f", self._fx_px)
+                        
         except (json.JSONDecodeError, OSError) as exc:
             logger.warning(
                 "Failed to load calibration scale: %s", exc
@@ -286,8 +308,19 @@ class OpenCvDetector(BaseDetector):
             (cx, cy), (w_axis, h_axis), angle = cv2.fitEllipse(contour)
             orientation = float(angle)
 
-        # Convert to mm
-        ratio = self._pixel_to_mm
+        # Convert to mm - use calibrated ratio when available, fallback to theoretical
+        if self._scale_available and self._pixels_per_mm is not None:
+            ratio = 1.0 / self._pixels_per_mm  # calibrated px→mm
+        else:
+            ratio = self._pixel_to_mm  # theoretical (legacy fallback)
+            logger.warning(
+                "Using theoretical pixel-to-mm ratio (calibration unavailable). "
+                "focal_length_mm=%.1f, sensor_distance_m=%.1f, sensor_pixel_um=%.1f. "
+                "Run calibration for accurate measurements.",
+                config.focal_length_mm,
+                config.sensor_distance_m,
+                config.sensor_pixel_um,
+            )
         length_mm = length_px * ratio
         area_mm2 = area_px * (ratio**2)
         width_mm = area_mm2 / length_mm if length_mm > 0 else 0.0
@@ -460,6 +493,14 @@ class OnnxDetector(BaseDetector):
         self._confidence = config.confidence_threshold
         self._session = None
         self._input_name: Optional[str] = None
+
+        # ── Calibration scale (pixels_per_mm) ────────────────────────
+        self._pixels_per_mm: Optional[float] = None
+        self._fx_px: Optional[float] = None
+        self._scale_available: bool = False
+        self._load_calibration_scale()
+
+        # Fallback theoretical pixel-to-mm ratio (DEPRECATED: used only when calibration unavailable)
         self._focal_mm = config.focal_length_mm
         self._distance_mm = config.sensor_distance_m * 1000.0
         self._pixel_um = config.sensor_pixel_um
@@ -471,6 +512,55 @@ class OnnxDetector(BaseDetector):
         )
         self._fallback = OpenCvDetector()
         self._load_model()
+
+    def _load_calibration_scale(self) -> None:
+        """Load ``pixels_per_mm`` and ``fx_px`` from calibration.json if available."""
+        # Use module-level path (can be overridden for testing)
+        cal_path = CALIBRATION_PATH
+        if not cal_path.exists():
+            logger.debug("Calibration file not found: %s", cal_path)
+            return
+
+        try:
+            with open(cal_path, "r") as f:
+                data = json.load(f)
+
+            # Load pixels_per_mm for scale
+            ppmm = data.get("pixels_per_mm")
+            if ppmm is not None and ppmm > 0:
+                self._pixels_per_mm = float(ppmm)
+                self._scale_available = True
+                logger.info(
+                    "Calibration scale loaded: %.4f px/mm", self._pixels_per_mm
+                )
+            else:
+                logger.debug(
+                    "Calibration file exists but pixels_per_mm is null/zero."
+                )
+
+            # Load fx_px (focal length in pixels) from camera matrix
+            fx_px = data.get("fx_px")
+            if fx_px is not None and fx_px > 0:
+                self._fx_px = float(fx_px)
+                logger.info("Calibration fx_px loaded: %.2f", self._fx_px)
+            else:
+                # Fallback: try to extract from camera_matrix[0][0]
+                cam_matrix = data.get("camera_matrix")
+                if (
+                    cam_matrix
+                    and isinstance(cam_matrix, list)
+                    and len(cam_matrix) > 0
+                    and len(cam_matrix[0]) > 0
+                ):
+                    fx_val = cam_matrix[0][0]
+                    if fx_val is not None and fx_val > 0:
+                        self._fx_px = float(fx_val)
+                        logger.info("Calibration fx_px loaded from camera_matrix: %.2f", self._fx_px)
+
+        except (json.JSONDecodeError, OSError) as exc:
+            logger.warning(
+                "Failed to load calibration scale: %s", exc
+            )
 
     def _load_model(self) -> None:
         """Load ONNX model. Falls back silently if not available."""
@@ -532,7 +622,18 @@ class OnnxDetector(BaseDetector):
 
             # Estimate length (diagonal / 2 approximation)
             length_px = np.sqrt(bw**2 + bh**2) / 2.0
-            ratio = self._pixel_to_mm
+            if self._scale_available and self._pixels_per_mm is not None:
+                ratio = 1.0 / self._pixels_per_mm  # calibrated px→mm
+            else:
+                ratio = self._pixel_to_mm
+                logger.warning(
+                    "ONNX: Using theoretical pixel-to-mm ratio (calibration unavailable). "
+                    "focal_length_mm=%.1f, sensor_distance_m=%.1f, sensor_pixel_um=%.1f. "
+                    "Run calibration for accurate measurements.",
+                    config.focal_length_mm,
+                    config.sensor_distance_m,
+                    config.sensor_pixel_um,
+                )
             length_mm = length_px * ratio
             area_mm2 = (bw * bh) * (ratio**2)
             width_mm = area_mm2 / length_mm if length_mm > 0 else 0.0

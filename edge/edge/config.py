@@ -59,14 +59,14 @@ class EdgeConfig:
     # Increase to 2000+ when in indoor/demo environments to suppress wallpaper texture
     min_contour_area_px: int = int(os.getenv("MIN_CONTOUR_AREA", "2000"))
 
-    # ── Camera parameters (mm) ──────────────────────────────────────
-    # Focal length in mm (used for pixel-to-mm conversion)
+    # ── Camera parameters (mm) [DEPRECATED for measurement — fallback only] ──
+    # Focal length in mm (DEPRECATED: used only as fallback when no calibration available)
     focal_length_mm: float = float(os.getenv("FOCAL_LENGTH_MM", "50.0"))
-    # Distance from camera to slope face in meters
+    # Distance from camera to slope face in meters (DEPRECATED: fallback only)
     sensor_distance_m: float = float(
         os.getenv("SENSOR_DISTANCE_M", "10.0")
     )
-    # Sensor pixel pitch in µm (used for pixel-to-mm)
+    # Sensor pixel pitch in µm (DEPRECATED: fallback only)
     sensor_pixel_um: float = float(os.getenv("SENSOR_PIXEL_UM", "3.0"))
 
     # ── 3D Pipeline (Depth + Point Cloud) ───────────────────────────
