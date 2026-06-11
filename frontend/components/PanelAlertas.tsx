@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { obtenerAlertas, reconocerAlerta } from '@/lib/api';
+import { obtenerAlertas, reconocerAlerta, fetchPredicciones } from '@/lib/api';
 
 // ── Tipos ─────────────────────────────────────────────────────────────
 
@@ -16,13 +16,69 @@ interface AlertaData {
   reconocida: boolean;
 }
 
+interface PrediccionData {
+  crack_id: number;
+  roi_id: string;
+  trend_direction: 'acelerando' | 'estable' | 'desacelerando';
+  slope: number;
+  r_squared: number;
+  ttt_days: number | null;
+  confidence: number;
+  latest_width_mm: number;
+  threshold_width_mm: number;
+  total_mediciones: number;
+}
+
 type FiltroTipo = 'todas' | 'critico' | 'advertencia' | 'informativo';
 type FiltroEstado = 'todas' | 'pendientes' | 'reconocidas';
+
+// ── Helpers de render ─────────────────────────────────────────────────
+
+function TrendArrow({ direction }: { direction: PrediccionData['trend_direction'] }) {
+  const config: Record<string, { arrow: string; label: string; color: string }> = {
+    acelerando: { arrow: '↗', label: 'Acelerando', color: 'text-dark-danger' },
+    estable: { arrow: '↑', label: 'Estable', color: 'text-green-400' },
+    desacelerando: { arrow: '↘', label: 'Desacelerando', color: 'text-dark-warning' },
+  };
+  const c = config[direction] ?? config.estable;
+  return (
+    <span className={`inline-flex items-center gap-1 text-sm font-bold ${c.color}`}>
+      <span className="text-lg">{c.arrow}</span>
+      {c.label}
+    </span>
+  );
+}
+
+function TttBadge({ ttt_days }: { ttt_days: number | null }) {
+  if (ttt_days == null) {
+    return <span className="text-[11px] text-dark-secondary">Sin proyección</span>;
+  }
+
+  let color: string;
+  let label: string;
+  if (ttt_days <= 3) {
+    color = 'bg-dark-danger/15 text-dark-danger border-dark-danger/30';
+    label = `${ttt_days.toFixed(0)} días para crítica`;
+  } else if (ttt_days <= 7) {
+    color = 'bg-dark-warning/15 text-dark-warning border-dark-warning/30';
+    label = `${ttt_days.toFixed(0)} días para crítica`;
+  } else {
+    color = 'bg-dark-accent/15 text-dark-accent border-dark-accent/20';
+    label = `${ttt_days.toFixed(0)} días para crítica`;
+  }
+
+  return (
+    <span className={`inline-block rounded-md border px-2 py-0.5 text-[11px] font-semibold ${color}`}>
+      {label}
+    </span>
+  );
+}
 
 // ── Componente ────────────────────────────────────────────────────────
 
 export default function PanelAlertas() {
   const [alertas, setAlertas] = useState<AlertaData[]>([]);
+  const [predicciones, setPredicciones] = useState<PrediccionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -40,8 +96,14 @@ export default function PanelAlertas() {
     let mounted = true;
     async function fetchData() {
       try {
-        const data = await obtenerAlertas();
-        if (mounted) setAlertas(data);
+        const [alertasData, prediccionesData] = await Promise.all([
+          obtenerAlertas(),
+          fetchPredicciones(),
+        ]);
+        if (mounted) {
+          setAlertas(alertasData);
+          setPredicciones(prediccionesData);
+        }
       } catch {
         if (mounted) setError(true);
       } finally {
@@ -158,6 +220,54 @@ export default function PanelAlertas() {
           <p className="text-xl font-bold text-dark-warning">{stats.pendientes}</p>
         </div>
       </div>
+
+      {/* ── Predicciones ── */}
+      {predicciones.length > 0 && (
+        <div className="rounded-lg border border-dark-border bg-dark-surface p-4">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+            Predicciones de Tendencia
+          </h3>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {predicciones.map((p) => {
+              const borderColor =
+                p.trend_direction === 'acelerando'
+                  ? 'border-l-dark-danger'
+                  : p.trend_direction === 'desacelerando'
+                  ? 'border-l-dark-warning'
+                  : 'border-l-green-500/50';
+
+              return (
+                <div
+                  key={p.crack_id}
+                  className={`rounded-lg border border-dark-border border-l-4 bg-dark-primary/30 p-3 ${borderColor}`}
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-xs font-semibold text-dark-text">
+                      {p.roi_id}
+                    </span>
+                    <span className="text-[10px] text-dark-secondary">
+                      #{p.crack_id}
+                    </span>
+                  </div>
+
+                  <div className="mb-2">
+                    <TrendArrow direction={p.trend_direction} />
+                  </div>
+
+                  <div className="mb-2">
+                    <TttBadge ttt_days={p.ttt_days} />
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-dark-secondary">
+                    <span>Pendiente: {p.slope.toFixed(4)} mm/día</span>
+                    <span>Confianza: {(p.confidence * 100).toFixed(0)}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Filtros ── */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dark-border bg-dark-surface p-4">
