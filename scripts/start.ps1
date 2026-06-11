@@ -1,71 +1,79 @@
 <#
 .SYNOPSIS
-    ARGOS SLOPE 4.0 — Inicio rápido (Windows / PowerShell)
+    ARGOS SLOPE 4.0 — Launch both backend (FastAPI) and frontend (Next.js).
 
 .DESCRIPTION
-    Inicia el backend (FastAPI) y el frontend (Next.js) simultáneamente.
-    Requiere PowerShell 5.1+.
-
-    Requisitos:
-      - Python 3.10+ con dependencias instaladas (pip install -r backend/requirements.txt)
-      - Node.js 18+ con dependencias instaladas (npm install)
-      - PostgreSQL 14+ corriendo en localhost:5432
-
-.EXAMPLE
-    .\scripts\start.ps1
+    Starts uvicorn for the FastAPI backend and npm run dev for the Next.js
+    frontend in background processes. PIDs are displayed. Press Ctrl+C to
+    stop both.
 #>
 
-$ROOT_DIR = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
+$rootDir = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 
-Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  ARGOS SLOPE 4.0 — Iniciando servicios..." -ForegroundColor Cyan
-Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "╔══════════════════════════════════════════╗" -ForegroundColor Cyan
+Write-Host "║   ARGOS SLOPE 4.0 — Iniciando servicios  ║" -ForegroundColor Cyan
+Write-Host "╚══════════════════════════════════════════╝" -ForegroundColor Cyan
+Write-Host ""
 
-# ── 1. Backend (FastAPI en puerto 8000) ────────────────────────────
-Write-Host "`n[1/2] Iniciando backend (FastAPI) en http://localhost:8000 ..." -ForegroundColor Yellow
-
-$BackendJob = Start-Job -ScriptBlock {
-    param($Dir, $RootDir)
-    # Cargar .env si existe
-    $envFile = Join-Path $RootDir ".env"
-    if (Test-Path $envFile) {
-        Get-Content $envFile | ForEach-Object {
-            if ($_ -match "^\s*([^#=]+)=(.+)\s*$") {
-                [Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim())
-            }
-        }
+# ── 1. Backend (FastAPI) ──────────────────────────────────────────────
+Write-Host "[1/2] Iniciando backend FastAPI..." -ForegroundColor Yellow
+$backendJob = Start-Job -Name "backend" -ScriptBlock {
+    param($dir)
+    Set-Location -LiteralPath $dir
+    # Activate venv if present, otherwise rely on system Python
+    $venv = Join-Path -Path $dir -ChildPath ".venv\Scripts\Activate.ps1"
+    if (Test-Path -LiteralPath $venv) {
+        & $venv
     }
-    Set-Location $Dir
-    uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-} -ArgumentList (Join-Path $ROOT_DIR "backend"), $ROOT_DIR
+    uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+} -ArgumentList $rootDir
 
-Write-Host "  → Backend iniciado en segundo plano (Job ID: $($BackendJob.Id))" -ForegroundColor Gray
+$backendPid = $backendJob.Id
+Write-Host "  → Backend iniciado (Job ID: $backendPid)" -ForegroundColor Green
+Write-Host "  → http://localhost:8000" -ForegroundColor Green
+Write-Host "  → http://localhost:8000/docs (Swagger)" -ForegroundColor Green
+Write-Host ""
 
-# ── 2. Frontend (Next.js en puerto 3000) ───────────────────────────
-Write-Host "`n[2/2] Iniciando frontend (Next.js) en http://localhost:3000 ..." -ForegroundColor Yellow
-
-$FrontendJob = Start-Job -ScriptBlock {
-    param($Dir)
-    Set-Location $Dir
+# ── 2. Frontend (Next.js) ────────────────────────────────────────────
+Write-Host "[2/2] Iniciando frontend Next.js..." -ForegroundColor Yellow
+$frontendJob = Start-Job -Name "frontend" -ScriptBlock {
+    param($dir)
+    $frontendDir = Join-Path -Path $dir -ChildPath "frontend"
+    Set-Location -LiteralPath $frontendDir
     npm run dev
-} -ArgumentList $ROOT_DIR
+} -ArgumentList $rootDir
 
-Write-Host "  → Frontend iniciado en segundo plano (Job ID: $($FrontendJob.Id))" -ForegroundColor Gray
+$frontendPid = $frontendJob.Id
+Write-Host "  → Frontend iniciado (Job ID: $frontendPid)" -ForegroundColor Green
+Write-Host "  → http://localhost:3000" -ForegroundColor Green
+Write-Host ""
 
-Write-Host "`n═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  Servicios iniciados:" -ForegroundColor Cyan
-Write-Host "    • Backend:  http://localhost:8000" -ForegroundColor White
-Write-Host "    • Frontend: http://localhost:3000" -ForegroundColor White
-Write-Host "    • API Docs: http://localhost:8000/docs" -ForegroundColor White
-Write-Host "`n  Para detener:" -ForegroundColor Cyan
-Write-Host "    Stop-Job $($BackendJob.Id); Stop-Job $($FrontendJob.Id); Remove-Job $($BackendJob.Id), $($FrontendJob.Id)" -ForegroundColor Gray
-Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+# ── PID info ──────────────────────────────────────────────────────────
+Write-Host "══════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "  Backend Job ID  : $backendPid" -ForegroundColor Gray
+Write-Host "  Frontend Job ID : $frontendPid" -ForegroundColor Gray
+Write-Host "══════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Presiona Ctrl+C para detener ambos servicios." -ForegroundColor DarkGray
 
-# Mantener el script en ejecución y mostrar output de los jobs
-Write-Host "`nMostrando output de los servicios (Ctrl+C para detener)..." -ForegroundColor Gray
-
-while ($BackendJob.State -eq "Running" -or $FrontendJob.State -eq "Running") {
-    Receive-Job $BackendJob -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "[Backend] $_" -ForegroundColor Green }
-    Receive-Job $FrontendJob -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "[Frontend] $_" -ForegroundColor Blue }
-    Start-Sleep -Milliseconds 500
+# ── Wait for Ctrl+C ────────────────────────────────────────────────────
+try {
+    while ($true) {
+        Start-Sleep -Seconds 1
+        # Check if jobs are still running
+        $bj = Get-Job -Name "backend" -ErrorAction SilentlyContinue
+        $fj = Get-Job -Name "frontend" -ErrorAction SilentlyContinue
+        if (-not $bj -and -not $fj) { break }
+        if (-not $bj) { Write-Host "⚠ Backend terminó inesperadamente" -ForegroundColor Red }
+        if (-not $fj) { Write-Host "⚠ Frontend terminó inesperadamente" -ForegroundColor Red }
+    }
+}
+finally {
+    Write-Host ""
+    Write-Host "Deteniendo servicios..." -ForegroundColor Yellow
+    Get-Job -Name "backend" -ErrorAction SilentlyContinue | Stop-Job
+    Get-Job -Name "frontend" -ErrorAction SilentlyContinue | Stop-Job
+    Get-Job -Name "backend" -ErrorAction SilentlyContinue | Remove-Job
+    Get-Job -Name "frontend" -ErrorAction SilentlyContinue | Remove-Job
+    Write-Host "✓ Servicios detenidos" -ForegroundColor Green
 }
