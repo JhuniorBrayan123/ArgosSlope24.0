@@ -242,6 +242,36 @@ class EdgeConfig:
         os.getenv("TEMPORAL_INTERVAL_FRAMES", "10")
     )
 
+    # ── Alert Engine (Sprint 5) ─────────────────────────────────────
+    # Enable velocity-based alert engine
+    alert_enabled: bool = (
+        os.getenv("ALERT_ENABLED", "true").lower() == "true"
+    )
+    # Velocity threshold for "moderada" alerts (mm/day)
+    alert_velocity_moderada: float = float(
+        os.getenv("ALERT_VELOCITY_MODERADA", "0.5")
+    )
+    # Velocity threshold for "rapida" alerts (mm/day)
+    alert_velocity_rapida: float = float(
+        os.getenv("ALERT_VELOCITY_RAPIDA", "2.0")
+    )
+    # Min consecutive temporal runs above threshold before alerting
+    alert_min_consecutive: int = int(
+        os.getenv("ALERT_MIN_CONSECUTIVE", "3")
+    )
+    # Cooldown in minutes before re-alerting after resolution
+    alert_cooldown_minutes: int = int(
+        os.getenv("ALERT_COOLDOWN_MINUTES", "60")
+    )
+    # Enable "moderada" level alerts
+    alert_moderada_enabled: bool = (
+        os.getenv("ALERT_MODERADA_ENABLED", "true").lower() == "true"
+    )
+    # Enable "rapida" level alerts
+    alert_rapida_enabled: bool = (
+        os.getenv("ALERT_RAPIDA_ENABLED", "true").lower() == "true"
+    )
+
     # ── WebRTC ──────────────────────────────────────────────────────
     # Enable WebRTC video streaming
     webrtc_enabled: bool = (

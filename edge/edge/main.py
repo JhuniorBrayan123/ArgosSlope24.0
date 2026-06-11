@@ -60,6 +60,8 @@ if config.temporal_enabled:
         VelocityCalculator,
         JsonCrackHistoryStore,
     )
+if config.alert_enabled:
+    from edge.temporal import AlertEngine
 
 logging.basicConfig(
     level=getattr(logging, config.log_level.upper(), logging.INFO),
@@ -332,6 +334,21 @@ def main() -> None:
             ema_alpha=config.temporal_ema_alpha,
         )
         history_store = JsonCrackHistoryStore(config.temporal_history_path)
+
+    # ── 1d. Alert engine (velocity-based alerts) ─────────────────────
+    alert_engine = None
+    if config.alert_enabled:
+        alert_engine = AlertEngine(
+            velocity_moderada=config.alert_velocity_moderada,
+            velocity_rapida=config.alert_velocity_rapida,
+            min_consecutive=config.alert_min_consecutive,
+            cooldown_minutes=config.alert_cooldown_minutes,
+            moderada_enabled=config.alert_moderada_enabled,
+            rapida_enabled=config.alert_rapida_enabled,
+            device_id=config.device_id,
+            publisher=lambda p: publisher.publish_velocity_alert(p) if publisher.connected else None,
+        )
+        logger.info("Alert engine enabled.")
         logger.info(
             "Temporal pipeline enabled: interval=%d frames, "
             "iou=%.2f, orb=%d, min_days=%.1f",
@@ -499,6 +516,23 @@ def main() -> None:
                         frame_number=frame_count,
                     )
                     history_store.save_snapshot(snapshot)
+
+                    # Alert engine
+                    if alert_engine is not None:
+                        alert_payload = alert_engine.update(
+                            track_id=tc.track_id,
+                            velocity_mm_day=v or 0.0,
+                            roi_id=tc.roi_id,
+                            width_mm=tc.width_mm,
+                            smoothed_velocity=velocity_calc.get_smoothed_velocity(tc.track_id),
+                        )
+                        if alert_payload:
+                            logger.info(
+                                "ALERTA %s: track %d, v=%.4f mm/day",
+                                alert_payload.get("category", "").upper(),
+                                tc.track_id,
+                                v or 0.0,
+                            )
 
                 # Log velocity summary
                 all_v = velocity_calc.get_all_velocities()
