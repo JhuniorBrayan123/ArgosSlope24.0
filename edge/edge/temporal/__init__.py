@@ -15,6 +15,7 @@ from edge.temporal.persistence import (
     CrackHistoryStore,
     CrackSnapshot,
 )
+from edge.temporal.trend_predictor import TrendPredictor, TrendPredictionResult
 
 __all__ = [
     "ImageRegistrator",
@@ -30,4 +31,6 @@ __all__ = [
     "AlertEngine",
     "AlertLevel",
     "CrackAlertState",
+    "TrendPredictor",
+    "TrendPredictionResult",
 ]

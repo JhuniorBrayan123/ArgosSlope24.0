@@ -17,21 +17,26 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from edge.temporal.alert_engine import AlertEngine, AlertLevel, CrackAlertState
+from edge.temporal.trend_predictor import TrendPredictionResult
 
 
 class TestAlertLevel(unittest.TestCase):
     """AlertLevel IntEnum ordering."""
 
     def test_level_ordering(self) -> None:
-        """Verify NONE < MODERADA < RAPIDA ordering."""
+        """Verify NONE < MODERADA < RAPIDA < PREDICTED_WARNING < PREDICTED_CRITICAL."""
         self.assertLess(AlertLevel.NONE, AlertLevel.MODERADA)
         self.assertLess(AlertLevel.MODERADA, AlertLevel.RAPIDA)
+        self.assertLess(AlertLevel.RAPIDA, AlertLevel.PREDICTED_WARNING)
+        self.assertLess(AlertLevel.PREDICTED_WARNING, AlertLevel.PREDICTED_CRITICAL)
 
     def test_level_values(self) -> None:
         """Verify IntEnum values."""
         self.assertEqual(int(AlertLevel.NONE), 0)
         self.assertEqual(int(AlertLevel.MODERADA), 1)
         self.assertEqual(int(AlertLevel.RAPIDA), 2)
+        self.assertEqual(int(AlertLevel.PREDICTED_WARNING), 3)
+        self.assertEqual(int(AlertLevel.PREDICTED_CRITICAL), 4)
 
 
 class TestAlertEngineDetermineLevel(unittest.TestCase):
@@ -436,6 +441,267 @@ class TestAlertEngine(unittest.TestCase):
         result = engine.update(track_id=1, velocity_mm_day=1.0)
         self.assertIsNotNone(result)
         publisher.assert_called_once()
+
+
+# ── Prediction integration ─────────────────────────────────────────
+
+
+class TestAlertEnginePrediction(unittest.TestCase):
+    """AlertEngine prediction integration tests."""
+
+    def setUp(self) -> None:
+        self.engine = AlertEngine(
+            velocity_moderada=0.5,
+            velocity_rapida=2.0,
+            min_consecutive=1,  # immediate for test simplicity
+        )
+
+    def make_prediction(
+        self,
+        direction: str = "acelerando",
+        slope: float = 2.5,
+        r_squared: float = 0.85,
+        ttt_days: float | None = 5.0,
+        confidence: float = 0.85,
+    ) -> TrendPredictionResult:
+        return TrendPredictionResult(
+            trend_direction=direction,
+            slope=slope,
+            r_squared=r_squared,
+            ttt_days=ttt_days,
+            confidence=confidence,
+        )
+
+    def test_prediction_triggers_predicted_critical(self) -> None:
+        """
+        GIVEN low velocity + high-confidence prediction with slope >= rapida
+        WHEN update() is called with prediction
+        THEN alert fires with PREDICTED_CRITICAL
+        """
+        prediction = self.make_prediction(slope=2.5)  # >= velocity_rapida
+        result = self.engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+            prediction=prediction,
+        )
+        self.assertIsNotNone(result)
+        self.assertEqual(result["level"], int(AlertLevel.PREDICTED_CRITICAL))
+        self.assertEqual(result["category"], "predicted_critical")
+        self.assertEqual(result["event"], "alerta_prediccion")
+
+    def test_prediction_triggers_predicted_warning(self) -> None:
+        """
+        GIVEN low velocity + prediction with slope between moderada and rapida
+        WHEN update() is called with prediction
+        THEN alert fires with PREDICTED_WARNING
+        """
+        prediction = self.make_prediction(slope=1.0)  # >= moderada, < rapida
+        result = self.engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+            prediction=prediction,
+        )
+        self.assertIsNotNone(result)
+        self.assertEqual(result["level"], int(AlertLevel.PREDICTED_WARNING))
+        self.assertEqual(result["category"], "predicted_warning")
+        self.assertEqual(result["event"], "alerta_prediccion")
+
+    def test_low_confidence_no_alert(self) -> None:
+        """
+        GIVEN prediction with confidence <= 0.5
+        WHEN update() is called
+        THEN engine stays IDLE, no alert fires
+        """
+        prediction = self.make_prediction(confidence=0.3)
+        result = self.engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+            prediction=prediction,
+        )
+        self.assertIsNone(result)
+
+    def test_velocity_alert_takes_precedence(self) -> None:
+        """
+        GIVEN velocity is RAPIDA (>= 2.0)
+        AND prediction is present
+        WHEN update() is called
+        THEN velocity alert fires, NOT prediction alert
+        """
+        prediction = self.make_prediction(direction="estable")
+        result = self.engine.update(
+            track_id=1,
+            velocity_mm_day=3.0,
+            prediction=prediction,
+        )
+        self.assertIsNotNone(result)
+        self.assertEqual(result["category"], "rapida")
+        self.assertEqual(result["event"], "alerta_velocidad")
+
+    def test_moderada_velocity_still_takes_precedence(self) -> None:
+        """
+        GIVEN velocity is MODERADA (>= 0.5)
+        AND a prediction is present
+        WHEN update() is called
+        THEN velocity alert fires (velocity > prediction)
+        """
+        prediction = self.make_prediction(slope=2.5)
+        result = self.engine.update(
+            track_id=1,
+            velocity_mm_day=1.0,
+            prediction=prediction,
+        )
+        self.assertIsNotNone(result)
+        self.assertEqual(result["category"], "moderada")
+        self.assertEqual(result["event"], "alerta_velocidad")
+
+    def test_suppress_predicted_critical(self) -> None:
+        """
+        GIVEN AlertEngine with predicted_critical_enabled=False
+        WHEN conditions for PREDICTED_CRITICAL are met
+        THEN no alert fires
+        """
+        engine = AlertEngine(
+            min_consecutive=1,
+            predicted_critical_enabled=False,
+        )
+        prediction = self.make_prediction(slope=2.5)
+        result = engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+            prediction=prediction,
+        )
+        self.assertIsNone(result)
+
+    def test_suppress_predicted_warning(self) -> None:
+        """
+        GIVEN AlertEngine with predicted_warning_enabled=False
+        WHEN conditions for PREDICTED_WARNING are met
+        THEN no alert fires
+        """
+        engine = AlertEngine(
+            min_consecutive=1,
+            predicted_warning_enabled=False,
+        )
+        prediction = self.make_prediction(slope=1.0)
+        result = engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+            prediction=prediction,
+        )
+        self.assertIsNone(result)
+
+    def test_prediction_with_ttt_none_does_not_alert(self) -> None:
+        """
+        GIVEN prediction with ttt_days=None (non-positive slope)
+        WHEN update() is called
+        THEN no alert fires
+        """
+        prediction = self.make_prediction(ttt_days=None, slope=-0.5)
+        result = self.engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+            prediction=prediction,
+        )
+        self.assertIsNone(result)
+
+    def test_prediction_estable_does_not_alert(self) -> None:
+        """
+        GIVEN prediction with direction 'estable'
+        WHEN update() is called
+        THEN no alert fires
+        """
+        prediction = self.make_prediction(direction="estable", slope=0.005)
+        result = self.engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+            prediction=prediction,
+        )
+        self.assertIsNone(result)
+
+    def test_prediction_without_prediction_param_stays_idle(self) -> None:
+        """
+        GIVEN low velocity and no prediction param
+        WHEN update() is called
+        THEN engine stays IDLE (backward compatible)
+        """
+        result = self.engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+        )
+        self.assertIsNone(result)
+
+    def test_prediction_payload_has_prediction_fields(self) -> None:
+        """
+        GIVEN a PREDICTED_WARNING fires
+        WHEN payload is returned
+        THEN it includes ttt_days, trend_direction, r_squared, confidence
+        """
+        prediction = self.make_prediction(slope=1.0)
+        result = self.engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+            roi_id="CRK-0001",
+            width_mm=4.5,
+            prediction=prediction,
+        )
+        self.assertIsNotNone(result)
+        self.assertIn("ttt_days", result)
+        self.assertIn("trend_direction", result)
+        self.assertIn("r_squared", result)
+        self.assertIn("confidence", result)
+        self.assertEqual(result["ttt_days"], 5.0)
+        self.assertEqual(result["trend_direction"], "acelerando")
+        self.assertEqual(result["r_squared"], 0.85)
+        self.assertEqual(result["confidence"], 0.85)
+
+    def test_prediction_consecutive_counting(self) -> None:
+        """
+        GIVEN engine with min_consecutive > 1
+        WHEN prediction is provided but not enough consecutive calls
+        THEN no alert until min_consecutive reached
+        """
+        engine = AlertEngine(
+            min_consecutive=3,
+            velocity_moderada=0.5,
+            velocity_rapida=2.0,
+        )
+        prediction = self.make_prediction(slope=2.5)
+
+        for i in range(2):
+            result = engine.update(
+                track_id=1,
+                velocity_mm_day=0.2,
+                prediction=prediction,
+            )
+            self.assertIsNone(
+                result,
+                f"Unexpected alert at call #{i + 1}",
+            )
+
+        # 3rd call → alert
+        result = engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+            prediction=prediction,
+        )
+        self.assertIsNotNone(result)
+
+    def test_publisher_called_for_prediction_alert(self) -> None:
+        """Publisher callable is invoked for prediction alerts."""
+        publisher = MagicMock(return_value=True)
+        engine = AlertEngine(
+            min_consecutive=1,
+            publisher=publisher,
+        )
+        prediction = self.make_prediction(slope=2.5)
+        result = engine.update(
+            track_id=1,
+            velocity_mm_day=0.2,
+            prediction=prediction,
+        )
+        self.assertIsNotNone(result)
+        publisher.assert_called_once_with(result)
+        self.assertEqual(result["event"], "alerta_prediccion")
 
 
 class TestAlertEngineCooldown(unittest.TestCase):

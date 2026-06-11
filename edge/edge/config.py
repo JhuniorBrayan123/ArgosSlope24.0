@@ -242,6 +242,20 @@ class EdgeConfig:
         os.getenv("TEMPORAL_INTERVAL_FRAMES", "10")
     )
 
+    # ── Prediction (Sprint 7) ───────────────────────────────────────
+    # Enable trend prediction pipeline
+    prediction_enabled: bool = (
+        os.getenv("PREDICTION_ENABLED", "true").lower() == "true"
+    )
+    # Maximum look-ahead days for Time-To-Threshold
+    prediction_horizon_days: int = int(
+        os.getenv("PREDICTION_HORIZON_DAYS", "7")
+    )
+    # Minimum data points required for a prediction
+    prediction_min_data_points: int = int(
+        os.getenv("PREDICTION_MIN_DATA_POINTS", "5")
+    )
+
     # ── Alert Engine (Sprint 5) ─────────────────────────────────────
     # Enable velocity-based alert engine
     alert_enabled: bool = (

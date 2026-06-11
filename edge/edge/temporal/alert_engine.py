@@ -18,6 +18,8 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Callable, Optional
 
+from edge.temporal.trend_predictor import TrendPredictionResult
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,6 +29,8 @@ class AlertLevel(IntEnum):
     NONE = 0
     MODERADA = 1
     RAPIDA = 2
+    PREDICTED_WARNING = 3
+    PREDICTED_CRITICAL = 4
 
 
 @dataclass
@@ -89,6 +93,8 @@ class AlertEngine:
         cooldown_minutes: int = 60,
         moderada_enabled: bool = True,
         rapida_enabled: bool = True,
+        predicted_warning_enabled: bool = True,
+        predicted_critical_enabled: bool = True,
         device_id: str = "argos-edge-01",
         publisher: Optional[Callable[[dict], bool]] = None,
     ) -> None:
@@ -98,6 +104,8 @@ class AlertEngine:
         self.cooldown_seconds = cooldown_minutes * 60
         self.moderada_enabled = moderada_enabled
         self.rapida_enabled = rapida_enabled
+        self.predicted_warning_enabled = predicted_warning_enabled
+        self.predicted_critical_enabled = predicted_critical_enabled
         self.device_id = device_id
         self._publisher = publisher
         self._states: dict[int, CrackAlertState] = {}
@@ -105,13 +113,16 @@ class AlertEngine:
         logger.info(
             "AlertEngine initialized: moderada=%.2f, rapida=%.2f, "
             "min_consecutive=%d, cooldown=%d min, "
-            "moderada_enabled=%s, rapida_enabled=%s",
+            "moderada_enabled=%s, rapida_enabled=%s, "
+            "predicted_warning_enabled=%s, predicted_critical_enabled=%s",
             self.velocity_moderada,
             self.velocity_rapida,
             self.min_consecutive,
             cooldown_minutes,
             self.moderada_enabled,
             self.rapida_enabled,
+            self.predicted_warning_enabled,
+            self.predicted_critical_enabled,
         )
 
     # ── Level classification ─────────────────────────────────────────
@@ -131,6 +142,32 @@ class AlertEngine:
             return AlertLevel.MODERADA
         return AlertLevel.NONE
 
+    # ── Prediction evaluation ─────────────────────────────────────────
+
+    @staticmethod
+    def _evaluate_prediction(
+        prediction: TrendPredictionResult,
+        velocity_moderada: float,
+        velocity_rapida: float,
+    ) -> Optional[AlertLevel]:
+        """
+        Evaluate a prediction result and determine the alert level.
+
+        Returns ``PREDICTED_CRITICAL`` if slope >= velocity_rapida,
+        ``PREDICTED_WARNING`` if slope >= velocity_moderada,
+        or ``None`` if prediction conditions are not met.
+        """
+        if (
+            prediction.confidence > 0.5
+            and prediction.trend_direction == "acelerando"
+            and prediction.ttt_days is not None
+        ):
+            if prediction.slope >= velocity_rapida:
+                return AlertLevel.PREDICTED_CRITICAL
+            if prediction.slope >= velocity_moderada:
+                return AlertLevel.PREDICTED_WARNING
+        return None
+
     # ── Core update ──────────────────────────────────────────────────
 
     def update(
@@ -140,6 +177,7 @@ class AlertEngine:
         roi_id: str = "",
         width_mm: float = 0.0,
         smoothed_velocity: Optional[float] = None,
+        prediction: Optional[TrendPredictionResult] = None,
     ) -> Optional[dict]:
         """
         Process a new velocity measurement for a tracked crack.
@@ -149,6 +187,9 @@ class AlertEngine:
         * **IDLE**\n
             Level >= MODERADA **and** consecutive >= min_consecutive
             → **ALERTING** (publishes alert, returns payload dict).
+
+            If velocity < MODERADA and a valid prediction is provided,
+            the predictive level is used instead.
 
         * **ALERTING**\n
             Level drops below MODERADA
@@ -164,6 +205,9 @@ class AlertEngine:
             roi_id: ROI identifier for the crack (for payload).
             width_mm: Crack width in mm (for payload).
             smoothed_velocity: EMA-smoothed velocity (for payload).
+            prediction:
+                Optional ``TrendPredictionResult``. Evaluated when
+                velocity is below ``MODERADA``.
 
         Returns:
             Payload dict when transitioning to ALERTING, otherwise
@@ -173,6 +217,16 @@ class AlertEngine:
 
         # Determine current alert level from velocity
         level = self._determine_level(velocity_mm_day)
+
+        # If velocity is below MODERADA, check prediction
+        if level < AlertLevel.MODERADA and prediction is not None:
+            pred_level = self._evaluate_prediction(
+                prediction,
+                velocity_moderada=self.velocity_moderada,
+                velocity_rapida=self.velocity_rapida,
+            )
+            if pred_level is not None:
+                level = pred_level
 
         # Update consecutive count: increasing/decreasing level
         if level >= state.level:
@@ -219,6 +273,16 @@ class AlertEngine:
                     should_alert = False
                 elif level == AlertLevel.MODERADA and not self.moderada_enabled:
                     should_alert = False
+                elif (
+                    level == AlertLevel.PREDICTED_CRITICAL
+                    and not self.predicted_critical_enabled
+                ):
+                    should_alert = False
+                elif (
+                    level == AlertLevel.PREDICTED_WARNING
+                    and not self.predicted_warning_enabled
+                ):
+                    should_alert = False
 
                 if should_alert:
                     alert_id = f"ALT-{int(now)}-{track_id}"
@@ -234,6 +298,7 @@ class AlertEngine:
                         velocity_mm_day=velocity_mm_day,
                         smoothed_velocity=smoothed_velocity,
                         level=level,
+                        prediction=prediction,
                     )
 
                     # Invoke publisher callable if set
@@ -268,12 +333,22 @@ class AlertEngine:
         velocity_mm_day: float,
         smoothed_velocity: Optional[float],
         level: AlertLevel,
+        prediction: Optional[TrendPredictionResult] = None,
     ) -> dict:
-        """Build the MQTT payload for a velocity alert."""
-        category = "moderada" if level == AlertLevel.MODERADA else "rapida"
+        """Build the MQTT payload for a velocity or predictive alert."""
+        if level == AlertLevel.PREDICTED_WARNING:
+            category = "predicted_warning"
+            event = "alerta_prediccion"
+        elif level == AlertLevel.PREDICTED_CRITICAL:
+            category = "predicted_critical"
+            event = "alerta_prediccion"
+        else:
+            category = "moderada" if level == AlertLevel.MODERADA else "rapida"
+            event = "alerta_velocidad"
+
         payload: dict = {
             "alert_id": state.alert_id,
-            "event": "alerta_velocidad",
+            "event": event,
             "device_id": self.device_id,
             "track_id": track_id,
             "roi_id": roi_id,
@@ -289,6 +364,17 @@ class AlertEngine:
             "consecutive_measurements": state.consecutive_count,
             "timestamp": time.time(),
         }
+
+        # Include prediction fields when applicable
+        if prediction is not None and level in (
+            AlertLevel.PREDICTED_WARNING,
+            AlertLevel.PREDICTED_CRITICAL,
+        ):
+            payload["ttt_days"] = prediction.ttt_days
+            payload["trend_direction"] = prediction.trend_direction
+            payload["r_squared"] = prediction.r_squared
+            payload["confidence"] = prediction.confidence
+
         return payload
 
     # ── State management ─────────────────────────────────────────────
