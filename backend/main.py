@@ -42,6 +42,8 @@ async def root():
             "GET /api/resumen": "Dashboard summary",
             "GET /api/alertas": "Velocity alerts",
             "PUT /api/alertas/{alerta_id}/reconocer": "Acknowledge alert",
+            "GET /api/predicciones": "Trend predictions for all cracks",
+            "GET /api/predicciones/{crack_id}": "Prediction for a single crack",
             "GET /api/configuracion": "Get config",
             "PUT /api/configuracion/{clave}": "Update config",
             "GET /api/health": "Health check",

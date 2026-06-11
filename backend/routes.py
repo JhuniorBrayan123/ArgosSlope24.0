@@ -72,6 +72,24 @@ async def update_configuracion(clave: str, body: dict):
     return db_bridge.actualizar_configuracion(clave, str(valor))
 
 
+@router.get("/predicciones")
+async def list_predicciones():
+    """List trend predictions for all cracks."""
+    return db_bridge.get_predicciones()
+
+
+@router.get("/predicciones/{crack_id}")
+async def get_prediccion(crack_id: int):
+    """Prediction for a single crack."""
+    result = db_bridge.get_prediccion(crack_id)
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Predicción para fisura #{crack_id} no disponible. Se requieren al menos 3 mediciones.",
+        )
+    return result
+
+
 @router.get("/health")
 async def health_check():
     """Lightweight health check."""

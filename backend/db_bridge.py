@@ -99,6 +99,75 @@ def _compute_delta_percentage(earliest: dict, latest: dict) -> Optional[float]:
     return None
 
 
+# ── Prediction helpers ──────────────────────────────────────────────
+
+def _linear_regression(
+    x: list[float], y: list[float],
+) -> tuple[float, float, float]:
+    """
+    Simple linear regression (pure Python, no numpy).
+
+    Returns (slope, intercept, r_squared).
+    """
+    n = len(x)
+    if n < 3:
+        return 0.0, 0.0, 0.0
+    sum_x = sum(x)
+    sum_y = sum(y)
+    sum_xy = sum(xi * yi for xi, yi in zip(x, y))
+    sum_x2 = sum(xi * xi for xi in x)
+    sum_y2 = sum(yi * yi for yi in y)
+
+    denom = n * sum_x2 - sum_x * sum_x
+    if denom == 0:
+        return 0.0, 0.0, 0.0
+
+    slope = (n * sum_xy - sum_x * sum_y) / denom
+    intercept = (sum_y - slope * sum_x) / n
+
+    # R²
+    mean_y = sum_y / n
+    ss_res = sum((yi - (slope * xi + intercept)) ** 2 for xi, yi in zip(x, y))
+    ss_tot = sum((yi - mean_y) ** 2 for yi in y)
+    r_squared = 1.0 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
+    r_squared = max(0.0, min(1.0, r_squared))
+
+    return slope, intercept, r_squared
+
+
+def _classify_trend_direction(
+    slope: float, slope_threshold: float = 0.01,
+) -> str:
+    """Classify slope into acelerando / estable / desacelerando."""
+    if slope > slope_threshold:
+        return "acelerando"
+    if slope < -slope_threshold:
+        return "desacelerando"
+    return "estable"
+
+
+def _compute_ttt(
+    slope: float,
+    intercept: float,
+    latest_width: float,
+    threshold_width: float = 10.0,
+    horizon_days: float = 14.0,
+) -> Optional[float]:
+    """
+    Compute Time-To-Threshold (days) for crack width.
+
+    Returns None when slope <= 0 (not widening).
+    Caps result at horizon_days.
+    """
+    if slope <= 0:
+        return None
+    # TTT = (threshold - current_width) / slope
+    ttt = (threshold_width - latest_width) / slope
+    if ttt < 0:
+        return None
+    return min(ttt, horizon_days)
+
+
 # ── Public API ───────────────────────────────────────────────────────
 
 def get_fisuras() -> list[dict]:
@@ -350,7 +419,82 @@ def get_resumen() -> dict:
         "alertas_criticas": alertas_criticas,
         "rpi_conectada": True,
         "deformacion_promedio": deformacion_promedio,
+        "count_predicciones_activas": len(get_predicciones()),
     }
+
+
+# ── Prediction API ──────────────────────────────────────────────────
+
+def get_predicciones() -> list[dict]:
+    """
+    Compute trend predictions from crack width measurements.
+
+    For each crack with at least 3 data points, runs simple linear
+    regression on width_mm over time.
+
+    Returns:
+        List of dicts:
+            crack_id, trend_direction, slope, r_squared,
+            ttt_days, confidence, latest_width
+    """
+    snapshots = load_snapshots()
+    groups = _group_by_track(snapshots)
+    results: list[dict] = []
+
+    for tid in sorted(groups):
+        snaps = groups[tid]
+        if len(snaps) < 3:
+            continue
+
+        # Convert timestamps to days elapsed from first measurement
+        first_ts = _parse_timestamp(snaps[0].get("timestamp", ""))
+        days: list[float] = []
+        widths: list[float] = []
+        for snap in snaps:
+            ts = _parse_timestamp(snap.get("timestamp", ""))
+            delta = (ts - first_ts).total_seconds() / 86400.0  # seconds → days
+            w = snap.get("width_mm")
+            if w is not None and delta >= 0:
+                days.append(delta)
+                widths.append(float(w))
+
+        if len(days) < 3:
+            continue
+
+        slope, intercept, r_squared = _linear_regression(days, widths)
+        trend_direction = _classify_trend_direction(slope)
+        latest_width = widths[-1] if widths else 0.0
+
+        # TTT: use the configurable threshold (default 10.0 mm)
+        thresholds = _get_thresholds()
+        threshold_width = 10.0  # mm — reasonable default for critical width
+        ttt_days = _compute_ttt(slope, intercept, latest_width, threshold_width)
+
+        confidence = max(0.0, min(1.0, r_squared))
+
+        results.append({
+            "crack_id": tid,
+            "roi_id": _roi_id(tid),
+            "trend_direction": trend_direction,
+            "slope": round(slope, 6),
+            "r_squared": round(r_squared, 4),
+            "ttt_days": round(ttt_days, 1) if ttt_days is not None else None,
+            "confidence": round(confidence, 4),
+            "latest_width_mm": round(latest_width, 3),
+            "threshold_width_mm": threshold_width,
+            "total_mediciones": len(days),
+        })
+
+    return results
+
+
+def get_prediccion(track_id: int) -> Optional[dict]:
+    """Return prediction for a single crack, or None if not found."""
+    predictions = get_predicciones()
+    for p in predictions:
+        if p["crack_id"] == track_id:
+            return p
+    return None
 
 
 def get_configuracion() -> list[dict]:
