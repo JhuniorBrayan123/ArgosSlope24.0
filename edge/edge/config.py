@@ -256,6 +256,28 @@ class EdgeConfig:
         os.getenv("PREDICTION_MIN_DATA_POINTS", "5")
     )
 
+    # ── Data Collection (Sprint 7) ──────────────────────────────────
+    # Enable periodic raw frame capture
+    data_collection_enabled: bool = (
+        os.getenv("DATA_COLLECTION_ENABLED", "true").lower() == "true"
+    )
+    # Save one frame every N frames
+    data_collection_interval: int = int(
+        os.getenv("DATA_COLLECTION_INTERVAL", "300")
+    )
+    # Maximum number of JPEG files to retain (oldest deleted)
+    data_collection_max_files: int = int(
+        os.getenv("DATA_COLLECTION_MAX_FILES", "1000")
+    )
+    # JPEG encoding quality (1–100)
+    data_collection_jpeg_quality: int = int(
+        os.getenv("DATA_COLLECTION_JPEG_QUALITY", "80")
+    )
+    # Output directory for captured frames
+    data_collection_output_dir: str = os.getenv(
+        "DATA_COLLECTION_OUTPUT_DIR", "data/training/raw"
+    )
+
     # ── Alert Engine (Sprint 5) ─────────────────────────────────────
     # Enable velocity-based alert engine
     alert_enabled: bool = (

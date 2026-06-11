@@ -62,6 +62,9 @@ if config.temporal_enabled:
     )
 if config.alert_enabled:
     from edge.temporal import AlertEngine
+if config.prediction_enabled:
+    from edge.temporal import TrendPredictor
+    from edge.temporal.data_collector import RawFrameCollector
 
 logging.basicConfig(
     level=getattr(logging, config.log_level.upper(), logging.INFO),
@@ -358,6 +361,35 @@ def main() -> None:
             config.temporal_min_days,
         )
 
+    # ── 1e. Trend predictor + data collector (Sprint 7) ─────────────
+    trend_predictor = None
+    frame_collector = None
+    last_prediction_frame: int = 0
+
+    if config.prediction_enabled:
+        trend_predictor = TrendPredictor(
+            min_data_points=config.prediction_min_data_points,
+            horizon_days=float(config.prediction_horizon_days),
+        )
+        frame_collector = RawFrameCollector(
+            output_dir=config.data_collection_output_dir,
+            interval=config.data_collection_interval,
+            max_files=config.data_collection_max_files,
+            jpeg_quality=config.data_collection_jpeg_quality,
+            enabled=config.data_collection_enabled,
+        )
+        logger.info(
+            "Trend predictor enabled: min_data_points=%d, horizon=%d days",
+            config.prediction_min_data_points,
+            config.prediction_horizon_days,
+        )
+        logger.info(
+            "Frame collector: interval=%d, max_files=%d, output=%s",
+            config.data_collection_interval,
+            config.data_collection_max_files,
+            config.data_collection_output_dir,
+        )
+
     # ── 2. Open camera ──────────────────────────────────────────────
     cap = open_camera(config.camera_source)
 
@@ -517,7 +549,31 @@ def main() -> None:
                     )
                     history_store.save_snapshot(snapshot)
 
-                    # Alert engine
+                    # ── Trend prediction (Sprint 7) ─────────────────
+                    prediction_result = None
+                    if (
+                        trend_predictor is not None
+                        and history_store is not None
+                        and v is not None
+                    ):
+                        measurements = [
+                            {
+                                "days_elapsed": (
+                                    datetime.fromisoformat(s.timestamp)
+                                    - now_ts.replace(tzinfo=None)
+                                ).total_seconds() / 86400.0 * -1,
+                                "width_mm": s.width_mm,
+                            }
+                            for s in history_store.load_by_track(tc.track_id)
+                        ]
+                        # Sort by days_elapsed ascending (oldest first)
+                        measurements.sort(key=lambda m: m["days_elapsed"])
+                        prediction_result = trend_predictor.predict(
+                            crack_id=tc.track_id,
+                            measurements=measurements,
+                        )
+
+                    # Alert engine (velocity + prediction)
                     if alert_engine is not None:
                         alert_payload = alert_engine.update(
                             track_id=tc.track_id,
@@ -525,6 +581,7 @@ def main() -> None:
                             roi_id=tc.roi_id,
                             width_mm=tc.width_mm,
                             smoothed_velocity=velocity_calc.get_smoothed_velocity(tc.track_id),
+                            prediction=prediction_result,
                         )
                         if alert_payload:
                             logger.info(
@@ -534,6 +591,17 @@ def main() -> None:
                                 v or 0.0,
                             )
 
+                    # ── Publish prediction via MQTT (Sprint 7) ─────
+                    if (
+                        prediction_result is not None
+                        and publisher.connected
+                    ):
+                        publisher.publish_prediction_alert(
+                            crack_id=tc.track_id,
+                            prediction=prediction_result,
+                            trace_id=f"frame-{frame_count}",
+                        )
+
                 # Log velocity summary
                 all_v = velocity_calc.get_all_velocities()
                 if all_v:
@@ -541,6 +609,19 @@ def main() -> None:
                         "Temporal: %d tracks active, velocities=%s",
                         len(all_v),
                         {tid: f"{v:.4f}" if v else "N/A" for tid, v in all_v.items()},
+                    )
+
+            # ── Frame data collection (Sprint 7) ─────────────────────
+            if frame_collector is not None:
+                saved_path = frame_collector.capture(
+                    roi_frame,
+                    crack_count=len(cracks),
+                )
+                if saved_path:
+                    logger.debug(
+                        "Frame capture saved: %s (frame %d)",
+                        saved_path,
+                        frame_count,
                     )
 
             # ── 3D Pipeline (Depth + Point Cloud) ───────────────────

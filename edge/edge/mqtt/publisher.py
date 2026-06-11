@@ -37,6 +37,7 @@ except ImportError:
 
 from edge.config import config
 from edge.detector.fisura_detector import CrackResult
+from edge.temporal.trend_predictor import TrendPredictionResult
 
 logger = logging.getLogger(__name__)
 
@@ -345,6 +346,70 @@ class MqttPublisher:
             payload.get("alert_id", "N/A"),
             payload.get("category", "N/A"),
             payload.get("track_id", -1),
+        )
+        return True
+
+    def publish_prediction_alert(
+        self,
+        crack_id: int,
+        prediction: TrendPredictionResult,
+        trace_id: str = "",
+    ) -> bool:
+        """
+        Publish a predictive trend alert for a single crack track.
+
+        Topic: ``argos/{device_id}/prediction/{crack_id}``
+
+        Payload includes:
+        - ``track_id``, ``trend_direction``, ``slope``, ``r_squared``
+        - ``ttt_days``, ``confidence``, ``trace_id``
+        - Standard ``event``, ``device_id``, ``timestamp`` fields
+
+        Args:
+            crack_id: Crack track identifier.
+            prediction: Trend prediction result to publish.
+            trace_id: Optional trace identifier for request correlation.
+
+        Returns:
+            True if published successfully, False if not connected
+            or publish failed.
+        """
+        if not self._client or not self._connected:
+            logger.debug(
+                "MQTT not connected — skipping prediction alert for track %d",
+                crack_id,
+            )
+            return False
+
+        topic = f"{self._topic_prefix}/prediction/{crack_id}"
+        payload: dict[str, object] = {
+            "event": "prediccion_tendencia",
+            "device_id": self._device_id,
+            "track_id": crack_id,
+            "trace_id": trace_id,
+            "trend_direction": prediction.trend_direction,
+            "slope": prediction.slope,
+            "r_squared": prediction.r_squared,
+            "ttt_days": prediction.ttt_days,
+            "confidence": prediction.confidence,
+            "timestamp": time.time(),
+        }
+        payload_str = json.dumps(payload, ensure_ascii=False, default=str)
+
+        result = self._client.publish(topic, payload_str, qos=self._qos)
+        if result.rc != mqtt.MQTT_ERR_SUCCESS:
+            logger.warning(
+                "MQTT prediction alert publish failed (rc=%d) on topic=%s",
+                result.rc,
+                topic,
+            )
+            return False
+
+        logger.info(
+            "Prediction alert published: track_id=%d, direction=%s, TTT=%s",
+            crack_id,
+            prediction.trend_direction,
+            f"{prediction.ttt_days:.1f}d" if prediction.ttt_days is not None else "N/A",
         )
         return True
 
