@@ -1,0 +1,20 @@
+{
+  "calibration_date": null,
+  "camera_matrix": null,
+  "distortion_coefficients": null,
+  "fx_px": null,
+  "fy_px": null,
+  "cx_px": null,
+  "cy_px": null,
+  "reprojection_error": null,
+  "image_width": null,
+  "image_height": null,
+  "pattern_size": [9, 6],
+  "square_size_mm": 25.0,
+  "marker_id": 0,
+  "marker_size_mm": 100.0,
+  "pixels_per_mm": null,
+  "aruco_distance_m": null,
+  "calibrated": false,
+  "scale_detected": false
+}

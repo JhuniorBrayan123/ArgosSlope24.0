@@ -23,6 +23,7 @@ import base64
 import json
 import logging
 import socket
+import threading
 import time
 from typing import Any, Optional
 
@@ -66,6 +67,11 @@ class MqttPublisher:
 
         self._client: Optional["mqtt.Client"] = None
         self._connected = False
+        self._connected_event = threading.Event()
+        # Optional callback invoked on MQTT connect (after setting _connected)
+        # Signature: on_connect_handler(client) -> None
+        # Used by main.py to set up subscriptions that must survive reconnects.
+        self.on_connect_handler: Optional[callable] = None
 
     # ── Connection management ───────────────────────────────────────
 
@@ -114,8 +120,14 @@ class MqttPublisher:
         try:
             self._client.connect(self._broker, self._port, keepalive=120)
             self._client.loop_start()
-            # Wait briefly for the connection to establish
-            time.sleep(0.5)
+            # Wait for the connection to establish (TLS takes 1-3s for cloud brokers)
+            self._connected_event.clear()
+            if not self._connected_event.wait(timeout=10):
+                self._client.loop_stop()
+                raise ConnectionError(
+                    f"MQTT connection timeout at {self._broker}:{self._port} "
+                    f"(TLS={'yes' if self._tls else 'no'})"
+                )
         except (socket.gaierror, OSError, ConnectionRefusedError) as exc:
             raise ConnectionError(
                 f"Cannot connect to MQTT broker at {self._broker}:{self._port}: {exc}"
@@ -144,7 +156,14 @@ class MqttPublisher:
     ) -> None:
         if rc == 0:
             self._connected = True
+            self._connected_event.set()
             logger.info("MQTT connected (rc=0).")
+            # Invoke external handler for subscription setup (survives reconnects)
+            if self.on_connect_handler is not None:
+                try:
+                    self.on_connect_handler(client)
+                except Exception:
+                    logger.exception("on_connect_handler failed — subscriptions may be incomplete.")
         else:
             self._connected = False
             reasons = {
@@ -413,44 +432,208 @@ class MqttPublisher:
         )
         return True
 
-    # ── 3D Alert (point cloud + cracks) ────────────────────────────
+    # ── 3D Snapshot (mesh + texture + cracks) ───────────────────────
 
-    def publish_alert_3d(
+    def publish_from_builder(
         self,
-        point_cloud: np.ndarray,
-        cracks: list,
-        image_path: str,
-        device_id: str,
-        depth_map: Optional[np.ndarray] = None,
+        result: "SnapshotBuildResult",
+        point_cloud: Optional[np.ndarray] = None,
         intrinsics: Optional[dict] = None,
     ) -> None:
         """
-        Publish a 3D point cloud alert with crack data.
+        Publish a Snapshot3D payload from a SnapshotBuildResult.
 
-        Topic: ``mineria/talud/alertas`` (from ``config.alert_topic``)
-
-        The point cloud is a flat ``(N, 6)`` array where each row is
-        ``[x, y, z, r, g, b]``. Points are capped at 5 000 to keep the
-        MQTT payload under 256 KB.
+        This is the preferred method when using SnapshotBuilder.build().
+        Mesh is only included when result.mode == '3d_valid'.
 
         Args:
-            point_cloud: ``(N, 6)`` float32 array of coloured 3D points.
-            cracks: List of ``CrackResult`` or dicts with crack data.
-            image_path: Filesystem path to the saved annotated frame.
-            device_id: Edge device identifier.
-            depth_map: Optional depth map in meters (H, W) for computing 3D crack positions.
-            intrinsics: Optional dict with fx, fy, cx, cy for projecting cracks to 3D.
-
-        QoS is 1 (at-least-once delivery). Broker offline is handled
-        gracefully — a warning is logged and execution continues.
+            result: Output of SnapshotBuilder.build().
+            point_cloud: Optional coloured point cloud (N, 6).
+            intrinsics: Camera intrinsics dict (fx, fy, cx, cy, calibrated).
         """
+        # Serialise projected cracks (already have x3d/y3d/z3d/surface_valid)
+        crack_data: list[dict] = []
+        for pc in result.cracks:
+            entry: dict = {
+                "roi_id": pc.roi_id,
+                "x": pc.x,
+                "y": pc.y,
+                "w": pc.w,
+                "h": pc.h,
+                "classification": pc.classification,
+                "surface_valid": pc.surface_valid,
+            }
+            if pc.length_mm is not None:
+                entry["length_mm"] = pc.length_mm
+            if pc.width_mm is not None:
+                entry["width_mm"] = pc.width_mm
+            if pc.surface_valid and pc.x3d is not None:
+                entry["x3d"] = pc.x3d
+                entry["y3d"] = pc.y3d
+                entry["z3d"] = pc.z3d
+            crack_data.append(entry)
+
+        # Mesh — only when 3d_valid
+        mesh_data: Optional[dict] = None
+        if result.mode == "3d_valid" and result.mesh is not None:
+            m = result.mesh
+            mesh_data = {
+                "vertices": m.vertices.astype(np.float32).ravel().tolist(),
+                "indices": m.indices.astype(np.int32).ravel().tolist(),
+                "uvs": m.uvs.astype(np.float32).ravel().tolist(),
+                "centroid": m.centroid.astype(np.float32).tolist(),
+                "scale": float(m.scale),
+            }
+
+        # Image texture (always when image_bgr available)
+        image_base64: Optional[str] = None
+        if result.image_bgr is not None and result.image_bgr.size > 0:
+            texture_frame = result.image_bgr
+            max_w = config.snapshot_texture_max_width
+            if max_w > 0 and texture_frame.shape[1] > max_w:
+                scale_f = max_w / texture_frame.shape[1]
+                new_h = int(texture_frame.shape[0] * scale_f)
+                texture_frame = cv2.resize(texture_frame, (max_w, new_h), interpolation=cv2.INTER_AREA)
+            _, buf = cv2.imencode(
+                ".jpg", texture_frame,
+                [cv2.IMWRITE_JPEG_QUALITY, config.snapshot_jpeg_quality],
+            )
+            image_base64 = base64.b64encode(buf).decode("ascii")
+
+        # Point cloud (optional, subsampled)
+        point_list: list = []
+        if point_cloud is not None and point_cloud.size > 0:
+            max_pts = min(len(point_cloud), config.pointcloud_max_points)
+            if len(point_cloud) > max_pts:
+                idx = np.random.choice(len(point_cloud), max_pts, replace=False)
+                point_list = point_cloud[idx].tolist()
+            else:
+                point_list = point_cloud.tolist()
+
+        # Calibration
+        calibration: Optional[dict] = None
+        if intrinsics:
+            calibration = {
+                "calibrated": bool(intrinsics.get("calibrated", False)),
+                "fx": intrinsics.get("fx"),
+                "fy": intrinsics.get("fy"),
+                "cx": intrinsics.get("cx"),
+                "cy": intrinsics.get("cy"),
+            }
+
+        # Reconstruction metadata block
+        rec = result.reconstruction
+        reconstruction_block: dict = {
+            "mode": rec.mode,
+            "scene_valid": rec.scene_valid,
+            "quality_score": round(rec.quality_score, 4),
+        }
+        if rec.reject_reason:
+            reconstruction_block["reject_reason"] = rec.reject_reason
+        if rec.message:
+            reconstruction_block["message"] = rec.message
+
+        payload: dict = {
+            "device_id": config.device_id,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "reconstruction": reconstruction_block,
+            "cracks": crack_data,
+            "point_count": len(point_list),
+        }
+        if mesh_data:
+            payload["mesh"] = mesh_data
+        if point_list:
+            payload["point_cloud"] = point_list
+        if image_base64:
+            payload["image_base64"] = image_base64
+        if calibration:
+            payload["calibration"] = calibration
+
         if not self._client or not self._connected:
-            logger.warning("MQTT not connected — skipping 3D alert publish (connected=%s, client=%s).", self._connected, self._client is not None)
+            logger.warning("MQTT not connected — skipping Snapshot3D publish.")
             return
 
-        logger.info("Publishing 3D alert (%d points, %d cracks)...", point_cloud.shape[0] if isinstance(point_cloud, np.ndarray) and point_cloud.size > 0 else 0, len(cracks))
+        try:
+            topic = config.alert_topic
+            payload_str = json.dumps(payload, ensure_ascii=False, separators=(",", ":"), default=str)
+            result_pub = self._client.publish(topic, payload_str, qos=1)
+            if result_pub.rc != mqtt.MQTT_ERR_SUCCESS:
+                logger.warning("MQTT Snapshot3D publish failed rc=%d", result_pub.rc)
+            else:
+                logger.info(
+                    "Snapshot3D: mode=%s score=%.2f cracks=%d mesh=%s texture=%s",
+                    rec.mode,
+                    rec.quality_score,
+                    len(crack_data),
+                    f"{result.mesh.face_count}f" if result.mesh else "none",
+                    "yes" if image_base64 else "no",
+                )
+        except Exception:
+            logger.warning("Failed to publish Snapshot3D.", exc_info=True)
 
-        # ── Serialise point cloud (FIX 4: subsample aleatorio, ≤5K pts) ──
+    def publish_snapshot_3d(
+        self,
+        *,
+        cracks: list,
+        device_id: str,
+        depth_map: Optional[np.ndarray] = None,
+        intrinsics: Optional[dict] = None,
+        mesh_vertices: Optional[np.ndarray] = None,
+        mesh_indices: Optional[np.ndarray] = None,
+        mesh_uvs: Optional[np.ndarray] = None,
+        mesh_centroid: Optional[np.ndarray] = None,
+        mesh_scale: float = 1.0,
+        point_cloud: Optional[np.ndarray] = None,
+        image_bgr: Optional[np.ndarray] = None,
+        image_path: str = "",
+        reconstruction_mode: str = "3d_valid",
+        quality_score: float = 1.0,
+        reject_reason: str = "",
+    ) -> None:
+        """
+        Publish a full Snapshot3D payload to ``mineria/talud/alertas``.
+
+        Includes textured mesh, optional point cloud, crack 3D positions,
+        camera calibration and a base64 JPEG of the captured frame.
+
+        Args:
+            cracks: List of ``CrackResult`` or dicts with crack data.
+            device_id: Edge device identifier.
+            depth_map: Depth map in metres (H, W) for 3D crack projection.
+            intrinsics: Dict with fx, fy, cx, cy, calibrated.
+            mesh_vertices: (N, 3) float32 vertex positions.
+            mesh_indices: (M, 3) int32 triangle indices.
+            mesh_uvs: (N, 2) float32 texture coordinates.
+            point_cloud: Optional (N, 6) coloured point cloud.
+            image_bgr: BGR frame to encode as texture (JPEG base64).
+            image_path: Optional filesystem path to annotated frame.
+        """
+        if not self._client or not self._connected:
+            logger.warning(
+                "MQTT not connected — skipping 3D snapshot publish."
+            )
+            return
+
+        # ── Serialise mesh ────────────────────────────────────────
+        mesh_data: dict[str, list] | None = None
+        if (
+            mesh_vertices is not None
+            and mesh_indices is not None
+            and mesh_uvs is not None
+            and mesh_vertices.size > 0
+            and mesh_indices.size > 0
+        ):
+            mesh_data = {
+                "vertices": mesh_vertices.astype(np.float32).ravel().tolist(),
+                "indices": mesh_indices.astype(np.int32).ravel().tolist(),
+                "uvs": mesh_uvs.astype(np.float32).ravel().tolist(),
+            }
+            if mesh_centroid is not None:
+                mesh_data["centroid"] = mesh_centroid.astype(np.float32).tolist()
+            if mesh_scale != 1.0:
+                mesh_data["scale"] = mesh_scale
+
+        # ── Serialise point cloud (optional, subsampled) ──────────
         point_list: list[list[float]] = []
         point_count = 0
         if point_cloud is not None and isinstance(point_cloud, np.ndarray) and point_cloud.size > 0:
@@ -464,9 +647,110 @@ class MqttPublisher:
             point_list = cloud_slice.tolist()
             point_count = len(point_list)
 
-        # ── Serialise cracks ──────────────────────────────────────
+        # ── Encode frame as base64 JPEG texture ───────────────────
+        image_base64: str | None = None
+        if image_bgr is not None and image_bgr.size > 0:
+            texture_frame = image_bgr
+            max_w = config.snapshot_texture_max_width
+            if max_w > 0 and texture_frame.shape[1] > max_w:
+                scale = max_w / texture_frame.shape[1]
+                new_h = int(texture_frame.shape[0] * scale)
+                texture_frame = cv2.resize(
+                    texture_frame,
+                    (max_w, new_h),
+                    interpolation=cv2.INTER_AREA,
+                )
+            _, buffer = cv2.imencode(
+                ".jpg",
+                texture_frame,
+                [cv2.IMWRITE_JPEG_QUALITY, config.snapshot_jpeg_quality],
+            )
+            image_base64 = base64.b64encode(buffer).decode("ascii")
+
+        # ── Serialise cracks with 3D projection ───────────────────
+        crack_data = self._serialize_cracks_3d(
+            cracks, depth_map, intrinsics, mesh_centroid, mesh_scale,
+        )
+
+        # ── Calibration block ─────────────────────────────────────
+        calibration: dict[str, object] | None = None
+        if intrinsics:
+            calibration = {
+                "calibrated": bool(intrinsics.get("calibrated", False)),
+                "fx": intrinsics.get("fx"),
+                "fy": intrinsics.get("fy"),
+                "cx": intrinsics.get("cx"),
+                "cy": intrinsics.get("cy"),
+            }
+            if intrinsics.get("pixels_per_mm"):
+                calibration["pixels_per_mm"] = intrinsics["pixels_per_mm"]
+
+        # ── Build Snapshot3D payload ──────────────────────────────
+        reconstruction_block: dict = {
+            "mode": reconstruction_mode,
+            "scene_valid": reconstruction_mode == "3d_valid",
+            "quality_score": round(quality_score, 4),
+        }
+        if reject_reason:
+            reconstruction_block["reject_reason"] = reject_reason
+
+        payload: dict[str, Any] = {
+            "device_id": device_id,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "reconstruction": reconstruction_block,
+            "cracks": crack_data,
+            "image_path": image_path or "",
+            "point_count": point_count,
+        }
+        if mesh_data:
+            payload["mesh"] = mesh_data
+        if point_list:
+            payload["point_cloud"] = point_list
+        if image_base64:
+            payload["image_base64"] = image_base64
+        if calibration:
+            payload["calibration"] = calibration
+
+        try:
+            topic = config.alert_topic
+            payload_str = json.dumps(
+                payload,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                default=str,
+            )
+            result = self._client.publish(topic, payload_str, qos=1)
+            if result.rc != mqtt.MQTT_ERR_SUCCESS:
+                logger.warning(
+                    "MQTT 3D snapshot publish failed (rc=%d) on topic=%s",
+                    result.rc,
+                    topic,
+                )
+            else:
+                mesh_faces = len(mesh_indices) if mesh_indices is not None else 0
+                logger.info(
+                    "Snapshot3D published: mesh=%d faces, %d pts, %d cracks, texture=%s",
+                    mesh_faces,
+                    point_count,
+                    len(crack_data),
+                    "yes" if image_base64 else "no",
+                )
+        except Exception:
+            logger.warning(
+                "Failed to publish Snapshot3D — broker may be offline.",
+                exc_info=True,
+            )
+
+    def _serialize_cracks_3d(
+        self,
+        cracks: list,
+        depth_map: Optional[np.ndarray],
+        intrinsics: Optional[dict],
+        mesh_centroid: Optional[np.ndarray] = None,
+        mesh_scale: float = 1.0,
+    ) -> list[dict]:
+        """Project crack bounding boxes to 3D camera space."""
         crack_data: list[dict] = []
-        # Intrínsecos para proyección 2D→3D de fisuras
         fx = intrinsics.get("fx", 1408.0) if intrinsics else 1408.0
         fy = intrinsics.get("fy", 1408.0) if intrinsics else 1408.0
         cx = intrinsics.get("cx", 640.0) if intrinsics else 640.0
@@ -480,62 +764,81 @@ class MqttPublisher:
             else:
                 continue
 
-            cx2d = d.get("x", 0) + d.get("width", 0) / 2
-            cy2d = d.get("y", 0) + d.get("height", 0) / 2
+            x = d.get("x", 0)
+            y = d.get("y", 0)
+            w = d.get("width", d.get("w", 0))
+            h = d.get("height", d.get("h", 0))
+            cx2d = x + w / 2
+            cy2d = y + h / 2
 
-            # Profundidad en el centro de la fisura
-            cz = 1.0  # fallback si no hay depth_map
+            cz = 1.0
             if depth_map is not None:
                 iy, ix = int(cy2d), int(cx2d)
                 if 0 <= iy < depth_map.shape[0] and 0 <= ix < depth_map.shape[1]:
                     dval = float(depth_map[iy, ix])
-                    if dval > 0.1 and dval < 5.0:
+                    if 0.1 < dval < 5.0:
                         cz = dval
 
-            # Proyección 2D→3D (mismos intrínsecos que generator.py)
             x3d = (cx2d - cx) * cz / fx
             y3d = (cy2d - cy) * cz / fy
             z3d = cz
 
+            # Apply same centre+scale as mesh so cracks align on surface
+            if mesh_centroid is not None:
+                x3d = (x3d - float(mesh_centroid[0])) * mesh_scale
+                y3d = (y3d - float(mesh_centroid[1])) * mesh_scale
+                z3d = (z3d - float(mesh_centroid[2])) * mesh_scale
+
             crack_data.append({
-                "x": d.get("x", 0),
-                "y": d.get("y", 0),
-                "w": d.get("width", 0),
-                "h": d.get("height", 0),
+                "roi_id": d.get("roi_id", ""),
+                "x": x,
+                "y": y,
+                "w": w,
+                "h": h,
                 "x3d": round(x3d, 4),
                 "y3d": round(y3d, 4),
                 "z3d": round(z3d, 4),
                 "classification": d.get("classification", "unknown"),
-                "roi_id": d.get("roi_id", ""),
+                "length_mm": d.get("length_mm"),
+                "width_mm": d.get("width_mm"),
             })
 
-        # ── Build payload ─────────────────────────────────────────
-        payload: dict[str, Any] = {
-            "device_id": device_id,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
-            "point_cloud": point_list,
-            "cracks": crack_data,
-            "image_path": image_path or "",
-            "point_count": point_count,
-        }
+        return crack_data
 
-        try:
-            topic = config.alert_topic
-            payload_str = json.dumps(
-                payload,
-                ensure_ascii=False,
-                separators=(",", ":"),
-                default=str,
-            )
-            result = self._client.publish(topic, payload_str, qos=1)
-            if result.rc != mqtt.MQTT_ERR_SUCCESS:
-                logger.warning(
-                    "MQTT 3D alert publish failed (rc=%d) on topic=%s",
-                    result.rc,
-                    topic,
-                )
-        except Exception:
-            logger.warning("Failed to publish 3D alert — broker may be offline.", exc_info=True)
+    def publish_alert_3d(
+        self,
+        point_cloud: np.ndarray,
+        cracks: list,
+        image_path: str,
+        device_id: str,
+        depth_map: Optional[np.ndarray] = None,
+        intrinsics: Optional[dict] = None,
+        mesh_vertices: Optional[np.ndarray] = None,
+        mesh_indices: Optional[np.ndarray] = None,
+        mesh_uvs: Optional[np.ndarray] = None,
+        mesh_centroid: Optional[np.ndarray] = None,
+        mesh_scale: float = 1.0,
+        image_bgr: Optional[np.ndarray] = None,
+    ) -> None:
+        """
+        Publish a 3D alert (legacy alias → ``publish_snapshot_3d``).
+
+        Kept for backward compatibility; delegates to ``publish_snapshot_3d``.
+        """
+        self.publish_snapshot_3d(
+            cracks=cracks,
+            device_id=device_id,
+            depth_map=depth_map,
+            intrinsics=intrinsics,
+            mesh_vertices=mesh_vertices,
+            mesh_indices=mesh_indices,
+            mesh_uvs=mesh_uvs,
+            mesh_centroid=mesh_centroid,
+            mesh_scale=mesh_scale,
+            point_cloud=point_cloud,
+            image_bgr=image_bgr,
+            image_path=image_path,
+        )
 
     # ── HD Capture notification ────────────────────────────────────
 

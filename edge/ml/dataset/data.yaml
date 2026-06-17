@@ -1,0 +1,13 @@
+# ARGOS SLOPE 4.0 — Crack Detection Dataset (synthetic)
+# Formato YOLOv8
+
+path: E:\PROYECTO-QUICKSTART\ProyectoMineria\ArgosSlope4.0\edge\ml\dataset  # raíz del dataset
+train: train/images
+val: val/images
+
+# Clases de fisuras según espesor
+nc: 3
+names:
+  0: fisura_fina       # < 3px at 640px (synthetic)
+  1: fisura_media      # 3–8px at 640px (synthetic)
+  2: fisura_gruesa     # > 8px at 640px (synthetic)

@@ -11,6 +11,12 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# Cargar .env del raíz del proyecto (ArgosSlope4.0/.env)
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+load_dotenv(_PROJECT_ROOT / ".env", override=False)
+
 
 @dataclass
 class EdgeConfig:
@@ -69,10 +75,19 @@ class EdgeConfig:
     # Sensor pixel pitch in µm (DEPRECATED: fallback only)
     sensor_pixel_um: float = float(os.getenv("SENSOR_PIXEL_UM", "3.0"))
 
-    # ── 3D Pipeline (Depth + Point Cloud) ───────────────────────────
+    # ── Calibration (2D Prototype) ──────────────────────────────────
+    # Si la cámara fue calibrada con patrón físico (ej. regla o ArUco).
+    is_calibrated: bool = (
+        os.getenv("IS_CALIBRATED", "false").lower() == "true"
+    )
+    # Factor de conversión directo px -> mm en la distancia actual.
+    # Ej: si una regla de 10cm (100mm) mide 500px, el factor es 5.0
+    pixels_per_mm: float = float(os.getenv("PIXELS_PER_MM", "5.0"))
+
+    # ── 3D Pipeline (Depth + Point Cloud) [AHORA OPCIONAL/FUTURO] ────
     # Enable depth estimation (MiDaS)
     depth_enabled: bool = (
-        os.getenv("DEPTH_ENABLED", "true").lower() == "true"
+        os.getenv("DEPTH_ENABLED", "false").lower() == "true"
     )
     # MiDaS model variant: "MiDaS_small" (fast) or "DPT_Large" (accurate)
     depth_model: str = os.getenv("DEPTH_MODEL", "MiDaS_small")
@@ -80,12 +95,32 @@ class EdgeConfig:
     depth_fps: int = int(os.getenv("DEPTH_FPS", "5"))
     # Enable point cloud generation
     pointcloud_enabled: bool = (
-        os.getenv("POINTCLOUD_ENABLED", "true").lower() == "true"
+        os.getenv("POINTCLOUD_ENABLED", "false").lower() == "true"
     )
     # Sample every Nth pixel when generating point cloud
     pointcloud_sample: int = int(os.getenv("POINTCLOUD_SAMPLE", "2"))
     # Maximum number of points in the output cloud
     pointcloud_max_points: int = int(os.getenv("POINTCLOUD_MAX_POINTS", "10000"))
+    # Enable depth→mesh generation for 3D snapshots
+    mesh_enabled: bool = (
+        os.getenv("MESH_ENABLED", "false").lower() == "true"
+    )
+    # Sample every Nth pixel when building the mesh (higher = lighter payload)
+    mesh_step: int = int(os.getenv("MESH_STEP", "8"))
+    # Ignore depth values beyond this distance (metres)
+    mesh_max_depth_m: float = float(os.getenv("MESH_MAX_DEPTH_M", "5.0"))
+    # Target max extent after centre+scale (for consistent frontend viewing)
+    mesh_target_extent: float = float(os.getenv("MESH_TARGET_EXTENT", "2.0"))
+    # JPEG quality for image_base64 texture in MQTT snapshot
+    snapshot_jpeg_quality: int = int(os.getenv("SNAPSHOT_JPEG_QUALITY", "60"))
+    # Max width for texture image sent over MQTT (0 = no resize)
+    snapshot_texture_max_width: int = int(
+        os.getenv("SNAPSHOT_TEXTURE_MAX_WIDTH", "640")
+    )
+    # Minimum seconds between 3D snapshot MQTT publishes
+    snapshot_publish_interval_s: float = float(
+        os.getenv("SNAPSHOT_PUBLISH_INTERVAL_S", "2.0")
+    )
     # Enable crack simulator (for dev/demo without live camera)
     simulator_enabled: bool = (
         os.getenv("SIMULATOR_ENABLED", "false").lower() == "true"
@@ -97,6 +132,44 @@ class EdgeConfig:
     alert_topic: str = os.getenv("ALERT_TOPIC", "mineria/talud/alertas")
     # Directory for historical crack frame captures
     capturas_dir: str = os.getenv("CAPTURAS_DIR", "capturas_historicas")
+
+    # ── 3D Quality Gates ─────────────────────────────────────────────
+    # Require configured ROI before publishing a 3D mesh.
+    # If true and ROI is empty → reject_reason="no_roi", mode="2d_only".
+    require_roi_for_3d: bool = (
+        os.getenv("REQUIRE_ROI_FOR_3D", "false").lower() == "true"
+    )
+    # Minimum scene quality score [0–1] to publish a mesh.
+    # Scenes below this threshold are published as 2d_only.
+    min_scene_quality_score: float = float(
+        os.getenv("MIN_SCENE_QUALITY_SCORE", "0.35")
+    )
+    # Depth post-processing: Gaussian bilateral sigma (pixels).
+    # Higher → more smoothing; 0 = disabled.
+    depth_smooth_sigma: float = float(os.getenv("DEPTH_SMOOTH_SIGMA", "2.0"))
+    # Depth post-processing: maximum gradient (m/px) between adjacent pixels.
+    # Pixels with |∇depth| > this are masked as invalid (likely object edges).
+    max_depth_gradient: float = float(os.getenv("MAX_DEPTH_GRADIENT", "0.15"))
+    # Mesh: maximum Z-difference (metres) allowed between the 4 vertices of a
+    # quad before it is rejected (avoids triangles bridging depth discontinuities).
+    max_triangle_depth_delta: float = float(
+        os.getenv("MAX_TRIANGLE_DEPTH_DELTA", "0.3")
+    )
+    # Mesh: Laplacian smooth iterations after mesh construction.
+    # 0 = disabled; 1–2 recommended for talud scenes.
+    mesh_laplacian_iterations: int = int(
+        os.getenv("MESH_LAPLACIAN_ITERATIONS", "1")
+    )
+    # Plane displacement scale: multiplier applied to the per-vertex displacement
+    # from the dominant plane (RANSAC).  1.0 = full displacement; 0.5 = half
+    # amplitude (reduces MiDaS artefacts on flat walls).
+    plane_displacement_scale: float = float(
+        os.getenv("PLANE_DISPLACEMENT_SCALE", "0.6")
+    )
+    # Depth metric bounds for the talud scene (metres).
+    # Values outside [depth_min_m, depth_max_m] are clipped / invalidated.
+    depth_min_m: float = float(os.getenv("DEPTH_MIN_M", "0.3"))
+    depth_max_m: float = float(os.getenv("DEPTH_MAX_M", "8.0"))
 
     # ── HD Capture ──────────────────────────────────────────────────
     # Enable HD capture (Open3D meshing on demand)
@@ -125,7 +198,9 @@ class EdgeConfig:
     mqtt_port: int = int(os.getenv("MQTT_PORT", "1883"))
     mqtt_username: str = os.getenv("MQTT_USERNAME", "")
     mqtt_password: str = os.getenv("MQTT_PASSWORD", "")
-    mqtt_tls_enabled: bool = os.getenv("MQTT_TLS", "false").lower() == "true"
+    mqtt_tls_enabled: bool = (
+        os.getenv("MQTT_TLS_ENABLED", os.getenv("MQTT_TLS", "false")).lower() == "true"
+    )
     # Base topic: argos/{device_id}/
     mqtt_topic_prefix: str = os.getenv(
         "MQTT_TOPIC_PREFIX", "argos/slope-01"

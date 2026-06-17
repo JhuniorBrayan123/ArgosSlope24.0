@@ -1,21 +1,3 @@
-"""
-ARGOS SLOPE 4.0 — Crack Detection Module for Edge (Raspberry Pi).
-
-Provides two detection pipelines:
-
-1. **OpenCV pipeline** (default) - Uses adaptive thresholding + contour
-   analysis for real-time crack detection. Works without a trained model.
-   Suitable for initial deployment on RPi.
-
-2. **ML pipeline** (ONNX/TFLite) - Loads an exported model (YOLOv8, etc.)
-   and runs inference. Drop-in replacement when a trained model is available.
-
-Usage:
-    detector = CrackDetector(method="opencv")
-    results = detector.process(frame)
-    for crack in results:
-        print(crack.roi_id, crack.length_mm, crack.width_mm)
-"""
 
 from __future__ import annotations
 
@@ -43,15 +25,7 @@ CALIBRATION_PATH = Path("calibration/calibration.json")
 
 @dataclass
 class GeometricFilterConfig:
-    """Configuration for geometric contour filtering.
-
-    Attributes:
-        enabled: Whether geometric filters are active.
-        min_aspect_ratio: Minimum aspect ratio (width/height) to accept.
-        max_aspect_ratio: Maximum aspect ratio (width/height) to accept.
-        min_solidity: Minimum solidity (area / convex hull area) to accept.
-        min_convexity: Minimum convexity (hull perimeter / contour perimeter) to accept.
-    """
+   
 
     enabled: bool = False
     min_aspect_ratio: float = 0.1
@@ -61,7 +35,7 @@ class GeometricFilterConfig:
 
 
 class CrackClassification(str, Enum):
-    """Crack width classification according to mining standards."""
+   
 
     NONE = "none"
     FINA = "fina"          # < 0.3 mm
@@ -118,6 +92,19 @@ class CrackResult:
     """Number of contour points (diagnostic)."""
     track_id: Optional[int] = None
     """Persistent track ID for temporal tracking (assigned by CrackTracker)."""
+    
+    # ── Contexto de la Demo 2D ──
+    unidad: str = "px"
+    """Unidad de medida: 'px' o 'mm'"""
+    calibrado: bool = False
+    """Indica si la medida se hizo con un factor de calibración real (True) o no (False)."""
+    origen: str = "real"
+    """Origen de los datos: 'real' o 'demo'"""
+
+    image_base64: str = ""
+    """Base64 JPEG of the crack crop."""
+    mask_base64: str = ""
+    """Base64 JPEG of the crack binary mask crop."""
 
     def to_dict(self) -> dict:
         """Serialize to JSON-safe dict for MQTT publishing."""
@@ -129,12 +116,15 @@ class CrackResult:
             "height": self.height,
             "center_x": self.center_x,
             "center_y": self.center_y,
-            "length_mm": round(self.length_mm, 4),
-            "width_mm": round(self.width_mm, 4),
-            "area_mm2": round(self.area_mm2, 4),
+            "largo": round(self.length_mm, 4),
+            "ancho": round(self.width_mm, 4),
+            "area": round(self.area_mm2, 4),
             "classification": self.classification.value,
             "orientation_deg": round(self.orientation_deg, 1),
             "confidence": round(self.confidence, 4),
+            "unidad": self.unidad,
+            "calibrado": self.calibrado,
+            "origen": self.origen,
         }
         if self.track_id is not None:
             d["track_id"] = self.track_id
@@ -295,7 +285,7 @@ class OpenCvDetector(BaseDetector):
         cleaned = cv2.morphologyEx(cleaned, cv2.MORPH_OPEN, kernel)
         return cleaned
 
-    def _measure_contour(self, contour: np.ndarray) -> CrackResult:
+    def _measure_contour(self, contour: np.ndarray, frame: np.ndarray, mask: np.ndarray) -> CrackResult:
         """Extract crack metrics from a single contour."""
         area_px = float(cv2.contourArea(contour))
         x, y, w, h = cv2.boundingRect(contour)
@@ -344,6 +334,28 @@ class OpenCvDetector(BaseDetector):
         bbox_area = w * h
         confidence = min(area_px / bbox_area, 1.0) if bbox_area > 0 else 0.0
 
+        # Extract crops for frontend display
+        image_b64 = ""
+        mask_b64 = ""
+        if w > 0 and h > 0:
+            # Add small padding
+            pad = 10
+            frame_h, frame_w = frame.shape[:2]
+            y1, y2 = max(0, y - pad), min(frame_h, y + h + pad)
+            x1, x2 = max(0, x - pad), min(frame_w, x + w + pad)
+            
+            crop_img = frame[y1:y2, x1:x2]
+            crop_mask = mask[y1:y2, x1:x2]
+            
+            import base64
+            ret, buf = cv2.imencode(".jpg", crop_img, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            if ret:
+                image_b64 = base64.b64encode(buf).decode("ascii")
+            
+            ret_m, buf_m = cv2.imencode(".jpg", crop_mask, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            if ret_m:
+                mask_b64 = base64.b64encode(buf_m).decode("ascii")
+
         return CrackResult(
             x=x,
             y=y,
@@ -358,6 +370,11 @@ class OpenCvDetector(BaseDetector):
             orientation_deg=orientation,
             confidence=confidence,
             contour_points=len(contour),
+            unidad="mm" if self._scale_available else "px",
+            calibrado=config.is_calibrated,
+            origen="real",
+            image_base64=image_b64,
+            mask_base64=mask_b64
         )
 
     # ── Geometric filtering ──────────────────────────────────────────
@@ -449,6 +466,18 @@ class OpenCvDetector(BaseDetector):
         else:
             gray = frame
 
+        frame_h, frame_w = gray.shape[:2]
+
+        # 1. Filtro ROI: Aplicar máscara si hay ROI configurado ("x,y,w,h")
+        if config.roi:
+            try:
+                rx, ry, rw, rh = map(int, config.roi.split(","))
+                roi_mask = np.zeros_like(gray)
+                cv2.rectangle(roi_mask, (rx, ry), (rx + rw, ry + rh), 255, -1)
+                gray = cv2.bitwise_and(gray, roi_mask)
+            except ValueError:
+                logger.warning("Invalid ROI format. Must be 'x,y,w,h'. Ignoring ROI.")
+
         mask = self._segment_cracks(gray)
         contours, _ = cv2.findContours(
             mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
@@ -463,6 +492,15 @@ class OpenCvDetector(BaseDetector):
             if area < self._min_area:
                 continue
 
+            x, y, w, h = cv2.boundingRect(cnt)
+            
+            # Filtro: Descartar si el contorno toca los bordes de la imagen
+            # (evita detectar marcos de pantalla o bordes de la cámara como fisuras)
+            margin = 5
+            if x <= margin or y <= margin or x + w >= frame_w - margin or y + h >= frame_h - margin:
+                self._rejected_contours.append((cnt, "screen_border"))
+                continue
+
             # Geometric filters
             passed, reason = self._filter_contour(cnt, area)
             if not passed:
@@ -475,7 +513,7 @@ class OpenCvDetector(BaseDetector):
                 self._rejected_contours.append((cnt, reason))
                 continue
 
-            results.append(self._measure_contour(cnt))
+            results.append(self._measure_contour(cnt, frame, mask))
 
         return results
 

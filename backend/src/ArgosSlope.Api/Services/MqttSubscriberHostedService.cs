@@ -9,33 +9,29 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ArgosSlope.Api.Services;
 
-/// <summary>
-/// Background service que se suscribe a MQTT para recibir telemetría
-/// de fisuras desde el edge (Raspberry Pi).
-///
-/// Topics suscritos:
-///   - argos/+/fisura    → Fisura detectada / alerta de crecimiento
-///   - argos/+/telemetry → Telemetría del dispositivo
-///   - argos/+/snapshot  → Snapshot de imagen (opcional)
-/// </summary>
 public class MqttSubscriberHostedService : BackgroundService
 {
     private readonly IServiceProvider _services;
     private readonly ILogger<MqttSubscriberHostedService> _logger;
     private readonly IConfiguration _configuration;
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly string _mode;
 
-    private IMqttClient? _client;
+    private readonly IMqttClient _client;
     private MqttClientOptions? _options;
+    private const int RECONNECT_DELAY_MS = 10_000;
 
     public MqttSubscriberHostedService(
         IServiceProvider services,
         ILogger<MqttSubscriberHostedService> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IMqttClient mqttClient)
     {
         _services = services;
         _logger = logger;
         _configuration = configuration;
+        _client = mqttClient;
+        _mode = Environment.GetEnvironmentVariable("DEMO_MODE") ?? "false";
         _jsonOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
@@ -45,11 +41,7 @@ public class MqttSubscriberHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var factory = new MqttFactory();
 
-        // ── Configuración (appsettings.json + env vars override) ────
-        // Las variables de entorno tienen prioridad sobre appsettings.json
-        // Formato env var: Mqtt__Broker (doble underscore) o MQTT_BROKER (legacy)
         var mqttSection = _configuration.GetSection("Mqtt");
 
         var broker = Environment.GetEnvironmentVariable("MQTT_BROKER")
@@ -81,7 +73,6 @@ public class MqttSubscriberHostedService : BackgroundService
             .WithCleanSession()
             .WithKeepAlivePeriod(TimeSpan.FromSeconds(60));
 
-        // TLS para HiveMQ Cloud / conexiones seguras
         if (tlsEnabled)
         {
             builder.WithTlsOptions(o => o.UseTls(true));
@@ -89,22 +80,20 @@ public class MqttSubscriberHostedService : BackgroundService
 
         _options = builder.Build();
 
-        _client = factory.CreateMqttClient();
-
-        // ── Callbacks ──────────────────────────────────────────────
         _client.ConnectedAsync += OnConnectedAsync;
         _client.DisconnectedAsync += OnDisconnectedAsync;
         _client.ApplicationMessageReceivedAsync += OnMessageReceivedAsync;
 
-        // ── Bucle de reconexión ────────────────────────────────────
+        _logger.LogInformation("MQTT Subscriber starting (mode: {Mode})...", _mode);
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 await _client.ConnectAsync(_options, stoppingToken);
-                _logger.LogInformation("MQTT connected to {Broker}:{Port}", broker, port);
+                _logger.LogInformation("MQTT connected to {Broker}:{Port} (TLS: {Tls})", broker, port, tlsEnabled);
 
-                // Mantener conexión
+                // Block until cancelled
                 await Task.Delay(Timeout.Infinite, stoppingToken);
             }
             catch (OperationCanceledException)
@@ -113,8 +102,9 @@ public class MqttSubscriberHostedService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("MQTT connection failed: {Ex}. Retrying in 10s...", ex.Message);
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                _logger.LogWarning("MQTT connection failed: {Ex}. Retrying in {Delay}s...",
+                    ex.Message, RECONNECT_DELAY_MS / 1000);
+                await Task.Delay(RECONNECT_DELAY_MS, stoppingToken);
             }
         }
     }
@@ -125,12 +115,13 @@ public class MqttSubscriberHostedService : BackgroundService
 
         if (_client is null) return Task.CompletedTask;
 
-        // Suscribirse a todos los tópicos de ARGOS
         var topics = new[]
         {
-            "argos/+/fisura",     // Detecciones y alertas
-            "argos/+/telemetry",  // Telemetría del edge
-            "argos/+/snapshot",   // Snapshots (opcional)
+            "argos/+/fisura",       // Crack detection events
+            "argos/+/telemetry",    // System health / telemetry
+            "argos/+/snapshot",     // Image snapshots
+            "mineria/talud/alertas", // External alert source
+            "argos/+/analysis2d"    // 2D Monitoring Analysis results
         };
 
         foreach (var topic in topics)
@@ -139,7 +130,7 @@ public class MqttSubscriberHostedService : BackgroundService
                 .WithTopic(topic)
                 .WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce)
                 .Build());
-            _logger.LogInformation("Subscribed to MQTT topic: {Topic}", topic);
+            _logger.LogInformation("Subscribed to: {Topic}", topic);
         }
 
         return Task.CompletedTask;
@@ -151,12 +142,12 @@ public class MqttSubscriberHostedService : BackgroundService
 
         if (args.Reason != MqttClientDisconnectReason.NormalDisconnection)
         {
-            // Auto-reconnect
+            _logger.LogInformation("Reconnecting in 5s...");
             await Task.Delay(5000);
             if (_client is not null && _options is not null)
             {
                 try { await _client.ConnectAsync(_options); }
-                catch { /* next retry cycle */ }
+                catch (Exception ex) { _logger.LogWarning("Reconnect failed: {Ex}", ex.Message); }
             }
         }
     }
@@ -166,7 +157,7 @@ public class MqttSubscriberHostedService : BackgroundService
         var topic = args.ApplicationMessage.Topic;
         var payload = Encoding.UTF8.GetString(args.ApplicationMessage.PayloadSegment);
 
-        _logger.LogDebug("MQTT received on {Topic}: {Payload}", topic, payload);
+        _logger.LogDebug("MQTT ← {Topic}: {Payload}", topic, Truncate(payload, 200));
 
         try
         {
@@ -178,163 +169,158 @@ public class MqttSubscriberHostedService : BackgroundService
             {
                 await HandleTelemetryMessage(payload);
             }
-            // snapshot se ignora por ahora para no saturar
+            else if (topic.Contains("/snapshot"))
+            {
+                await HandleSnapshotMessage(payload);
+            }
+            else if (topic.Contains("mineria/talud/alertas"))
+            {
+                await HandleExternalAlert(payload);
+            }
+            else if (topic.Contains("/analysis2d"))
+            {
+                await HandleAnalysis2dMessage(payload);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError("Error processing MQTT message on {Topic}: {Ex}", topic, ex);
+            _logger.LogError("Error processing MQTT on {Topic}: {Ex}", topic, ex);
         }
     }
 
-    /// <summary>
-    /// Procesa un mensaje de fisura recibido por MQTT.
-    /// Crea o actualiza la fisura en la base de datos.
-    /// </summary>
     private async Task HandleFisuraMessage(string payload)
     {
         var mqttMsg = JsonSerializer.Deserialize<MqttFisuraPayload>(payload, _jsonOptions);
         if (mqttMsg is null) return;
 
         using var scope = _services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var consolidationService = scope.ServiceProvider.GetRequiredService<ICrackConsolidationService>();
 
-        // Buscar fisura existente por ROI ID
-        var fisura = await db.Fisuras
-            .FirstOrDefaultAsync(f => f.RoiId == mqttMsg.RoiId);
-
-        var ahora = DateTime.UtcNow;
-        var coordenadasJson = $"{{\"x\":{mqttMsg.X},\"y\":{mqttMsg.Y},\"w\":{mqttMsg.Width},\"h\":{mqttMsg.Height}}}";
-
-        if (fisura is null)
-        {
-            // Crear nueva fisura
-            fisura = new Fisura
-            {
-                RoiId = mqttMsg.RoiId,
-                FechaDeteccion = ahora,
-                LargoMm = mqttMsg.LengthMm,
-                AnchoMm = mqttMsg.WidthMm,
-                AreaMm2 = mqttMsg.AreaMm2,
-                Orientacion = $"{mqttMsg.OrientationDeg:F1}°",
-                Tipo = mqttMsg.Classification,
-                Coordenadas = coordenadasJson,
-            };
-            db.Fisuras.Add(fisura);
-            await db.SaveChangesAsync();
-
-            _logger.LogInformation("Nueva fisura creada: {RoiId}", mqttMsg.RoiId);
-        }
-        else
-        {
-            // Actualizar métricas existentes
-            fisura.LargoMm = mqttMsg.LengthMm;
-            fisura.AnchoMm = mqttMsg.WidthMm;
-            fisura.AreaMm2 = mqttMsg.AreaMm2;
-            fisura.Tipo = mqttMsg.Classification;
-            fisura.Orientacion = $"{mqttMsg.OrientationDeg:F1}°";
-            fisura.Coordenadas = coordenadasJson;
-            await db.SaveChangesAsync();
-        }
-
-        // ── Cálculo de Crecimiento (Delta) ──
-        var primeraMedicion = await db.MedicionesDiarias
-            .Where(m => m.FisuraId == fisura.Id)
-            .OrderBy(m => m.Fecha)
-            .FirstOrDefaultAsync();
-
-        double deltaPorcentaje = 0;
-        double deltaMm = 0;
-        if (primeraMedicion != null && primeraMedicion.LargoMm > 0)
-        {
-            deltaMm = mqttMsg.LengthMm - primeraMedicion.LargoMm;
-            deltaPorcentaje = (deltaMm / primeraMedicion.LargoMm) * 100;
-        }
-
-        // Regla de negocio: Crítico si creció > 5% o > 1.0 mm (según requerimiento de usuario)
-        bool esCritica = deltaPorcentaje > 5.0 || deltaMm > 1.0;
-
-        // ── Consolidación Diaria (Evitar Bloat) ──
-        var hoy = ahora.Date;
-        var medicion = await db.MedicionesDiarias
-            .FirstOrDefaultAsync(m => m.FisuraId == fisura.Id && m.Fecha.Date == hoy);
-
-        if (medicion == null)
-        {
-            medicion = new MedicionDiaria
-            {
-                FisuraId = fisura.Id,
-                Fecha = ahora,
-                LargoMm = mqttMsg.LengthMm,
-                AnchoMm = mqttMsg.WidthMm,
-                AreaMm2 = mqttMsg.AreaMm2,
-                DeltaPorcentaje = deltaPorcentaje,
-                EsCritica = esCritica,
-            };
-            db.MedicionesDiarias.Add(medicion);
-        }
-        else
-        {
-            // Actualizar si la nueva medición del día es mayor
-            if (mqttMsg.LengthMm > medicion.LargoMm)
-            {
-                medicion.LargoMm = mqttMsg.LengthMm;
-                medicion.AnchoMm = mqttMsg.WidthMm;
-                medicion.AreaMm2 = mqttMsg.AreaMm2;
-                medicion.DeltaPorcentaje = deltaPorcentaje;
-                medicion.EsCritica = esCritica;
-            }
-        }
-        await db.SaveChangesAsync();
-
-        // ── Creación de Alertas ──
-        if (esCritica)
-        {
-            // Evitar spamear alertas (1 por día por fisura)
-            bool alertaExistente = await db.Alertas
-                .AnyAsync(a => a.FisuraId == fisura.Id && a.Fecha.Date == hoy && a.Tipo == "critico");
-
-            if (!alertaExistente)
-            {
-                var alerta = new Alerta
-                {
-                    FisuraId = fisura.Id,
-                    Fecha = ahora,
-                    Tipo = "critico",
-                    Mensaje = $"Crecimiento crítico detectado en {mqttMsg.RoiId}: Δ={deltaPorcentaje:F1}% ({deltaMm:F1}mm)",
-                    UmbralSuperado = 5.0, // Umbral referencial base
-                    ValorActual = deltaPorcentaje,
-                    Reconocida = false,
-                };
-                db.Alertas.Add(alerta);
-                await db.SaveChangesAsync();
-
-                _logger.LogWarning("Alerta crítica creada para {RoiId}: Δ={Delta}% ({DeltaMm}mm)",
-                    mqttMsg.RoiId, deltaPorcentaje, deltaMm);
-            }
-        }
+        await consolidationService.ProcessDetectionAsync(mqttMsg);
     }
 
-    /// <summary>
-    /// Procesa un mensaje de telemetría del edge.
-    /// Actualiza el estado RPi en caché (se sirve desde el health endpoint).
-    /// </summary>
     private async Task HandleTelemetryMessage(string payload)
     {
         var telemetry = JsonSerializer.Deserialize<MqttTelemetryPayload>(payload, _jsonOptions);
         if (telemetry is null) return;
 
-        // Actualizar último heartbeat del edge
         EdgeHeartbeatCache.Update(telemetry.DeviceId, telemetry);
 
         _logger.LogDebug("Telemetry from {Device}: FPS={Fps}, Cracks={Count}, Temp={Temp}°C",
             telemetry.DeviceId, telemetry.Fps, telemetry.CracksCount,
             telemetry.CpuTempC?.ToString("F1") ?? "N/A");
     }
+
+    private async Task HandleSnapshotMessage(string payload)
+    {
+        var snapshot = JsonSerializer.Deserialize<MqttSnapshotPayload>(payload, _jsonOptions);
+        if (snapshot is null) return;
+
+        _logger.LogInformation("Snapshot received from {Device}: {Count} fisuras, path={Path}",
+            snapshot.DeviceId, snapshot.FisuraCount ?? 0, snapshot.ImagePath ?? "inline");
+
+        await Task.CompletedTask;
+    }
+
+    private async Task HandleExternalAlert(string payload)
+    {
+        _logger.LogInformation("External 3D snapshot received (len={Len})", payload.Length);
+
+        try
+        {
+            var snapshot = JsonSerializer.Deserialize<Snapshot3DPayloadDto>(payload, _jsonOptions);
+            if (snapshot is null || string.IsNullOrEmpty(snapshot.DeviceId))
+            {
+                _logger.LogWarning("Invalid 3D snapshot payload — skipping persistence.");
+                return;
+            }
+
+            DateTime capturedAt = DateTime.UtcNow;
+            if (!string.IsNullOrEmpty(snapshot.Timestamp)
+                && DateTime.TryParse(snapshot.Timestamp, out var parsed))
+            {
+                capturedAt = parsed.ToUniversalTime();
+            }
+
+            var pointCount = snapshot.PointCount
+                ?? snapshot.PointCloud?.Count
+                ?? 0;
+            var crackCount = snapshot.Cracks?.Count ?? 0;
+            var meshVertexCount = snapshot.Mesh?.Vertices.Count / 3 ?? 0;
+
+            using var scope = _services.CreateScope();
+            var snapshotRepo = scope.ServiceProvider.GetRequiredService<ISnapshotRepository>();
+
+            var entity = new Snapshot3DEntity
+            {
+                DeviceId = snapshot.DeviceId,
+                CapturedAt = capturedAt,
+                PayloadJson = payload,
+                PointCount = pointCount,
+                CrackCount = crackCount,
+                MeshVertexCount = meshVertexCount,
+            };
+
+            await snapshotRepo.CreateAsync(entity);
+            _logger.LogInformation(
+                "Snapshot3D persisted: id pending, device={Device}, pts={Pts}, cracks={Cracks}, mesh_verts={Verts}",
+                snapshot.DeviceId, pointCount, crackCount, meshVertexCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("Could not persist 3D snapshot: {Ex}", ex.Message);
+        }
+    }
+
+    private async Task HandleAnalysis2dMessage(string payload)
+    {
+        try
+        {
+            var analysisObj = JsonSerializer.Deserialize<JsonElement>(payload);
+            
+            var captureId = analysisObj.TryGetProperty("captureId", out var capEl) ? capEl.GetString() : Guid.NewGuid().ToString();
+            var zoneId = analysisObj.TryGetProperty("zoneId", out var zoneEl) ? zoneEl.GetString() : "unknown";
+            
+            var isBaseImage = false;
+            if (analysisObj.TryGetProperty("isBaseImage", out var baseImageElement) && baseImageElement.ValueKind == JsonValueKind.True)
+            {
+                isBaseImage = true;
+            }
+
+            string? processedImagePath = null;
+            if (analysisObj.TryGetProperty("processedImagePath", out var processedImagePathElement))
+            {
+                processedImagePath = processedImagePathElement.GetString();
+            }
+
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var analysis = new MonitoringAnalysis
+            {
+                CaptureId = captureId ?? Guid.NewGuid().ToString(),
+                ZoneId = zoneId ?? "unknown",
+                IsBaseImage = isBaseImage,
+                ProcessedImagePath = processedImagePath,
+                AnalysisJson = payload,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            db.MonitoringAnalyses.Add(analysis);
+            await db.SaveChangesAsync();
+
+            _logger.LogInformation("Saved 2D Analysis for CaptureId: {CaptureId}, ZoneId: {ZoneId}", captureId, zoneId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Error processing 2D analysis MQTT message: {Ex}", ex.Message);
+        }
+    }
+
+    private static string Truncate(string value, int maxLength)
+        => value.Length <= maxLength ? value : value[..maxLength] + "...";
 }
 
-/// <summary>
-/// Caché en memoria del último heartbeat de cada edge device.
-/// </summary>
 public static class EdgeHeartbeatCache
 {
     private static readonly Dictionary<string, MqttTelemetryPayload> _heartbeats = new();
@@ -353,24 +339,17 @@ public static class EdgeHeartbeatCache
         lock (_lock)
         {
             if (!_heartbeats.TryGetValue(deviceId, out var last)) return false;
-            // Considerar conectado si el heartbeat tiene menos de 30 segundos
             var age = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - last.Timestamp;
-            return age < 30;
+            return age < 60; // 60 segundos de tolerancia
         }
     }
 
-    /// <summary>
-    /// Retorna true si al menos un edge device está conectado.
-    /// </summary>
     public static bool AnyConnected()
     {
         lock (_lock)
         {
-            return _heartbeats.Values.Any(v =>
-            {
-                var age = DateTimeOffset.UtcNow.ToUnixTimeSeconds() - v.Timestamp;
-                return age < 30;
-            });
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            return _heartbeats.Values.Any(v => (now - v.Timestamp) < 60);
         }
     }
 }

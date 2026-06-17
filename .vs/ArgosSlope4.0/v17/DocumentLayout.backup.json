@@ -1,0 +1,351 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Alerta.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Models\\Alerta.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\Snapshot3DDtos.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Models\\Dtos\\Snapshot3DDtos.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\MqttFisuraPayload.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Models\\Dtos\\MqttFisuraPayload.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraResponse.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraResponse.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraRequests.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraRequests.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\HealthController.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Controllers\\HealthController.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\ConfiguracionController.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Controllers\\ConfiguracionController.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\frontend\\components\\Sidebar.tsx||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\components\\Sidebar.tsx||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\frontend\\components\\VideoEnVivo.tsx||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\components\\VideoEnVivo.tsx||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\frontend\\components\\TablaHistorial.js||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:frontend\\components\\TablaHistorial.js||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\scripts\\run-dotnet.ps1||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:scripts\\run-dotnet.ps1||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Program.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Program.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Dockerfile||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Dockerfile||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\ArgosSlope.Api.csproj||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\ArgosSlope.Api.csproj||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\appsettings.json||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\appsettings.json||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\appsettings.Development.json||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\appsettings.Development.json||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\.env.example||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:.env.example||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\GeotechnicalController.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Controllers\\GeotechnicalController.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\FisurasController.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Controllers\\FisurasController.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\AlertasController.cs||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:backend\\src\\ArgosSlope.Api\\Controllers\\AlertasController.cs||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Alerta.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Alerta.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Models\\Alerta.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Alerta.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Models\\Alerta.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T22:33:30.63Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Snapshot3DDtos.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\Snapshot3DDtos.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Models\\Dtos\\Snapshot3DDtos.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\Snapshot3DDtos.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Models\\Dtos\\Snapshot3DDtos.cs",
+              "ViewState": "AgIAALcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T22:13:01.078Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "MqttFisuraPayload.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\MqttFisuraPayload.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Models\\Dtos\\MqttFisuraPayload.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\MqttFisuraPayload.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Models\\Dtos\\MqttFisuraPayload.cs",
+              "ViewState": "AgIAAFEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T22:12:51.664Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Sidebar.tsx",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\frontend\\components\\Sidebar.tsx",
+              "RelativeDocumentMoniker": "frontend\\components\\Sidebar.tsx",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\frontend\\components\\Sidebar.tsx",
+              "RelativeToolTip": "frontend\\components\\Sidebar.tsx",
+              "ViewState": "AgIAACoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-06-13T22:11:09.595Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "VideoEnVivo.tsx",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\frontend\\components\\VideoEnVivo.tsx",
+              "RelativeDocumentMoniker": "frontend\\components\\VideoEnVivo.tsx",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\frontend\\components\\VideoEnVivo.tsx",
+              "RelativeToolTip": "frontend\\components\\VideoEnVivo.tsx",
+              "ViewState": "AgIAAPAAAAAAAAAAAAAAAF4AAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-06-13T21:52:57.678Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "TablaHistorial.js",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\frontend\\components\\TablaHistorial.js",
+              "RelativeDocumentMoniker": "frontend\\components\\TablaHistorial.js",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\frontend\\components\\TablaHistorial.js",
+              "RelativeToolTip": "frontend\\components\\TablaHistorial.js",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2026-06-13T21:52:56.343Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "run-dotnet.ps1",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\scripts\\run-dotnet.ps1",
+              "RelativeDocumentMoniker": "scripts\\run-dotnet.ps1",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\scripts\\run-dotnet.ps1",
+              "RelativeToolTip": "scripts\\run-dotnet.ps1",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAC0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-13T14:18:30.703Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "HealthController.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\HealthController.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Controllers\\HealthController.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\HealthController.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Controllers\\HealthController.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T14:18:01.553Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ConfiguracionController.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\ConfiguracionController.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Controllers\\ConfiguracionController.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\ConfiguracionController.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Controllers\\ConfiguracionController.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T14:14:08.394Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "FisuraRequests.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraRequests.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraRequests.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraRequests.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraRequests.cs",
+              "ViewState": "AgIAACEAAAAAAAAAAAAAAC0AAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T13:48:27.388Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "FisuraResponse.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraResponse.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraResponse.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraResponse.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Models\\Dtos\\FisuraResponse.cs",
+              "ViewState": "AgIAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T14:14:15.57Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "ArgosSlope.Api.csproj",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\ArgosSlope.Api.csproj",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\ArgosSlope.Api.csproj",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\ArgosSlope.Api.csproj",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\ArgosSlope.Api.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-06-13T14:17:47.129Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "Dockerfile",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Dockerfile",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Dockerfile",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Dockerfile",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Dockerfile",
+              "ViewState": "AgIAABsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-13T14:17:51.118Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Program.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Program.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Program.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Program.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Program.cs",
+              "ViewState": "AgIAAHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T14:18:05.994Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\appsettings.json",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\appsettings.json",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\appsettings.json",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-06-13T14:17:44.09Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\appsettings.Development.json",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\appsettings.Development.json",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-06-13T14:17:43.231Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": ".env.example",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\.env.example",
+              "RelativeDocumentMoniker": ".env.example",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\.env.example",
+              "RelativeToolTip": ".env.example",
+              "ViewState": "AgIAABIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-13T14:17:22.937Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "GeotechnicalController.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\GeotechnicalController.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Controllers\\GeotechnicalController.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\GeotechnicalController.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Controllers\\GeotechnicalController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T14:14:12.108Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "FisurasController.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\FisurasController.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Controllers\\FisurasController.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\FisurasController.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Controllers\\FisurasController.cs",
+              "ViewState": "AgIAABUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T14:14:09.441Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "AlertasController.cs",
+              "DocumentMoniker": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\AlertasController.cs",
+              "RelativeDocumentMoniker": "backend\\src\\ArgosSlope.Api\\Controllers\\AlertasController.cs",
+              "ToolTip": "E:\\PROYECTO-QUICKSTART\\ProyectoMineria\\ArgosSlope4.0\\backend\\src\\ArgosSlope.Api\\Controllers\\AlertasController.cs",
+              "RelativeToolTip": "backend\\src\\ArgosSlope.Api\\Controllers\\AlertasController.cs",
+              "ViewState": "AgIAAD8AAAAAAAAAAAAAAEkAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-06-13T14:14:01.549Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

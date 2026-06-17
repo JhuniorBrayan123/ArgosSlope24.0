@@ -18,10 +18,6 @@ public class HealthController : ControllerBase
         });
     }
 
-    /// <summary>
-    /// Endpoint de resumen para el dashboard.
-    /// Compatible con el mismo endpoint del backend FastAPI existente.
-    /// </summary>
     [HttpGet("resumen")]
     public async Task<IActionResult> GetResumen(
         [FromServices] IFisuraRepository repo)
@@ -33,7 +29,7 @@ public class HealthController : ControllerBase
             total_fisuras = data["total_fisuras"],
             alertas_criticas = data["alertas_criticas"],
             rpi_conectada = EdgeHeartbeatCache.AnyConnected(),
-            deformacion_promedio = 0.0, // Se calculará desde mediciones
+            deformacion_promedio = 0.0, 
         });
     }
 

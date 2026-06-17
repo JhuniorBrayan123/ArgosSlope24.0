@@ -15,7 +15,6 @@ public class ConfiguracionController : ControllerBase
         _repo = repo;
     }
 
-    /// <summary>Obtener toda la configuración.</summary>
     [HttpGet]
     public async Task<ActionResult<List<ConfigResponse>>> GetAll()
     {
@@ -27,7 +26,6 @@ public class ConfiguracionController : ControllerBase
         )).ToList();
     }
 
-    /// <summary>Actualizar o crear un valor de configuración.</summary>
     [HttpPut("{clave}")]
     public async Task<ActionResult<ConfigResponse>> Update(
         string clave,

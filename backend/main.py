@@ -1,8 +1,3 @@
-"""
-ARGOS SLOPE 4.0 — Backend API
-Serves crack history and velocity data from the edge's crack_history.json.
-"""
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -27,7 +22,6 @@ app.add_middleware(
 )
 
 app.include_router(router)
-
 
 @app.get("/")
 async def root():

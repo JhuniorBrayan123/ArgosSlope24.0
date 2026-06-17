@@ -1,0 +1,57 @@
+[
+  {
+    "tracking_id": 1,
+    "timestamp": "2026-06-08T12:00:00+00:00",
+    "width_mm": 2.0,
+    "length_mm": 18.0,
+    "area_mm2": 36.0,
+    "classification": "pequena",
+    "is_new": true,
+    "velocity_mm_day": null,
+    "frame_number": 100
+  },
+  {
+    "tracking_id": 1,
+    "timestamp": "2026-06-09T12:00:00+00:00",
+    "width_mm": 2.5,
+    "length_mm": 20.0,
+    "area_mm2": 50.0,
+    "classification": "media",
+    "is_new": false,
+    "velocity_mm_day": 0.3,
+    "frame_number": 150
+  },
+  {
+    "tracking_id": 1,
+    "timestamp": "2026-06-10T12:00:00+00:00",
+    "width_mm": 3.2,
+    "length_mm": 22.0,
+    "area_mm2": 70.4,
+    "classification": "grande",
+    "is_new": false,
+    "velocity_mm_day": 0.7,
+    "frame_number": 200
+  },
+  {
+    "tracking_id": 2,
+    "timestamp": "2026-06-08T14:00:00+00:00",
+    "width_mm": 1.0,
+    "length_mm": 10.0,
+    "area_mm2": 10.0,
+    "classification": "pequena",
+    "is_new": true,
+    "velocity_mm_day": null,
+    "frame_number": 100
+  },
+  {
+    "tracking_id": 2,
+    "timestamp": "2026-06-10T14:00:00+00:00",
+    "width_mm": 5.0,
+    "length_mm": 25.0,
+    "area_mm2": 125.0,
+    "classification": "grande",
+    "is_new": false,
+    "velocity_mm_day": 2.5,
+    "frame_number": 200
+  }
+]

@@ -53,6 +53,8 @@ class CrackSnapshot:
     is_new: bool = False
     velocity_mm_day: Optional[float] = None
     frame_number: int = 0
+    image_path: str = ""
+    mask_path: str = ""
 
     def to_dict(self) -> dict:
         return asdict(self)

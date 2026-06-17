@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>avance_argos_slope.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="argos-slope-40--informe-técnico-de-avance">ARGOS SLOPE 4.0 — Informe Técnico de Avance</h1>
+<p><strong>Análisis basado en revisión directa del código fuente</strong></p>
+<blockquote>
+<p>Fecha: Junio 2026 | Revisado por: Antigravity AI | Base: <code>e:\PROYECTO-QUICKSTART\ProyectoMineria\ArgosSlope4.0</code></p>
+</blockquote>
+<hr>
+<h2 id="1-resumen-ejecutivo">1. Resumen Ejecutivo</h2>
+<p><strong>ARGOS SLOPE 4.0</strong> es un sistema distribuido de monitoreo geotécnico en tiempo real para taludes mineros. Su meta es construir un <strong>gemelo digital 3D métrico</strong> que integre captura visual en campo, detección de fisuras con clasificación, medición calibrada, historial evolutivo y visualización 3D interactiva.</p>
+<p>Tras la revisión directa del código fuente, se confirma que el proyecto tiene una <strong>base técnica sólida y en ejecución</strong>. El módulo Edge en Python (<code>edge/edge/</code>) está operativo con un pipeline completo que incluye detección de fisuras por OpenCV, estimación de profundidad con MiDaS (IA monocular), generación de nubes de puntos y transmisión de video en vivo por WebRTC y MJPEG. El Backend (.NET) expone una API REST con modelos de datos relacionales bien definidos. El Frontend (Next.js) renderiza en tiempo real la nube de puntos 3D usando React Three Fiber, y muestra los bounding boxes de fisuras sobre el video vía MQTT WebSocket.</p>
+<p>La principal brecha confirmada por código es la <strong>calibración no ejecutada</strong>: el archivo <code>calibration/calibration.json</code> tiene todos sus campos en <code>null</code>. Esto significa que las mediciones actuales de longitud y ancho en milímetros se calculan con parámetros físicos estimados por defecto y <strong>no son confiables para uso en minería real</strong>.</p>
+<hr>
+<h2 id="2-meta-final-del-sistema">2. Meta Final del Sistema</h2>
+<p>El sistema busca ser un <strong>Gemelo Digital 3D para monitoreo de taludes</strong>, no un simple dashboard. Esto implica:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Capacidad</th>
+<th style="text-align:left">Descripción técnica</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Captura visual continua</td>
+<td style="text-align:left">Cámara USB o Raspberry Pi → OpenCV</td>
+</tr>
+<tr>
+<td style="text-align:left">Detección de fisuras</td>
+<td style="text-align:left">OpenCV (activo) o modelo ONNX/YOLO (preparado)</td>
+</tr>
+<tr>
+<td style="text-align:left">Medición calibrada</td>
+<td style="text-align:left"><code>length_mm</code>, <code>width_mm</code>, <code>area_mm2</code> via factor <code>px/mm</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Comparación temporal</td>
+<td style="text-align:left">Evolución de <code>DeltaPorcentaje</code> por fisura en BD</td>
+</tr>
+<tr>
+<td style="text-align:left">Risk Engine</td>
+<td style="text-align:left">Clasificación: <code>fina / media / gruesa</code> → alertas</td>
+</tr>
+<tr>
+<td style="text-align:left">Historial y trazabilidad</td>
+<td style="text-align:left">PostgreSQL con tablas <code>fisura</code>, <code>medicion_diaria</code>, <code>alerta</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Visualización 3D</td>
+<td style="text-align:left">React Three Fiber + MiDaS + nube de puntos vía MQTT</td>
+</tr>
+<tr>
+<td style="text-align:left">Visualización inmersiva (futura)</td>
+<td style="text-align:left">WebXR / VR sobre el gemelo digital</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="3-arquitectura-implementada-evidenciada-por-código">3. Arquitectura Implementada (Evidenciada por Código)</h2>
+<pre class="hljs"><code><div>[Cámara USB / laptop]
+        │
+        ▼
+[edge/main.py — Orquestador Principal]
+  ├─ apply_roi()                    → recorte de región de interés
+  ├─ EdgePreprocessor               → undistort + CLAHE
+  ├─ OpenCvDetector.process()       → detección de fisuras en BGR
+  ├─ MidasDepthEstimator.estimate() → mapa de profundidad relativo (2–5 m)
+  ├─ PointCloudGenerator.generate() → nube de puntos [x,y,z,r,g,b]
+  ├─ CrackSimulator.update()        → eventos sintéticos para pruebas
+  └─ MqttPublisher
+       ├─ publish_batch()           → topic: argos/{device_id}/fisura
+       ├─ publish_telemetry()       → topic: argos/{device_id}/telemetry
+       └─ publish_alert_3d()        → topic: mineria/talud/alertas
+        │
+        ▼                                  ▼
+[WebRTC/MJPEG server]              [MQTT Broker :1883]
+[http://localhost:8082/stream]             │
+        │                                  ├─────────────────────────┐
+        ▼                                  ▼                         ▼
+[Frontend: CamaraMJPEG.tsx]   [FisuraOverlay.tsx]        [Backend .NET]
+     (video en vivo)           (bounding boxes MQTT)       API REST
+                                                           │
+                                                     [PostgreSQL]
+                                                     tablas: fisura,
+                                                     medicion_diaria, alerta
+</div></code></pre>
+<p><strong>Arquitectura Futura (Hardware en campo):</strong></p>
+<pre class="hljs"><code><div>[Raspberry Pi + Cámara]
+  └─ captura ligera, sin inferencia pesada
+       │ HTTP / MQTT sobre Wi-Fi/LTE
+       ▼
+[Laptop / Servidor]
+  └─ edge/main.py (IA, MiDaS, detección, publicación)
+       │
+       ▼
+[Backend + Frontend + PostgreSQL]
+</div></code></pre>
+<hr>
+<h2 id="4-análisis-detallado-por-módulo">4. Análisis Detallado por Módulo</h2>
+<hr>
+<h3 id="41-módulo-edge--orquestador-principal">4.1 Módulo Edge — Orquestador Principal</h3>
+<p>📄 <code>edge/edge/main.py</code> (506 líneas)</p>
+<p>Este es el <strong>motor central del sistema</strong>. Gestiona concurrentemente todos los subsistemas.</p>
+<p><strong>Flujo por frame:</strong></p>
+<ol>
+<li><code>cap.read()</code> — captura BGR a 1280×720 @ 15 FPS (configurables por <code>.env</code>)</li>
+<li><code>apply_roi()</code> — recorta zona de interés (<code>x,y,w,h</code> por variable de entorno)</li>
+<li><code>EdgePreprocessor.process()</code> — aplica <code>undistort</code> (si hay calibración) y <code>CLAHE</code></li>
+<li><code>detector.process()</code> — detecta fisuras y devuelve lista de <code>CrackResult</code></li>
+<li>Si <code>depth_enabled</code>: <code>MiDaS.estimate()</code> + <code>PointCloudGenerator.generate()</code> cada N frames</li>
+<li>Si <code>simulator_enabled</code>: <code>CrackSimulator.update()</code> genera eventos sintéticos</li>
+<li><code>publisher.publish_batch()</code> — publica cada fisura por MQTT (QoS 1)</li>
+<li><code>publisher.publish_alert_3d()</code> — publica nube de puntos + fisuras 3D</li>
+<li><code>shared_frame.write()</code> — alimenta el servidor WebRTC/MJPEG en tiempo real</li>
+<li>Cada <code>telemetry_interval_s</code>: publica FPS, temperatura CPU, conteo de fisuras</li>
+</ol>
+<p><strong>Configuración total por variables de entorno:</strong> La clase <code>EdgeConfig</code> (218 líneas) cubre 40+ parámetros sin modificar código: cámara, detector, MQTT, thresholds, WebRTC, profundidad, filtros geométricos, calibración.</p>
+<p><strong>Estado real:</strong> ✅ <strong>Completamente operativo en laptop</strong>. Compatible con Raspberry Pi (detección de <code>/etc/hostname</code> para <code>device_id</code>, lectura de temperatura de sysfs).</p>
+<hr>
+<h3 id="42-detector-de-fisuras">4.2 Detector de Fisuras</h3>
+<p>📄 <code>edge/edge/detector/fisura_detector.py</code> (603 líneas)</p>
+<p>Es el módulo de mayor impacto técnico. Implementa <strong>dos backends intercambiables</strong>:</p>
+<h4 id="pipeline-opencv-opencvdetector">Pipeline OpenCV (<code>OpenCvDetector</code>)</h4>
+<pre class="hljs"><code><div>Imagen BGR
+  → Escala de grises (cv2.cvtColor)
+  → Blur Gaussiano (kernel configurable, default: 5×5)
+  → Umbral adaptativo Gaussiano THRESH_BINARY_INV
+      block_size: 31 | C: 5 (configurables)
+  → Operaciones morfológicas: CLOSE → OPEN (elimina ruido)
+  → cv2.findContours (RETR_EXTERNAL)
+  → Filtrado por área mínima (default: 2000 px²)
+  → Filtros geométricos (aspect ratio, solidity, convexity)
+  → _measure_contour() → CrackResult
+</div></code></pre>
+<p><strong>Medición por contorno</strong> (<code>_measure_contour</code>):</p>
+<ul>
+<li><code>length_px</code> = perímetro del convex hull / 2</li>
+<li><code>orientation_deg</code> = ángulo del eje principal via <code>cv2.fitEllipse()</code></li>
+<li><code>width_mm = area_mm2 / length_mm</code> (derivado, no medición directa)</li>
+<li><code>pixel_to_mm</code> = <code>(pixel_size_µm × distance_m × 1000) / focal_mm</code> — <strong>este es el factor crítico no calibrado</strong></li>
+</ul>
+<p><strong>Clasificación de fisuras</strong> (según estándares mineros definidos en código):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Clase</th>
+<th style="text-align:left">Umbral de ancho</th>
+<th style="text-align:left">Color en Overlay</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>fina</code></td>
+<td style="text-align:left">&lt; 0.3 mm</td>
+<td style="text-align:left">Verde teal</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>media</code></td>
+<td style="text-align:left">0.3 – 1.0 mm</td>
+<td style="text-align:left">Amarillo ámbar</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>gruesa</code></td>
+<td style="text-align:left">&gt; 1.0 mm</td>
+<td style="text-align:left">Rojo</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Filtros geométricos</strong> (opcionales, desactivados por defecto):</p>
+<ul>
+<li><code>min_aspect_ratio</code>, <code>max_aspect_ratio</code> — descarta contornos cuadrados (no son fisuras)</li>
+<li><code>min_solidity</code> — fisuras tienen solidity baja (son irregulares)</li>
+<li><code>min_convexity</code> — complementa la detección de formas elongadas</li>
+</ul>
+<p><strong>Filtro por escala real</strong> (<code>_check_min_size</code>):</p>
+<ul>
+<li>Si existe <code>calibration.json</code> con <code>pixels_per_mm</code> &gt; 0: filtra en mm reales (<code>filter_min_width_mm</code>, <code>filter_max_width_mm</code>)</li>
+<li>Si no hay calibración: filtra en píxeles (<code>filter_min_width_px</code>, <code>filter_min_length_px</code>)</li>
+</ul>
+<p><strong>Carga de calibración</strong> (<code>_load_calibration_scale</code>): Al iniciar, el detector intenta leer <code>edge/calibration/calibration.json</code>. Si <code>pixels_per_mm</code> es null (como está actualmente), opera sin escala real. ⚠️ <strong>Estado actual: <code>pixels_per_mm: null</code> — sin calibración activa.</strong></p>
+<h4 id="pipeline-onnx-onnxdetector">Pipeline ONNX (<code>OnnxDetector</code>)</h4>
+<ul>
+<li>Carga cualquier modelo <code>.onnx</code> (ej. YOLOv8 exportado)</li>
+<li>Input: <code>(N, 3, H, W)</code> float32 normalizado</li>
+<li>Output esperado: <code>(N, num_detections, 6)</code> — <code>[x1, y1, x2, y2, conf, class]</code></li>
+<li>Si el modelo no está disponible → <strong>fallback automático</strong> a <code>OpenCvDetector</code></li>
+<li>Estado: <strong>Preparado pero sin modelo entrenado disponible</strong>. Requiere dataset.</li>
+</ul>
+<hr>
+<h3 id="43-módulo-de-calibración">4.3 Módulo de Calibración</h3>
+<p>📄 <code>edge/edge/calibration/</code> (5 archivos)</p>
+<p>Es el módulo más crítico y el que más trabajo requiere. Está <strong>completamente implementado</strong> pero <strong>no ejecutado</strong> aún.</p>
+<h4 id="calibrate_camerapy--calibración-intrínseca"><code>calibrate_camera.py</code> — Calibración intrínseca</h4>
+<ul>
+<li>Usa patrón de ajedrez (checkerboard) con <code>cv2.findChessboardCorners()</code></li>
+<li>Calcula: <code>camera_matrix (K)</code>, <code>distortion_coefficients (dist)</code>, <code>reprojection_error</code></li>
+<li>Patrón esperado: 9×6 esquinas interiores, cuadrado de 25mm</li>
+</ul>
+<h4 id="detect_aruco_scalepy--escala-aruco"><code>detect_aruco_scale.py</code> — Escala ArUco</h4>
+<ul>
+<li>Detecta marcadores ArUco (<code>cv2.aruco</code>) en la imagen</li>
+<li>Calcula <code>pixels_per_mm</code> midiendo en píxeles el marcador de tamaño conocido</li>
+<li>Estima <code>distance_m</code> a la cámara usando la longitud focal</li>
+</ul>
+<h4 id="calibration_servicepy--orquestador-de-calibración"><code>calibration_service.py</code> — Orquestador de calibración</h4>
+<ul>
+<li>Coordina los dos pasos anteriores en una sola llamada <code>run_full_calibration()</code></li>
+<li>Persiste todo en <code>calibration.json</code> (cargado automáticamente al iniciar el detector)</li>
+<li>También ofrece <code>quick_scale_from_aruco()</code> para actualizar solo la escala</li>
+</ul>
+<h4 id="estado-del-calibrationjson">Estado del <code>calibration.json</code>:</h4>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;calibration_date&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;camera_matrix&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;fx_px&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;fy_px&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;cx_px&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;cy_px&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;reprojection_error&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;pixels_per_mm&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;calibrated&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;scale_detected&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">false</span></span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<blockquote>
+<p>⚠️ <strong>BRECHA CRÍTICA:</strong> Todos los campos son <code>null</code>. Las mediciones en mm que el sistema calcula y publica actualmente <strong>son estimaciones no validadas</strong> basadas en los parámetros físicos por defecto del <code>.env</code>.</p>
+</blockquote>
+<p><strong>Parámetros por defecto activos en producción:</strong></p>
+<pre class="hljs"><code><div>FOCAL_LENGTH_MM   = 50.0  mm  ← valor genérico, no medido
+SENSOR_DISTANCE_M = 10.0  m   ← distancia al talud no verificada
+SENSOR_PIXEL_UM   = 3.0   µm  ← tamaño de pixel asumido
+</div></code></pre>
+<p><strong>La fórmula activa:</strong> <code>pixel_to_mm = (3.0/1e6 × 10000) / 50.0 = 0.0006 mm/px</code></p>
+<hr>
+<h3 id="44-estimación-de-profundidad--midas">4.4 Estimación de Profundidad — MiDaS</h3>
+<p>📄 <code>edge/edge/depth/midas_depth.py</code> (218 líneas)</p>
+<p>Implementa <strong>MiDaS v3.1 Small</strong> (modelo de IA de Intel) para estimación de profundidad monocular en CPU.</p>
+<p><strong>Flujo técnico:</strong></p>
+<ol>
+<li><code>torch.hub.load(&quot;intel-isl/MiDaS&quot;, &quot;MiDaS_small&quot;)</code> — cargado lazy en primer frame</li>
+<li>Conversión BGR→RGB, aplicar transform de MiDaS</li>
+<li><code>torch.no_grad()</code> — inferencia en CPU</li>
+<li>Resize al tamaño original del frame</li>
+<li><strong>Normalización crítica</strong> (comentada en el código):
+<ul>
+<li>MiDaS retorna <strong>disparidad inversa</strong> (mayor = más cercano)</li>
+<li>Se invierte para obtener profundidad (mayor = más lejano)</li>
+<li>Clipping percentil 5–95 para suprimir outliers de paredes planas</li>
+<li>Escalado al rango métrico <code>[2.0m – 5.0m]</code> (configurado para taludes)</li>
+</ul>
+</li>
+</ol>
+<p><strong>Limitación documentada en el propio código:</strong></p>
+<blockquote>
+<p><em>&quot;Para una pared plana, MiDaS disparity es casi uniforme (±0.03). La normalización completa [0,1] amplificaría estas variaciones minúsculas a 4.7m → forma de cono artificial.&quot;</em></p>
+</blockquote>
+<blockquote>
+<p>⚠️ <strong>IMPORTANTE:</strong> MiDaS es <strong>profundidad relativa monocular</strong>, no LIDAR ni estéreo. El rango 2–5m es un escalado matemático heurístico, <strong>no una medición física absoluta</strong>. Para un gemelo digital métrico real, se necesita cámara estéreo o LIDAR.</p>
+</blockquote>
+<p><strong>Throttling de rendimiento:</strong> El pipeline 3D se ejecuta a <code>DEPTH_FPS=5</code> fps (no en cada frame), calculando el intervalo dinámicamente: <code>depth_frame_interval = fps / depth_fps</code>.</p>
+<hr>
+<h3 id="45-generación-de-nube-de-puntos-y-publicación-3d">4.5 Generación de Nube de Puntos y Publicación 3D</h3>
+<p>📄 <code>edge/edge/pointcloud/generator.py</code> (no leído completo) + <code>mqtt/publisher.py</code></p>
+<p><strong>Proceso de publicación</strong> (<code>publish_alert_3d</code>):</p>
+<ol>
+<li>Submuestra la nube de puntos a máximo <code>pointcloud_max_points</code> (default: 10.000 pts)</li>
+<li>Para cada fisura detectada, proyecta sus coordenadas 2D al espacio 3D:<pre class="hljs"><code><div>x3d = (cx2d - cx) * depth / fx
+y3d = (cy2d - cy) * depth / fy
+z3d = depth  <span class="hljs-comment"># del mapa de MiDaS</span>
+</div></code></pre>
+</li>
+<li>Los intrínsecos usados actualmente son <strong>fijos y mockeados</strong>:<pre class="hljs"><code><div>fx=<span class="hljs-number">1408.0</span>, fy=<span class="hljs-number">1408.0</span>, cx=<span class="hljs-number">640.0</span>, cy=<span class="hljs-number">360.0</span>
+</div></code></pre>
+<blockquote>
+<p>⚠️ Estos valores deberían provenir de <code>calibration.json</code> tras calibrar la cámara.</p>
+</blockquote>
+</li>
+</ol>
+<p><strong>Payload MQTT al topic <code>mineria/talud/alertas</code>:</strong></p>
+<pre class="hljs"><code><div><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;device_id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;argos-edge-01&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;timestamp&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2026-06-07T18:00:00&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;point_cloud&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">[</span>x<span class="hljs-punctuation">,</span>y<span class="hljs-punctuation">,</span>z<span class="hljs-punctuation">,</span>r<span class="hljs-punctuation">,</span>g<span class="hljs-punctuation">,</span>b<span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span> ...<span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>  <span class="hljs-comment">// hasta 10.000 puntos</span>
+  <span class="hljs-attr">&quot;cracks&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-punctuation">{</span><span class="hljs-attr">&quot;x&quot;</span><span class="hljs-punctuation">:</span><span class="hljs-number">100</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;y&quot;</span><span class="hljs-punctuation">:</span><span class="hljs-number">200</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;w&quot;</span><span class="hljs-punctuation">:</span><span class="hljs-number">50</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;h&quot;</span><span class="hljs-punctuation">:</span><span class="hljs-number">30</span><span class="hljs-punctuation">,</span>
+     <span class="hljs-attr">&quot;x3d&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0.12</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;y3d&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">-0.08</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;z3d&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">3.45</span><span class="hljs-punctuation">,</span>
+     <span class="hljs-attr">&quot;classification&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;media&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;roi_id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;CRK-A3B2&quot;</span><span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;point_count&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">8500</span>
+<span class="hljs-punctuation">}</span>
+</div></code></pre>
+<hr>
+<h3 id="46-transmisión-de-video--webrtc-y-mjpeg">4.6 Transmisión de Video — WebRTC y MJPEG</h3>
+<p>📄 <code>edge/edge/webrtc/</code></p>
+<p>Dos servidores corren en <strong>threads daemon</strong> paralelos al loop principal:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Servidor</th>
+<th style="text-align:left">Puerto</th>
+<th style="text-align:left">Protocolo</th>
+<th style="text-align:left">Estado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">MJPEG</td>
+<td style="text-align:left"><code>:8082/stream</code></td>
+<td style="text-align:left">HTTP multipart</td>
+<td style="text-align:left"><strong>Activo por defecto</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">WebRTC Signaling</td>
+<td style="text-align:left"><code>:8081</code></td>
+<td style="text-align:left">WebSocket + aiortc</td>
+<td style="text-align:left">Activo pero experimental</td>
+</tr>
+</tbody>
+</table>
+<p>El frontend ofrece un toggle <code>MJPEG / WebRTC</code> en la UI. MJPEG es el modo recomendado porque &quot;funciona siempre&quot; sin negociación ICE.</p>
+<p>El frame enviado al stream es <code>proc_frame</code> (ya procesado y con detecciones calculadas).</p>
+<hr>
+<h3 id="47-backend-net--api-rest">4.7 Backend .NET — API REST</h3>
+<p>📄 <code>backend/src/ArgosSlope.Api/</code></p>
+<p><strong>Modelo de datos en PostgreSQL</strong> (evidenciado por clases C#):</p>
+<pre class="hljs"><code><div>fisura
+  ├─ id, roi_id
+  ├─ fecha_deteccion
+  ├─ largo_mm, ancho_mm, area_mm2
+  ├─ orientacion, tipo (fina/media/gruesa)
+  ├─ coordenadas (JSON: {x,y,w,h})
+  ├─ imagen_original, imagen_segmentada (paths)
+  └─ → medicion_diaria (1:N)
+  └─ → alerta (1:N)
+
+medicion_diaria
+  ├─ fisura_id (FK)
+  ├─ fecha
+  ├─ largo_mm, ancho_mm, area_mm2
+  ├─ delta_porcentaje (Δ% respecto a medición anterior)
+  └─ es_critica (bool — supera umbral)
+
+alerta
+  ├─ fisura_id (FK)
+  ├─ fecha, tipo, mensaje
+  ├─ umbral_superado, valor_actual
+  └─ reconocida (bool)
+</div></code></pre>
+<p><strong>Endpoints disponibles</strong> (<code>FisurasController</code>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Método</th>
+<th style="text-align:left">Ruta</th>
+<th style="text-align:left">Función</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>GET</code></td>
+<td style="text-align:left"><code>/api/fisuras</code></td>
+<td style="text-align:left">Lista todas las fisuras detectadas</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>GET</code></td>
+<td style="text-align:left"><code>/api/fisuras/{id}</code></td>
+<td style="text-align:left">Detalle completo + mediciones + alertas</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>GET</code></td>
+<td style="text-align:left"><code>/api/fisuras/{id}/mediciones?dias=N</code></td>
+<td style="text-align:left">Serie temporal de mediciones</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>El esquema de <code>medicion_diaria</code> con <code>delta_porcentaje</code> y <code>es_critica</code> es la base del <strong>Risk Engine y comparación temporal</strong>. La lógica de cálculo del delta y la evaluación del umbral está diseñada pero pendiente de la ingesta de datos reales calibrados.</p>
+</blockquote>
+<hr>
+<h3 id="48-frontend-nextjs--visualización-3d-y-dashboard">4.8 Frontend Next.js — Visualización 3D y Dashboard</h3>
+<p>📄 <code>frontend/app/</code> y <code>frontend/components/</code></p>
+<h4 id="componentes-críticos-implementados">Componentes críticos implementados:</h4>
+<p><strong><code>NubePuntos3D.tsx</code></strong> — Render 3D con React Three Fiber:</p>
+<ul>
+<li>Recibe <code>points: [x,y,z,r,g,b][]</code> desde MQTT</li>
+<li>Construye <code>THREE.BufferGeometry</code> con <code>Float32BufferAttribute</code></li>
+<li>Renderiza fisuras como <strong>esferas rojas</strong> (<code>#ff4444</code>) en posición 3D exacta</li>
+<li>Corrección de coordenadas documentada en código: <code>scale={[-1, -1, 1]}</code> para voltear eje Y (sistema OpenCV → Three.js)</li>
+<li><code>OrbitControls</code> con damping, autoRotate y límites de zoom</li>
+<li>Vacío → muestra <code>EmptyState</code> esperando datos del edge</li>
+</ul>
+<p><strong><code>FisuraOverlay.tsx</code></strong> — Overlay Canvas sobre video:</p>
+<ul>
+<li>Se conecta al broker MQTT via WebSocket (<code>mqtt.connect()</code>)</li>
+<li>Suscribe al topic <code>argos/+/fisura</code></li>
+<li>Dibuja <code>bounding boxes</code> sobre canvas transparente superpuesto al video</li>
+<li>Colores por clasificación: Verde (fina) / Ámbar (media) / Rojo (gruesa)</li>
+<li>Muestra <code>roi_id</code>, clasificación y <code>length_mm</code> formateado</li>
+<li>Barra de confianza dibujada debajo del bounding box</li>
+<li><strong>Auto-limpieza:</strong> Fisuras con más de 5 segundos sin actualización se eliminan del canvas</li>
+</ul>
+<p><strong><code>VideoEnVivo.tsx</code></strong> — Cliente WebRTC nativo:</p>
+<ul>
+<li>Conexión WebSocket al servidor de señalización en <code>:8081</code></li>
+<li>Negociación SDP completa (offer/answer/ICE candidates)</li>
+<li><code>RTCPeerConnection</code> con video track del edge</li>
+</ul>
+<p><strong><code>CamaraMJPEG.tsx</code></strong> — Fallback MJPEG:</p>
+<ul>
+<li><code>&lt;img src=&quot;/stream&quot; /&gt;</code> → actualización automática del browser</li>
+<li>Modo recomendado en UI (más simple y confiable)</li>
+</ul>
+<p><strong>Páginas del sistema:</strong></p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Ruta</th>
+<th style="text-align:left">Componente</th>
+<th style="text-align:left">Función</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>/monitoreo</code></td>
+<td style="text-align:left"><code>VideoEnVivo</code> + <code>FisuraOverlay</code></td>
+<td style="text-align:left">Video en vivo con detecciones</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>/visualizacion</code></td>
+<td style="text-align:left"><code>NubePuntos3D</code> + <code>VisorModelo3D</code></td>
+<td style="text-align:left">Gemelo digital 3D</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>/historial</code></td>
+<td style="text-align:left"><code>TablaHistorial</code> + <code>GraficoDeformacion</code></td>
+<td style="text-align:left">Serie temporal de fisuras</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>/alertas</code></td>
+<td style="text-align:left"><code>PanelAlertas</code></td>
+<td style="text-align:left">Lista de alertas activas</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>/configuracion</code></td>
+<td style="text-align:left"><code>FormularioConfig</code></td>
+<td style="text-align:left">Parámetros de conexión</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="5-estado-consolidado-de-componentes">5. Estado Consolidado de Componentes</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Componente</th>
+<th style="text-align:left">Archivo(s) clave</th>
+<th style="text-align:left">Estado real</th>
+<th style="text-align:left">Detalle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Orquestador Edge</strong></td>
+<td style="text-align:left"><code>main.py</code></td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left">506 líneas, producción-ready en laptop</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Captura de Cámara</strong></td>
+<td style="text-align:left"><code>main.py:open_camera()</code></td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left">DirectShow (Windows) / V4L2 (Linux), FPS configurable</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Preprocesamiento</strong></td>
+<td style="text-align:left"><code>preprocessing/preprocessor.py</code></td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left">undistort + CLAHE por pipeline</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Detector OpenCV</strong></td>
+<td style="text-align:left"><code>detector/fisura_detector.py</code></td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left">Umbral adaptativo + morfología + filtros geométricos</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Detector ONNX/ML</strong></td>
+<td style="text-align:left"><code>detector/fisura_detector.py</code></td>
+<td style="text-align:left">🟡 Preparado</td>
+<td style="text-align:left">Infraestructura lista, sin modelo entrenado</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Calibración intrínseca</strong></td>
+<td style="text-align:left"><code>calibration/calibrate_camera.py</code></td>
+<td style="text-align:left">🟡 Implementado, sin ejecutar</td>
+<td style="text-align:left">Código listo, <code>calibration.json</code> vacío</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Escala ArUco</strong></td>
+<td style="text-align:left"><code>calibration/detect_aruco_scale.py</code></td>
+<td style="text-align:left">🟡 Implementado, sin ejecutar</td>
+<td style="text-align:left">Requiere imagen con marcador</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Estimación Profundidad</strong></td>
+<td style="text-align:left"><code>depth/midas_depth.py</code></td>
+<td style="text-align:left">✅ Operativo</td>
+<td style="text-align:left">MiDaS Small CPU, normalización percentil implementada</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Nube de Puntos 3D</strong></td>
+<td style="text-align:left"><code>pointcloud/generator.py</code></td>
+<td style="text-align:left">✅ Operativo</td>
+<td style="text-align:left">Genera <code>[x,y,z,r,g,b]</code>, subsampleado a 10K pts</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Proyección 3D de fisuras</strong></td>
+<td style="text-align:left"><code>mqtt/publisher.py</code></td>
+<td style="text-align:left">🟡 Funcional con intrínsecos fijos</td>
+<td style="text-align:left">Usa <code>fx=1408</code> hardcodeado, no calibrado</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Transmisión MJPEG</strong></td>
+<td style="text-align:left"><code>webrtc/mjpeg_server.py</code></td>
+<td style="text-align:left">✅ Operativo</td>
+<td style="text-align:left"><code>:8082/stream</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Transmisión WebRTC</strong></td>
+<td style="text-align:left"><code>webrtc/signaling_server.py</code></td>
+<td style="text-align:left">🟡 Experimental</td>
+<td style="text-align:left">Funciona, pero MJPEG es recomendado</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>MQTT Publisher</strong></td>
+<td style="text-align:left"><code>mqtt/publisher.py</code></td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left">487 líneas, TLS, QoS, reconexión exponencial</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Simulador</strong></td>
+<td style="text-align:left"><code>simulator/crack_simulator.py</code></td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left">Generador de eventos sintéticos, desactivado por defecto</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Backend API .NET</strong></td>
+<td style="text-align:left"><code>Controllers/</code>, <code>Models/</code></td>
+<td style="text-align:left">✅ Estructura completa</td>
+<td style="text-align:left">4 controllers, modelos bien tipados, ORM</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Modelo de BD</strong></td>
+<td style="text-align:left"><code>Fisura.cs</code>, <code>MedicionDiaria.cs</code>, <code>Alerta.cs</code></td>
+<td style="text-align:left">✅ Diseñado</td>
+<td style="text-align:left">Esquema relacional con delta%, critica, historial</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Frontend Video</strong></td>
+<td style="text-align:left"><code>CamaraMJPEG.tsx</code>, <code>VideoEnVivo.tsx</code></td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left">Soporte MJPEG + WebRTC con toggle</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Overlay Fisuras</strong></td>
+<td style="text-align:left"><code>FisuraOverlay.tsx</code></td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left">Canvas MQTT en tiempo real, auto-limpieza 5s</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Visualización 3D</strong></td>
+<td style="text-align:left"><code>NubePuntos3D.tsx</code></td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left">Three.js/R3F, esferas de fisuras, orbit controls</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Dashboard/Historial</strong></td>
+<td style="text-align:left"><code>PanelAlertas.tsx</code>, <code>TablaHistorial.js</code></td>
+<td style="text-align:left">🟡 En desarrollo</td>
+<td style="text-align:left">Componentes listos, falta datos reales</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Risk Engine</strong></td>
+<td style="text-align:left">—</td>
+<td style="text-align:left">❌ Pendiente</td>
+<td style="text-align:left">Lógica de umbral por definir, modelo <code>es_critica</code> listo en BD</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Comparación temporal</strong></td>
+<td style="text-align:left">—</td>
+<td style="text-align:left">❌ Pendiente</td>
+<td style="text-align:left">Infraestructura BD lista (<code>delta_porcentaje</code>), sin algoritmo</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Raspberry Pi Edge</strong></td>
+<td style="text-align:left"><code>main.py</code> (compatible)</td>
+<td style="text-align:left">🟡 Planificado</td>
+<td style="text-align:left">Código 100% compatible con ARM, sin hardware configurado</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>HD Capture (meshing)</strong></td>
+<td style="text-align:left"><code>capture_hd/manager.py</code></td>
+<td style="text-align:left">🟡 Implementado</td>
+<td style="text-align:left">Open3D meshing on-demand vía MQTT trigger</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>WebXR / VR</strong></td>
+<td style="text-align:left">—</td>
+<td style="text-align:left">❌ No iniciado</td>
+<td style="text-align:left">Dependiente del gemelo digital métrico real</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-brechas-críticas-confirmadas-por-código">6. Brechas Críticas Confirmadas por Código</h2>
+<h3 id="-brecha-1-calibración-no-ejecutada-bloqueante">🔴 Brecha 1: Calibración no ejecutada (BLOQUEANTE)</h3>
+<p><strong>Evidencia:</strong> <code>calibration.json</code> tiene <code>&quot;pixels_per_mm&quot;: null</code>, <code>&quot;calibrated&quot;: false</code>.</p>
+<p><strong>Impacto:</strong> Los valores de <code>length_mm</code>, <code>width_mm</code> y <code>area_mm2</code> publicados vía MQTT y almacenados en PostgreSQL son estimaciones con parámetros genéricos (<code>focal=50mm</code>, <code>dist=10m</code>, <code>pixel=3µm</code>). No son representativos de la cámara real del sistema.</p>
+<p><strong>Solución técnica:</strong> Ejecutar <code>CalibrationService.run_full_calibration()</code> con:</p>
+<ol>
+<li>10–20 fotos de tablero de ajedrez (9×6, cuadros de 25mm)</li>
+<li>Una imagen con marcador ArUco de 100mm de tamaño conocido</li>
+</ol>
+<h3 id="-brecha-2-intrínsecos-3d-hardcodeados">🔴 Brecha 2: Intrínsecos 3D hardcodeados</h3>
+<p><strong>Evidencia:</strong> En <code>publisher.py</code>, líneas 369–372:</p>
+<pre class="hljs"><code><div>fx = intrinsics.get(<span class="hljs-string">&quot;fx&quot;</span>, <span class="hljs-number">1408.0</span>) <span class="hljs-keyword">if</span> intrinsics <span class="hljs-keyword">else</span> <span class="hljs-number">1408.0</span>
+</div></code></pre>
+<p>Y en <code>main.py</code>, línea 438:</p>
+<pre class="hljs"><code><div>intrinsics = {<span class="hljs-string">&quot;fx&quot;</span>: <span class="hljs-number">1408.0</span>, <span class="hljs-string">&quot;fy&quot;</span>: <span class="hljs-number">1408.0</span>, <span class="hljs-string">&quot;cx&quot;</span>: <span class="hljs-number">640.0</span>, <span class="hljs-string">&quot;cy&quot;</span>: <span class="hljs-number">360.0</span>}
+</div></code></pre>
+<p><strong>Impacto:</strong> Las posiciones 3D de las fisuras (<code>x3d</code>, <code>y3d</code>, <code>z3d</code>) en la nube de puntos no son métricamente correctas. La visualización 3D es topológica, no topográfica.</p>
+<p><strong>Solución:</strong> Tras calibrar, cargar <code>fx_px</code> y <code>cx_px</code> del <code>calibration.json</code> y pasarlos al publisher.</p>
+<h3 id="-brecha-3-midas-genera-profundidad-relativa-no-absoluta">🟡 Brecha 3: MiDaS genera profundidad relativa, no absoluta</h3>
+<p><strong>Evidencia:</strong> Código en <code>midas_depth.py</code> líneas 196–198:</p>
+<pre class="hljs"><code><div>DEPTH_MIN_M = <span class="hljs-number">2.0</span>
+DEPTH_MAX_M = <span class="hljs-number">5.0</span>
+depth = depth * (DEPTH_MAX_M - DEPTH_MIN_M) + DEPTH_MIN_M
+</div></code></pre>
+<p><strong>Impacto:</strong> El rango 2–5m es una suposición del programador para taludes. No hay sensor de profundidad físico. Para medición real se necesita cámara estéreo o LIDAR.</p>
+<h3 id="-brecha-4-risk-engine-sin-lógica-de-umbral-real">🟡 Brecha 4: Risk Engine sin lógica de umbral real</h3>
+<p><strong>Evidencia:</strong> El modelo <code>MedicionDiaria.cs</code> tiene <code>EsCritica</code> y <code>DeltaPorcentaje</code>, pero no existe código de evaluación del umbral en el backend (<code>Services/</code>).</p>
+<h3 id="-brecha-5-comparación-temporal-sin-algoritmo-de-alineación">🟡 Brecha 5: Comparación temporal sin algoritmo de alineación</h3>
+<p><strong>Evidencia:</strong> La BD puede almacenar mediciones diarias con <code>DeltaPorcentaje</code>, pero no hay implementación de alineación de imágenes (homografía) para comparar frames en el tiempo.</p>
+<hr>
+<h2 id="7-avance-técnico-para-informe-formal">7. Avance Técnico para Informe Formal</h2>
+<p>A la fecha de este informe, el proyecto ARGOS SLOPE 4.0 ha completado el desarrollo del <strong>núcleo funcional</strong> de su arquitectura distribuida. El módulo de procesamiento Edge ejecuta en producción un pipeline completo que comprende: adquisición de video desde cámara USB, preprocesamiento de imagen (corrección CLAHE y undistort), detección de fisuras mediante análisis de contornos adaptativos con OpenCV, estimación de profundidad monocular via red neuronal MiDaS v3.1, generación de nubes de puntos tridimensionales en formato <code>[x,y,z,r,g,b]</code>, y transmisión concurrente del video procesado mediante los protocolos MJPEG y WebRTC. La comunicación entre el módulo Edge y los servicios de backend se realiza íntegramente vía mensajería MQTT (QoS 1), con esquemas de payload JSON bien definidos y reconexión automática con backoff exponencial.</p>
+<p>El subsistema de visualización, implementado en Next.js con React Three Fiber, recibe y renderiza en tiempo real la nube de puntos 3D del talud, superpone las fisuras detectadas como marcadores tridimensionales y presenta bounding boxes de detección sobre el video en vivo mediante un canvas transparente reactivo. El backend en .NET expone una API REST con un modelo relacional en PostgreSQL que contempla el historial de fisuras, mediciones diarias y alertas con su clasificación de criticidad.</p>
+<p>La etapa inmediatamente prioritaria para escalar este prototipo a un sistema de monitoreo geotécnico confiable es la ejecución de la <strong>calibración óptica de la cámara</strong> mediante tablero de ajedrez y marcadores ArUco, procedimiento que generará los parámetros intrínsecos reales y el factor de conversión px/mm que actualmente el sistema asume con valores genéricos.</p>
+<hr>
+<h2 id="8-qué-se-puede-presentar-al-equipo-ahora">8. Qué se puede presentar al equipo ahora</h2>
+<h3 id="-presentable-con-confianza-total-evidenciado-y-operativo">🟢 Presentable con confianza total (evidenciado y operativo)</h3>
+<ul>
+<li><strong>Pipeline completo Edge en tiempo real:</strong> captura → detección → publicación MQTT</li>
+<li><strong>Transmisión de video en vivo</strong> con bounding boxes de fisuras superpuestos (MJPEG)</li>
+<li><strong>Nube de puntos 3D</strong> recibida y visualizada en navegador via React Three Fiber</li>
+<li><strong>Clasificación de fisuras</strong> en fina/media/gruesa con colores diferenciados</li>
+<li><strong>Arquitectura MQTT</strong> con topics definidos y payload estructurado</li>
+<li><strong>Modelo de datos PostgreSQL</strong> completo: fisura, medición diaria, alerta</li>
+<li><strong>Dashboard multi-sección</strong>: monitoreo, visualización 3D, historial, alertas</li>
+</ul>
+<h3 id="-presentable-con-aclaración-funcional-pero-con-limitaciones-conocidas">🟡 Presentable con aclaración (funcional pero con limitaciones conocidas)</h3>
+<ul>
+<li><strong>Mediciones en mm</strong> → <em>Aclaración: calculadas con parámetros físicos estimados, pendiente calibración con cámara real</em></li>
+<li><strong>Posiciones 3D de fisuras</strong> → <em>Aclaración: usando intrínsecos fijos, no calibrados</em></li>
+<li><strong>Profundidad MiDaS</strong> → <em>Aclaración: IA monocular escalada a 2–5m, no es LIDAR</em></li>
+<li><strong>Detector ONNX</strong> → <em>Aclaración: infraestructura lista, sin modelo entrenado aún</em></li>
+</ul>
+<h3 id="-no-prometer-en-esta-etapa">🔴 No prometer en esta etapa</h3>
+<ul>
+<li>Precisión milimétrica certificada para monitoreo geotécnico real</li>
+<li>Comparación temporal robusta de crecimiento de fisuras</li>
+<li>Risk Engine con umbrales geotécnicos validados</li>
+<li>Visualización WebXR / Realidad Virtual funcional</li>
+<li>Detección sin falsos positivos en campo (rocas, vegetación, luz solar)</li>
+</ul>
+<hr>
+<h2 id="9-roadmap-con-estado-actual">9. Roadmap con Estado Actual</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Fase</th>
+<th style="text-align:left">Objetivo</th>
+<th style="text-align:left">Estado</th>
+<th style="text-align:left">Criterio de aceptación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>F1 — Captura local</strong></td>
+<td style="text-align:left">Cámara estable en laptop</td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left">Video continuo, FPS configurables</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>F2 — Pipeline detección</strong></td>
+<td style="text-align:left">OpenCV → MQTT</td>
+<td style="text-align:left">✅ Completado</td>
+<td style="text-align:left"><code>CrackResult</code> con clasificación publicado</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>F3 — Calibración</strong></td>
+<td style="text-align:left">Factor px/mm real</td>
+<td style="text-align:left">🔴 Pendiente</td>
+<td style="text-align:left"><code>calibration.json</code> con <code>pixels_per_mm &gt; 0</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>F4 — Backend e historial</strong></td>
+<td style="text-align:left">Persistencia real</td>
+<td style="text-align:left">🟡 Parcial</td>
+<td style="text-align:left">API operativa, falta ingestión de datos reales</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>F5 — Comparación temporal</strong></td>
+<td style="text-align:left">Detección de crecimiento</td>
+<td style="text-align:left">❌ Pendiente</td>
+<td style="text-align:left"><code>delta_porcentaje</code> calculado automáticamente</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>F6 — Risk Engine</strong></td>
+<td style="text-align:left">Alertas geotécnicas</td>
+<td style="text-align:left">❌ Pendiente</td>
+<td style="text-align:left">Umbrales configurables, alertas con <code>is_critical=true</code></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>F7 — Gemelo digital 3D</strong></td>
+<td style="text-align:left">Fisuras proyectadas con métrica</td>
+<td style="text-align:left">🟡 Parcial</td>
+<td style="text-align:left">Visualización correcta tras calibración</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>F8 — Raspberry Pi edge</strong></td>
+<td style="text-align:left">Captura remota</td>
+<td style="text-align:left">🟡 Planificado</td>
+<td style="text-align:left">Edge corre en ARM, datos llegan al servidor</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>F9 — WebXR</strong></td>
+<td style="text-align:left">Navegación inmersiva</td>
+<td style="text-align:left">❌ No iniciado</td>
+<td style="text-align:left">Dependiente de F3–F7</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="10-tareas-técnicas-prioritarias-próximas-2-semanas">10. Tareas Técnicas Prioritarias (Próximas 2 semanas)</h2>
+<h3 id="semana-1--cerrar-la-brecha-de-calibración">Semana 1 — Cerrar la brecha de calibración</h3>
+<ol>
+<li><strong>Imprimir tablero de ajedrez</strong> 9×6, cuadros de 25mm exactos</li>
+<li><strong>Tomar 15–20 fotos</strong> del tablero con la misma cámara USB, distintos ángulos</li>
+<li><strong>Imprimir marcador ArUco</strong> de 100mm, colocarlo en la escena del talud</li>
+<li><strong>Ejecutar <code>CalibrationService.run_full_calibration()</code></strong> y verificar que <code>calibration.json</code> quede con <code>calibrated: true</code></li>
+<li><strong>Conectar intrínsecos</strong> de <code>calibration.json</code> al <code>publisher.py</code> (reemplazar <code>fx=1408.0</code> por los reales)</li>
+<li><strong>Reiniciar el edge</strong> y verificar que <code>length_mm</code> cambie respecto al valor anterior</li>
+</ol>
+<h3 id="semana-2--datos-reales-al-backend-y-validación">Semana 2 — Datos reales al backend y validación</h3>
+<ol start="7">
+<li><strong>Habilitar escritura a PostgreSQL</strong> desde el worker MQTT del backend</li>
+<li><strong>Probar flujo completo</strong>: fisura detectada → MQTT → backend → BD → frontend historial</li>
+<li><strong>Implementar cálculo de <code>delta_porcentaje</code></strong> al guardar nueva medición diaria</li>
+<li><strong>Validar con imágenes reales del talud</strong> que el detector no genere exceso de falsos positivos</li>
+<li><strong>Documentar parámetros ajustados</strong> de <code>ADAPTIVE_BLOCK</code>, <code>ADAPTIVE_C</code> y <code>MIN_CONTOUR_AREA</code> para el entorno real</li>
+</ol>
+<hr>
+<h2 id="11-riesgos-técnicos">11. Riesgos Técnicos</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Riesgo</th>
+<th style="text-align:left">Probabilidad</th>
+<th style="text-align:left">Impacto</th>
+<th style="text-align:left">Mitigación</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Calibración difícil por condiciones de luz en talud</td>
+<td style="text-align:left">Alta</td>
+<td style="text-align:left">Alto</td>
+<td style="text-align:left">Realizar calibración indoor; usar solo escala ArUco en campo</td>
+</tr>
+<tr>
+<td style="text-align:left">MiDaS no distingue profundidad real en roca uniforme</td>
+<td style="text-align:left">Alta</td>
+<td style="text-align:left">Medio</td>
+<td style="text-align:left">Documentar limitación; evaluar cámara estéreo para fase futura</td>
+</tr>
+<tr>
+<td style="text-align:left">Alto CPU por MiDaS + WebRTC en laptop simultáneo</td>
+<td style="text-align:left">Media</td>
+<td style="text-align:left">Medio</td>
+<td style="text-align:left"><code>DEPTH_FPS=2</code> o <code>DEPTH_ENABLED=false</code> si hay throttling</td>
+</tr>
+<tr>
+<td style="text-align:left">Falsos positivos en campo (sombras, polvo, vegetación)</td>
+<td style="text-align:left">Alta</td>
+<td style="text-align:left">Alto</td>
+<td style="text-align:left">Ajustar <code>ADAPTIVE_BLOCK</code>, <code>MIN_CONTOUR_AREA</code> y activar filtros geométricos</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>SIMULATOR_ENABLED=true</code> accidentalmente en producción</td>
+<td style="text-align:left">Baja</td>
+<td style="text-align:left">Alto</td>
+<td style="text-align:left">Verificar <code>.env</code> antes de deploy; agregar log de advertencia visible</td>
+</tr>
+<tr>
+<td style="text-align:left">Raspberry Pi sin microSD retrasa pruebas en campo</td>
+<td style="text-align:left">Actual</td>
+<td style="text-align:left">Medio</td>
+<td style="text-align:left">Continuar validando con laptop; priorizar calibración</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="12-conclusión">12. Conclusión</h2>
+<p>El proyecto ARGOS SLOPE 4.0 tiene un <strong>núcleo técnico construido y en ejecución</strong>. La arquitectura distribuida (Edge Python → MQTT → Backend .NET → PostgreSQL → Frontend Next.js → Visualización 3D) está operativa y demuestra el flujo completo del sistema. El detector de fisuras clasifica correctamente por severidad, la nube de puntos se visualiza en 3D en tiempo real, y el modelo de datos soporta el historial evolutivo que el Risk Engine necesitará.</p>
+<p><strong>La prioridad absoluta</strong> es ejecutar la calibración óptica de la cámara. Sin ella, el sistema funciona como una demostración visual convincente, pero sus mediciones en milímetros carecen de validez geotécnica. Una vez calibrado, el sistema estará listo para producir datos reales que alimenten el historial, el motor de riesgo y el gemelo digital métrico.</p>
+<hr>
+<h2 id="pitch-de-1-minuto-exposición-oral">Pitch de 1 Minuto (Exposición oral)</h2>
+<blockquote>
+<p><em>&quot;Buenas, equipo. El core de ARGOS SLOPE 4.0 ya está construido y funcionando. Tenemos un pipeline completo: la cámara captura video, OpenCV detecta fisuras en tiempo real, una IA calcula la profundidad del talud, y todo eso se transmite en vivo al dashboard con una nube de puntos 3D navegable en el navegador.</em></p>
+<p><em>Lo que ven en pantalla es real: el video viene del edge, los bounding boxes de fisuras vienen de MQTT, y la visualización 3D se actualiza automáticamente.</em></p>
+<p><em>Ahora bien, siendo honestos: las medidas en milímetros que muestra el sistema hoy están calculadas con parámetros genéricos, porque todavía no hemos calibrado la cámara. Esa es nuestra tarea número uno de esta semana: imprimir un tablero de ajedrez, tomar las fotos de calibración, y dejar el sistema midiendo con precisión real. Con eso resuelto, el resto del trabajo —historial, alertas, risk engine— ya tiene la infraestructura lista para recibir los datos.&quot;</em></p>
+</blockquote>
+<hr>
+<p><em>Documento generado con análisis directo del código fuente del repositorio.</em>
+<em>Módulos revisados: <code>edge/main.py</code>, <code>detector/fisura_detector.py</code>, <code>calibration/calibration_service.py</code>, <code>calibration/calibration.json</code>, <code>depth/midas_depth.py</code>, <code>mqtt/publisher.py</code>, <code>config.py</code>, <code>backend/Models/*.cs</code>, <code>backend/Controllers/FisurasController.cs</code>, <code>frontend/components/NubePuntos3D.tsx</code>, <code>frontend/components/FisuraOverlay.tsx</code>, <code>frontend/app/monitoreo/page.js</code></em></p>
+
+</body>
+</html>

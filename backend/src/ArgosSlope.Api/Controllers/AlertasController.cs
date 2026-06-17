@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ArgosSlope.Api.Models;
 using ArgosSlope.Api.Models.Dtos;
 using ArgosSlope.Api.Services;
 
@@ -15,7 +16,7 @@ public class AlertasController : ControllerBase
         _repo = repo;
     }
 
-    /// <summary>Listar alertas, con filtro opcional de no reconocidas.</summary>
+    /// <summary>Listar todas las alertas</summary>
     [HttpGet]
     public async Task<ActionResult<List<AlertaResponse>>> GetAll(
         [FromQuery] bool soloNoReconocidas = false)
@@ -23,7 +24,7 @@ public class AlertasController : ControllerBase
         var alertas = await _repo.GetAlertasAsync(soloNoReconocidas);
         return alertas.Select(a => new AlertaResponse(
             Id: a.Id,
-            FisuraId: a.FisuraId,
+            CrackId: a.CrackId,
             Fecha: a.Fecha,
             Tipo: a.Tipo,
             Mensaje: a.Mensaje,
@@ -33,7 +34,7 @@ public class AlertasController : ControllerBase
         )).ToList();
     }
 
-    /// <summary>Reconocer (ack) una alerta.</summary>
+    /// <summary>Reconocer (acknowledge) una alerta</summary>
     [HttpPut("{id:int}/reconocer")]
     public async Task<ActionResult<AlertaResponse>> Reconocer(int id)
     {
@@ -43,7 +44,7 @@ public class AlertasController : ControllerBase
 
         return new AlertaResponse(
             Id: alerta.Id,
-            FisuraId: alerta.FisuraId,
+            CrackId: alerta.CrackId,
             Fecha: alerta.Fecha,
             Tipo: alerta.Tipo,
             Mensaje: alerta.Mensaje,
@@ -51,5 +52,34 @@ public class AlertasController : ControllerBase
             ValorActual: alerta.ValorActual,
             Reconocida: alerta.Reconocida
         );
+    }
+
+    /// <summary>Crear una alerta manualmente</summary>
+    [HttpPost]
+    public async Task<ActionResult<AlertaResponse>> Create(
+        [FromBody] RegistrarAlertaRequest request)
+    {
+        var alerta = new Alerta
+        {
+            Fecha = DateTime.UtcNow,
+            Tipo = request.Tipo,
+            Mensaje = request.Mensaje,
+            UmbralSuperado = request.UmbralSuperado,
+            ValorActual = request.ValorActual,
+            Reconocida = false,
+        };
+
+        var created = await _repo.CreateAlertaAsync(alerta);
+
+        return CreatedAtAction(nameof(GetAll), new AlertaResponse(
+            Id: created.Id,
+            CrackId: created.CrackId,
+            Fecha: created.Fecha,
+            Tipo: created.Tipo,
+            Mensaje: created.Mensaje,
+            UmbralSuperado: created.UmbralSuperado,
+            ValorActual: created.ValorActual,
+            Reconocida: created.Reconocida
+        ));
     }
 }

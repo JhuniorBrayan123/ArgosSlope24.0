@@ -44,10 +44,72 @@ from edge.mqtt.publisher import MqttPublisher
 from edge.preprocessing.preprocessor import EdgePreprocessor
 from edge.webrtc.shared_frame import shared_frame
 
+# ── Calibration loader ─────────────────────────────────────────────
+CALIBRATION_PATH = Path(__file__).parent / "calibration" / "calibration.json"
+
+def load_calibration_intrinsics() -> dict:
+    """
+    Load camera intrinsics from calibration.json.
+
+    Returns a dict with fx, fy, cx, cy if calibrated,
+    or raises RuntimeError if not calibrated.
+    """
+    if not CALIBRATION_PATH.exists():
+        raise RuntimeError("calibration.json not found")
+
+    import json
+    try:
+        with open(CALIBRATION_PATH) as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        raise RuntimeError(f"Invalid calibration.json: {exc}") from exc
+
+    if not data.get("calibrated", False):
+        raise RuntimeError("Camera not calibrated (calibrated=false in calibration.json)")
+
+    fx = data.get("fx_px")
+    fy = data.get("fy_px")
+    cx = data.get("cx_px")
+    cy = data.get("cy_px")
+
+    if not all(v is not None and v > 0 for v in [fx, fy, cx, cy]):
+        raise RuntimeError("Incomplete calibration data: fx, fy, cx, cy must be > 0")
+
+    return {"fx": float(fx), "fy": float(fy), "cx": float(cx), "cy": float(cy)}
+
+
+def get_intrinsics() -> dict:
+    """
+    Get camera intrinsics, with fallback to hardcoded defaults.
+
+    Returns a dict with fx, fy, cx, cy and a 'calibrated' flag.
+    The Edge MUST log a warning when using fallback values.
+    """
+    try:
+        intrinsics = load_calibration_intrinsics()
+        intrinsics["calibrated"] = True
+        logger.info("Camera intrinsics loaded from calibration.json: fx=%.1f fy=%.1f cx=%.1f cy=%.1f",
+                     intrinsics["fx"], intrinsics["fy"], intrinsics["cx"], intrinsics["cy"])
+        return intrinsics
+    except RuntimeError as e:
+        logger.warning("⚠ Camera NOT calibrated: %s", e)
+        logger.warning("⚠ Using hardcoded fallback intrinsics (fx=1408, fy=1408, cx=640, cy=360)")
+        logger.warning("⚠ 3D measurements will NOT be metrically accurate until calibration is performed.")
+        return {
+            "fx": 1408.0,
+            "fy": 1408.0,
+            "cx": 640.0,
+            "cy": 360.0,
+            "calibrated": False,
+        }
+
 if config.depth_enabled:
     from edge.depth.midas_depth import MidasDepthEstimator
 if config.pointcloud_enabled:
     from edge.pointcloud.generator import PointCloudGenerator
+if config.mesh_enabled:
+    from edge.pointcloud.mesh_generator import DepthMeshGenerator
+    from edge.reconstruction.snapshot_builder import SnapshotBuilder
 if config.simulator_enabled:
     from edge.simulator.crack_simulator import CrackSimulator
 if config.hd_capture_enabled:
@@ -91,9 +153,41 @@ def open_camera(source: str) -> cv2.VideoCapture:
         RuntimeError: If the camera/video cannot be opened.
     """
     if source.isdigit():
-        # Windows → DirectShow, Linux → V4L2, macOS → AVFOUNDATION
-        backend = cv2.CAP_DSHOW if os.name == "nt" else cv2.CAP_V4L2
-        cap = cv2.VideoCapture(int(source), backend)
+        index = int(source)
+        cap: cv2.VideoCapture | None = None
+
+        if os.name == "nt":
+            # Windows: DSHOW often fails on index 0; try MSMF first.
+            backends: list[tuple[int, str]] = [
+                (cv2.CAP_MSMF, "MSMF"),
+                (cv2.CAP_DSHOW, "DSHOW"),
+            ]
+            for backend, name in backends:
+                candidate = cv2.VideoCapture(index, backend)
+                if candidate.isOpened():
+                    ret, _ = candidate.read()
+                    if ret:
+                        logger.info(
+                            "Camera opened: index=%d, backend=%s", index, name
+                        )
+                        cap = candidate
+                        break
+                    candidate.release()
+
+            if cap is None:
+                candidate = cv2.VideoCapture(index)
+                if candidate.isOpened():
+                    ret, _ = candidate.read()
+                    if ret:
+                        logger.info("Camera opened: index=%d, backend=default", index)
+                        cap = candidate
+                    else:
+                        candidate.release()
+        else:
+            cap = cv2.VideoCapture(index, cv2.CAP_V4L2)
+
+        if cap is None or not cap.isOpened():
+            raise RuntimeError(f"Cannot open camera source: {source}")
     else:
         path = Path(source)
         if not path.exists():
@@ -103,10 +197,26 @@ def open_camera(source: str) -> cv2.VideoCapture:
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open camera source: {source}")
 
-    # Set resolution
+    # Set resolution and verify the stream still delivers frames
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, config.frame_width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config.frame_height)
     cap.set(cv2.CAP_PROP_FPS, config.fps)
+
+    ret, _ = cap.read()
+    if not ret:
+        logger.warning(
+            "Camera read failed at %dx%d — retrying with native resolution.",
+            config.frame_width,
+            config.frame_height,
+        )
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        ret, _ = cap.read()
+        if not ret:
+            cap.release()
+            raise RuntimeError(
+                f"Camera source {source} opened but cannot read frames."
+            )
 
     actual_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     actual_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -295,18 +405,52 @@ def main() -> None:
         )
         logger.info("Debug drawer enabled.")
 
-    # ── 1b. Initialize 3D pipeline (depth + point cloud + simulator) ─
+    # ── 1b. Initialize 3D pipeline (depth + point cloud + mesh) ───
     depth_estimator = None
     pointcloud_gen = None
+    mesh_gen = None
+    snapshot_builder = None
     crack_simulator = None
+    camera_intrinsics = get_intrinsics()
+
+    logger.info(
+        "Camera source=%s ROI=%s",
+        config.camera_source,
+        config.roi if config.roi else "FULL_FRAME (no ROI)",
+    )
 
     if config.depth_enabled:
         depth_estimator = MidasDepthEstimator()
         logger.info("Depth estimator initialized: %s", type(depth_estimator).__name__)
 
     if config.pointcloud_enabled:
-        pointcloud_gen = PointCloudGenerator()
+        pointcloud_gen = PointCloudGenerator(intrinsics=camera_intrinsics)
         logger.info("Point cloud generator initialized.")
+
+    if config.mesh_enabled:
+        mesh_gen = DepthMeshGenerator(
+            fx=camera_intrinsics["fx"],
+            fy=camera_intrinsics["fy"],
+            cx=camera_intrinsics["cx"],
+            cy=camera_intrinsics["cy"],
+        )
+        snapshot_builder = SnapshotBuilder(
+            fx=camera_intrinsics["fx"],
+            fy=camera_intrinsics["fy"],
+            cx=camera_intrinsics["cx"],
+            cy=camera_intrinsics["cy"],
+        )
+        logger.info(
+            "SnapshotBuilder initialized (mesh_step=%d, roi=%s, require_roi=%s).",
+            config.mesh_step,
+            config.roi or "MISSING",
+            config.require_roi_for_3d,
+        )
+        if not config.roi and config.require_roi_for_3d:
+            logger.warning(
+                "⚠ REQUIRE_ROI_FOR_3D=true but ROI is not set. "
+                "3D reconstruction will be skipped until ROI=x,y,w,h is configured."
+            )
 
     if config.simulator_enabled:
         crack_simulator = CrackSimulator()
@@ -337,6 +481,16 @@ def main() -> None:
             ema_alpha=config.temporal_ema_alpha,
         )
         history_store = JsonCrackHistoryStore(config.temporal_history_path)
+
+    # ── 2. Open camera ──────────────────────────────────────────────
+    cap = open_camera(config.camera_source)
+
+    # ── 3. MQTT publisher (before alert engine — it needs publisher) ─
+    publisher = MqttPublisher()
+    try:
+        publisher.connect()
+    except (ConnectionError, ImportError) as exc:
+        logger.warning("MQTT unavailable — continuing without publishing: %s", exc)
 
     # ── 1d. Alert engine (velocity-based alerts) ─────────────────────
     alert_engine = None
@@ -390,16 +544,6 @@ def main() -> None:
             config.data_collection_output_dir,
         )
 
-    # ── 2. Open camera ──────────────────────────────────────────────
-    cap = open_camera(config.camera_source)
-
-    # ── 3. MQTT publisher ───────────────────────────────────────────
-    publisher = MqttPublisher()
-    try:
-        publisher.connect()
-    except (ConnectionError, ImportError) as exc:
-        logger.warning("MQTT unavailable — continuing without publishing: %s", exc)
-
     # ── 3b. HD Capture Manager ──────────────────────────────────────
     hd_capture = None
     latest_rgb_pc: Optional[np.ndarray] = None
@@ -440,6 +584,67 @@ def main() -> None:
         else:
             logger.warning("MQTT no disponible — captura HD no puede recibir señales.")
 
+    # ── 3c. 2D Monitoring Command Listener ───────────────────────────
+    from edge.analyzer.analyzer_pipeline import AnalyzerPipeline
+    import json
+    
+    analyzer_2d = AnalyzerPipeline(mm_per_px=1.0) # Podríamos cargarlo de calibración luego
+    global_base_image_2d = None
+    global_latest_frame_2d = None
+
+    # Handler de comandos 2D (se registra via message_callback_add abajo)
+    def _on_analyzer_cmd(client, userdata, msg) -> None:
+        nonlocal global_base_image_2d
+        logger.info("Comando de análisis 2D recibido en topic=%s", msg.topic)
+        try:
+            payload = json.loads(msg.payload.decode('utf-8'))
+            cmd = payload.get("command")
+            zoneId = payload.get("zoneId")
+            
+            # Obtener frame actual almacenado por el loop principal
+            current_frame = global_latest_frame_2d
+            if current_frame is None:
+                logger.warning("No hay frame actual disponible para 2D.")
+                return
+            
+            if cmd == "save_base_image":
+                global_base_image_2d = current_frame.copy()
+                resp = {
+                    "captureId": payload.get("timestamp"),
+                    "zoneId": zoneId,
+                    "isBaseImage": True,
+                    "success": True
+                }
+                client.publish(f"argos/{config.device_id}/analysis2d", json.dumps(resp))
+                logger.info("Base image 2D guardada localmente.")
+            
+            elif cmd == "capture" or cmd == "compare_detachment":
+                base = global_base_image_2d if cmd == "compare_detachment" else None
+                result = analyzer_2d.execute(current_frame, payload, base)
+                result["captureId"] = payload.get("timestamp")
+                result["zoneId"] = zoneId
+                result["isBaseImage"] = False
+                
+                client.publish(f"argos/{config.device_id}/analysis2d", json.dumps(result))
+                logger.info(f"Análisis 2D finalizado y publicado para zona {zoneId}")
+        except Exception as e:
+            logger.error("Error al procesar comando 2D: %s", e)
+
+    # Función que configura las suscripciones 2D en el cliente MQTT
+    # Se llama al conectar (inicial) y al reconectar (via on_connect_handler)
+    def _setup_2d_subscriptions(mqtt_client) -> None:
+        cmd_topic = f"argos/{config.device_id}/commands/capture"
+        mqtt_client.message_callback_add(cmd_topic, _on_analyzer_cmd)
+        mqtt_client.subscribe(cmd_topic)
+        logger.info("Suscrito a comandos 2D: %s", cmd_topic)
+
+    # Registrar handler para que las suscripciones sobrevivan a reconexiones
+    publisher.on_connect_handler = _setup_2d_subscriptions
+
+    # Configurar ahora (el publisher ya está conectado porque connect() espera la confirmación)
+    if publisher.connected and publisher._client is not None:
+        _setup_2d_subscriptions(publisher._client)
+
     # ── 4. Processing loop ──────────────────────────────────────────
     frame_count = 0
     last_telemetry = 0.0
@@ -449,7 +654,9 @@ def main() -> None:
 
     # 3D pipeline state
     latest_point_cloud = None
+    latest_mesh = None
     latest_depth_frame_num = 0
+    last_snapshot_publish = 0.0
     depth_frame_interval = max(1, int(config.fps / max(1, config.depth_fps))) if config.depth_enabled else 0
 
     try:
@@ -459,8 +666,8 @@ def main() -> None:
             # ── Read frame ──────────────────────────────────────────
             ret, frame = cap.read()
             if not ret:
-                logger.warning("End of video stream or read error — reconnecting...")
-                time.sleep(1.0)
+                logger.warning("Frame read failed — reconnecting camera...")
+                time.sleep(0.5)
                 cap.release()
                 cap = open_camera(config.camera_source)
                 continue
@@ -469,6 +676,9 @@ def main() -> None:
 
             # ── Apply ROI ───────────────────────────────────────────
             roi_frame = apply_roi(frame, config.roi)
+            
+            # Guardar frame para el callback 2D
+            global_latest_frame_2d = roi_frame.copy()
 
             # ── Preprocess ──────────────────────────────────────────
             proc_frame = roi_frame
@@ -533,6 +743,35 @@ def main() -> None:
                         vel_str,
                     )
 
+                    import base64
+                    from pathlib import Path
+                    
+                    image_path_str = ""
+                    mask_path_str = ""
+                    
+                    if hasattr(tc, 'image_base64') and (tc.image_base64 or getattr(tc, 'mask_base64', '')):
+                        cap_dir = Path(config.capturas_dir)
+                        cap_dir.mkdir(parents=True, exist_ok=True)
+                        ts_str = now_ts.strftime("%Y%m%d_%H%M%S")
+                        
+                        if getattr(tc, 'image_base64', ''):
+                            try:
+                                img_bytes = base64.b64decode(tc.image_base64)
+                                img_file = cap_dir / f"{tc.roi_id}_{ts_str}_orig.jpg"
+                                img_file.write_bytes(img_bytes)
+                                image_path_str = img_file.name
+                            except Exception as e:
+                                logger.error("Error saving image crop: %s", e)
+                                
+                        if getattr(tc, 'mask_base64', ''):
+                            try:
+                                mask_bytes = base64.b64decode(tc.mask_base64)
+                                mask_file = cap_dir / f"{tc.roi_id}_{ts_str}_mask.jpg"
+                                mask_file.write_bytes(mask_bytes)
+                                mask_path_str = mask_file.name
+                            except Exception as e:
+                                logger.error("Error saving mask crop: %s", e)
+
                     # Persist snapshot
                     snapshot = CrackSnapshot(
                         tracking_id=tc.track_id,
@@ -546,6 +785,8 @@ def main() -> None:
                         is_new=False,
                         velocity_mm_day=v,
                         frame_number=frame_count,
+                        image_path=image_path_str,
+                        mask_path=mask_path_str,
                     )
                     history_store.save_snapshot(snapshot)
 
@@ -624,48 +865,88 @@ def main() -> None:
                         frame_count,
                     )
 
-            # ── 3D Pipeline (Depth + Point Cloud) ───────────────────
-            # Depth estimation is throttled to depth_fps to save CPU.
+            # ── 3D Pipeline: SnapshotBuilder (depth→validate→mesh→project) ────
+            # Depth estimation throttled to depth_fps to save CPU.
             if depth_estimator is not None and depth_frame_interval > 0:
                 if frame_count - latest_depth_frame_num >= depth_frame_interval:
                     depth_map = depth_estimator.estimate(roi_frame)
                     if depth_map is not None:
                         latest_depth_frame_num = frame_count
+                        latest_depth_map = depth_map
+                        rgb_for_pc = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2RGB)
+
                         if pointcloud_gen is not None:
-                            rgb_for_pc = cv2.cvtColor(roi_frame, cv2.COLOR_BGR2RGB)
                             pc_result = pointcloud_gen.generate(
                                 rgb_for_pc, depth_map, frame_count,
                             )
-                            latest_point_cloud = pc_result.points if pc_result.points.size > 0 else None
+                            latest_point_cloud = (
+                                pc_result.points if pc_result.points.size > 0 else None
+                            )
+
+                        # Build snapshot via quality-gated builder
+                        if snapshot_builder is not None:
+                            snap_result = snapshot_builder.build(
+                                roi_frame=roi_frame,
+                                raw_depth=depth_map,
+                                cracks=cracks,
+                            )
+                            # Update latest_mesh for HD capture manager
+                            if snap_result.mode == "3d_valid" and snap_result.mesh is not None:
+                                latest_mesh = snap_result.mesh
+                            elif snap_result.mode != "3d_valid":
+                                latest_mesh = None
+                        elif mesh_gen is not None:
+                            # Fallback: direct mesh_gen without quality gate
+                            mesh_result = mesh_gen.generate(
+                                depth_map,
+                                frame_width=roi_frame.shape[1],
+                                frame_height=roi_frame.shape[0],
+                            )
+                            latest_mesh = mesh_result if mesh_result.face_count > 0 else None
+                            snap_result = None
+                        else:
+                            snap_result = None
 
                         # Guardar para captura HD (RGB + depth a resolución completa)
                         latest_rgb_pc = rgb_for_pc
-                        latest_depth_map = depth_map
                     else:
-                        # Depth returned None — skip point cloud generation
                         latest_point_cloud = None
+                        latest_mesh = None
+                        latest_depth_map = None
+                        snap_result = None
+            else:
+                snap_result = None
 
             # ── Simulator (crack events at random intervals) ─────────
             sim_event = None
             if crack_simulator is not None:
                 sim_event = crack_simulator.update(frame_count, roi_frame)
 
-            # ── Publish 3D alert if data is available ───────────────
-            # Usa fisuras reales (detector) o simuladas
-            cracks_for_3d = cracks if cracks else (sim_event.cracks if sim_event else [])
-            image_path_3d = sim_event.image_path if sim_event else ""
-            has_pc = latest_point_cloud is not None
-            if publisher.connected and (has_pc or cracks_for_3d):
-                pc_for_publish = latest_point_cloud if has_pc else np.empty((0, 6), dtype=np.float32)
-                intrinsics = {"fx": 1408.0, "fy": 1408.0, "cx": 640.0, "cy": 360.0}
-                publisher.publish_alert_3d(
-                    point_cloud=pc_for_publish,
-                    cracks=cracks_for_3d,
-                    image_path=image_path_3d,
+            # ── Publish Snapshot3D (mesh + texture + cracks) ──────────
+            now_snap = time.time()
+            snapshot_due = (
+                now_snap - last_snapshot_publish >= config.snapshot_publish_interval_s
+            )
+
+            if (
+                publisher.connected
+                and snapshot_due
+            ):
+                publisher.publish_snapshot_3d(
+                    cracks=cracks,
                     device_id=config.device_id,
-                    depth_map=latest_depth_map,
-                    intrinsics=intrinsics,
+                    depth_map=None,
+                    intrinsics=camera_intrinsics,
+                    mesh_vertices=None,
+                    mesh_indices=None,
+                    mesh_uvs=None,
+                    mesh_centroid=None,
+                    mesh_scale=1.0,
+                    point_cloud=None,
+                    image_bgr=roi_frame,
+                    image_path="",
                 )
+                last_snapshot_publish = now_snap
 
             # ── Publish via MQTT ────────────────────────────────────
             if cracks and publisher.connected:

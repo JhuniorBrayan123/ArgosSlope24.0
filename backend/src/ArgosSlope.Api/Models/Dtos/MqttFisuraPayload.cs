@@ -2,11 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace ArgosSlope.Api.Models.Dtos;
 
-/// <summary>
-/// Payload MQTT recibido desde el edge (Raspberry Pi).
-/// Corresponde al JSON publicado por edge/mqtt/publisher.py publish_fisura().
-/// Los nombres de propiedad usan [JsonPropertyName] para mapear desde snake_case (Python) a PascalCase (C#).
-/// </summary>
 public class MqttFisuraPayload
 {
     [JsonPropertyName("event")]
@@ -18,7 +13,6 @@ public class MqttFisuraPayload
     [JsonPropertyName("timestamp")]
     public double Timestamp { get; set; }
 
-    // ── Datos de la fisura ──
     [JsonPropertyName("roi_id")]
     public string RoiId { get; set; } = string.Empty;
 
@@ -40,14 +34,14 @@ public class MqttFisuraPayload
     [JsonPropertyName("center_y")]
     public int CenterY { get; set; }
 
-    [JsonPropertyName("length_mm")]
-    public double LengthMm { get; set; }
+    [JsonPropertyName("largo")]
+    public double Largo { get; set; }
 
-    [JsonPropertyName("width_mm")]
-    public double WidthMm { get; set; }
+    [JsonPropertyName("ancho")]
+    public double Ancho { get; set; }
 
-    [JsonPropertyName("area_mm2")]
-    public double AreaMm2 { get; set; }
+    [JsonPropertyName("area")]
+    public double Area { get; set; }
 
     [JsonPropertyName("classification")]
     public string Classification { get; set; } = "none";
@@ -58,7 +52,6 @@ public class MqttFisuraPayload
     [JsonPropertyName("confidence")]
     public double Confidence { get; set; }
 
-    // ── Alertas (para crecimiento/umbral) ──
     [JsonPropertyName("delta_percent")]
     public double? DeltaPercent { get; set; }
 
@@ -67,11 +60,23 @@ public class MqttFisuraPayload
 
     [JsonPropertyName("is_critical")]
     public bool? IsCritical { get; set; }
+
+    [JsonPropertyName("unidad")]
+    public string Unidad { get; set; } = "px";
+
+    [JsonPropertyName("calibrado")]
+    public bool Calibrado { get; set; }
+
+    [JsonPropertyName("origen")]
+    public string Origen { get; set; } = "real";
+
+    [JsonPropertyName("image_base64")]
+    public string? ImageBase64 { get; set; }
+
+    [JsonPropertyName("mask_base64")]
+    public string? MaskBase64 { get; set; }
 }
 
-/// <summary>
-/// Payload MQTT de telemetría del edge.
-/// </summary>
 public class MqttTelemetryPayload
 {
     public string Event { get; set; } = string.Empty;

@@ -1,0 +1,325 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Google Fonts ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── ARGOS SLOPE 4.0 — Design System Variables ───────────────── */
+:root {
+  --bg-primary:      #080C14;
+  --bg-secondary:    #0D1321;
+  --bg-surface:      #111827;
+  --bg-elevated:     #1C2333;
+  --bg-hover:        #1E2D45;
+  --border:          #1E293B;
+  --border-active:   #0EA5C5;
+  --accent:          #0EA5C5;
+  --accent-glow:     rgba(14,165,197,0.2);
+  --success:         #10B981;
+  --warning:         #F59E0B;
+  --danger:          #EF4444;
+  --critical:        #DC2626;
+  --text-primary:    #F1F5F9;
+  --text-secondary:  #94A3B8;
+  --text-muted:      #475569;
+  --sidebar-width:   240px;
+  --sidebar-collapsed: 64px;
+  --topbar-height:   56px;
+}
+
+/* ── Base Reset ──────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ── Focus ───────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Selection ───────────────────────────────────────────────── */
+::selection {
+  background: rgba(14,165,197,0.25);
+  color: var(--text-primary);
+}
+
+/* ── Argos Utility Classes ───────────────────────────────────── */
+@layer components {
+  /* Glass morphism card */
+  .glass-card {
+    background: rgba(17, 24, 39, 0.80);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(30, 41, 59, 0.8);
+  }
+
+  /* Premium card */
+  .argos-card {
+    @apply rounded-xl border border-dark-border bg-dark-surface shadow-card transition-all duration-200;
+  }
+  .argos-card:hover {
+    @apply border-dark-borderActive/30 shadow-card-hover;
+  }
+
+  /* Metric card */
+  .metric-card {
+    @apply rounded-xl border border-dark-border bg-gradient-card p-4 shadow-card transition-all duration-200;
+  }
+
+  /* Status dot */
+  .status-dot {
+    @apply h-2 w-2 rounded-full;
+  }
+  .status-dot-online {
+    @apply status-dot bg-dark-success animate-pulse-slow;
+    box-shadow: 0 0 8px rgba(16,185,129,0.6);
+  }
+  .status-dot-offline {
+    @apply status-dot bg-dark-muted;
+  }
+  .status-dot-warning {
+    @apply status-dot bg-dark-warning animate-pulse-slow;
+  }
+  .status-dot-critical {
+    @apply status-dot bg-dark-critical animate-pulse;
+    box-shadow: 0 0 8px rgba(220,38,38,0.7);
+  }
+
+  /* Risk badge */
+  .risk-bajo {
+    @apply rounded-full bg-dark-success/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-dark-success;
+  }
+  .risk-medio {
+    @apply rounded-full bg-dark-warning/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-dark-warning;
+  }
+  .risk-alto {
+    @apply rounded-full bg-dark-danger/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-dark-danger;
+  }
+  .risk-critico {
+    @apply rounded-full bg-dark-critical/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-dark-critical;
+    animation: glow-pulse-danger 2s ease-in-out infinite;
+  }
+
+  /* Button variants */
+  .btn-primary {
+    @apply flex items-center gap-2 rounded-lg bg-dark-accent px-4 py-2 text-sm font-semibold text-dark-primary transition-all duration-200;
+  }
+  .btn-primary:hover {
+    @apply opacity-90 shadow-glow-accent;
+  }
+  .btn-secondary {
+    @apply flex items-center gap-2 rounded-lg border border-dark-border bg-dark-elevated px-4 py-2 text-sm font-medium text-dark-text transition-all duration-200;
+  }
+  .btn-secondary:hover {
+    @apply border-dark-borderActive/50 bg-dark-hover text-dark-text;
+  }
+  .btn-danger {
+    @apply flex items-center gap-2 rounded-lg bg-dark-danger/10 border border-dark-danger/30 px-4 py-2 text-sm font-medium text-dark-danger transition-all duration-200;
+  }
+  .btn-danger:hover {
+    @apply bg-dark-danger/20;
+  }
+
+  /* Nav item */
+  .nav-item {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150;
+    color: #CBD5E1;
+    border-left: 3px solid transparent;
+  }
+  .nav-item svg {
+    color: #8EA4C8;
+    transition: color 0.15s;
+  }
+  .nav-item:hover {
+    background: rgba(0,209,178,0.10);
+    color: #FFFFFF;
+  }
+  .nav-item:hover svg {
+    color: #00D1B2;
+  }
+  .nav-item.active {
+    background: linear-gradient(90deg, rgba(0,209,178,0.20), rgba(37,99,235,0.10));
+    color: #FFFFFF;
+    border-left-color: #00D1B2;
+    box-shadow: 0 0 18px rgba(0,209,178,0.12);
+  }
+  .nav-item.active svg {
+    color: #00D1B2;
+  }
+
+  /* Input */
+  .argos-input {
+    @apply w-full rounded-lg border border-dark-border bg-dark-elevated px-3 py-2.5 text-sm text-dark-text placeholder-dark-muted;
+    @apply transition-all duration-200 outline-none;
+  }
+  .argos-input:focus {
+    @apply border-dark-accent ring-1 ring-dark-accent/30;
+  }
+
+  /* Skeleton loading */
+  .skeleton {
+    @apply rounded bg-dark-elevated;
+    background: linear-gradient(90deg, #1C2333 0%, #1E2D45 50%, #1C2333 100%);
+    background-size: 400px 100%;
+    animation: shimmer 1.5s linear infinite;
+  }
+
+  /* Live indicator */
+  .live-badge {
+    @apply flex items-center gap-1.5 rounded-full bg-dark-success/10 px-2.5 py-1 text-[11px] font-semibold text-dark-success;
+  }
+
+  /* Section header */
+  .section-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.12em] text-dark-muted;
+  }
+}
+
+/* ── Keyframes adicionales ───────────────────────────────────── */
+@keyframes glow-pulse-danger {
+  0%, 100% { box-shadow: 0 0 6px rgba(220,38,38,0.4); }
+  50%       { box-shadow: 0 0 14px rgba(220,38,38,0.7); }
+}
+
+@keyframes topography-shift {
+  0%   { transform: translateX(0) translateY(0); }
+  100% { transform: translateX(-60px) translateY(-20px); }
+}
+
+/* ── Input range styling ─────────────────────────────────────── */
+input[type="range"] {
+  appearance: none;
+  height: 4px;
+  background: var(--border);
+  border-radius: 9999px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(14,165,197,0.4);
+}
+
+/* ── Table ───────────────────────────────────────────────────── */
+.argos-table {
+  @apply w-full border-collapse text-sm;
+}
+.argos-table th {
+  @apply border-b border-dark-border px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-dark-muted;
+}
+.argos-table td {
+  @apply border-b border-dark-border/40 px-4 py-3 text-dark-secondary;
+}
+.argos-table tr:hover td {
+  @apply bg-dark-hover/40 text-dark-text;
+}
+
+/* ── Login Animations ────────────────────────────────────────── */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInStagger {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+}
+
+@keyframes successFlash {
+  0% { box-shadow: inset 0 0 0 rgba(16,185,129,0); }
+  50% { box-shadow: inset 0 0 20px rgba(16,185,129,0.5); }
+  100% { box-shadow: inset 0 0 0 rgba(16,185,129,0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-stagger {
+  animation: fadeInStagger 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out forwards;
+}
+
+.animate-success {
+  animation: successFlash 0.5s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-in-left,
+  .animate-fade-stagger,
+  .animate-shake,
+  .animate-success,
+  .animate-float,
+  .animate-bounce-slow,
+  .animate-pulse-slow {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}

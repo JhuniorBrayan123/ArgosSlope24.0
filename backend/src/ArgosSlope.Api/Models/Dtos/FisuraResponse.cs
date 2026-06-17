@@ -1,23 +1,27 @@
 namespace ArgosSlope.Api.Models.Dtos;
 
-/// <summary>Respuesta pública de una fisura.</summary>
 public record FisuraResponse(
     int Id,
     string RoiId,
     DateTime FechaDeteccion,
-    double LargoMm,
-    double AnchoMm,
-    double AreaMm2,
+    double Largo,
+    double Ancho,
+    double Area,
     string? Orientacion,
     string? Tipo,
     string? Coordenadas,
     string? ImagenOriginal,
     string? ImagenSegmentada,
     double? DeltaPorcentaje,
-    bool EsCritica
+    bool EsCritica,
+    string Unidad = "px",
+    bool Calibrado = false,
+    double Confianza = 0.0,
+    string Origen = "real",
+    string? EstadoAlerta = null,
+    string? DeviceId = null
 );
 
-/// <summary>Respuesta detallada de una fisura con mediciones y alertas.</summary>
 public record FisuraDetalleResponse(
     FisuraResponse Fisura,
     List<MedicionResponse> Mediciones,
@@ -25,22 +29,20 @@ public record FisuraDetalleResponse(
     List<AlertaResponse> Alertas
 );
 
-/// <summary>Medición diaria de fisura.</summary>
 public record MedicionResponse(
     int Id,
     int FisuraId,
     DateTime Fecha,
-    double LargoMm,
-    double AnchoMm,
-    double AreaMm2,
+    double Largo,
+    double Ancho,
+    double Area,
     double? DeltaPorcentaje,
     bool EsCritica
 );
 
-/// <summary>Alerta del sistema.</summary>
 public record AlertaResponse(
     int Id,
-    int? FisuraId,
+    int? CrackId,
     DateTime Fecha,
     string Tipo,
     string Mensaje,
@@ -49,7 +51,6 @@ public record AlertaResponse(
     bool Reconocida
 );
 
-/// <summary>Resumen del dashboard.</summary>
 public record ResumenResponse(
     int TotalFisuras,
     int AlertasCriticas,
@@ -57,15 +58,46 @@ public record ResumenResponse(
     double DeformacionPromedio
 );
 
-/// <summary>Valor de configuración.</summary>
 public record ConfigResponse(
     string Clave,
     string Valor,
     string? Descripcion
 );
 
-/// <summary>Request para actualizar configuración.</summary>
 public record ValorConfigRequest(string Valor);
 
-/// <summary>Error estándar de la API.</summary>
 public record ErrorResponse(string Error);
+
+// ── Paginated response ──────────────────────────────────────────────
+
+public record PagedResponse<T>(
+    List<T> Items,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    int TotalPages
+);
+
+// ── Report DTOs ─────────────────────────────────────────────────────
+
+public record ReportSummaryResponse(
+    int TotalCracks,
+    int TotalDetections,
+    int TotalMeasurements,
+    int TotalAlerts,
+    int ActiveAlerts,
+    double AvgWidthPx,
+    double MaxGrowthPercent,
+    DateTime? LastDetectionAt
+);
+
+public record ReportTrendPoint(
+    string Date,
+    double AvgWidthPx,
+    int CrackCount
+);
+
+public record ReportAlertSummary(
+    string Tipo,
+    int Count
+);

@@ -54,7 +54,7 @@ services:
   backend-dotnet:
     build:
       context: .
-      dockerfile: backend-dotnet/src/ArgosSlope.Api/Dockerfile
+      dockerfile: backend/src/ArgosSlope.Api/Dockerfile
     container_name: argos-backend-dotnet
     restart: unless-stopped
     ports:

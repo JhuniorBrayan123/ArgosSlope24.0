@@ -4,7 +4,7 @@
 # Multi-stage build: SDK → publish → runtime
 #
 # Build:
-#   docker build -t argos-backend-dotnet:latest -f backend-dotnet/src/ArgosSlope.Api/Dockerfile .
+#   docker build -t argos-backend-dotnet:latest -f backend/src/ArgosSlope.Api/Dockerfile .
 #
 # Run:
 #   docker run --rm -it -p 8000:8080 --network host argos-backend-dotnet:latest
@@ -20,11 +20,11 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy csproj and restore dependencies (layer caching)
-COPY backend-dotnet/src/ArgosSlope.Api/ArgosSlope.Api.csproj ./ArgosSlope.Api/
+COPY backend/src/ArgosSlope.Api/ArgosSlope.Api.csproj ./ArgosSlope.Api/
 RUN dotnet restore ./ArgosSlope.Api/ArgosSlope.Api.csproj
 
 # Copy all source and build
-COPY backend-dotnet/ .
+COPY backend/ .
 WORKDIR /src/ArgosSlope.Api
 RUN dotnet publish -c Release -o /app --no-restore
 
