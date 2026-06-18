@@ -18,24 +18,50 @@ public class ReportsController : ControllerBase
 
     /// <summary>Resumen agregado para el módulo de reportes</summary>
     [HttpGet("summary")]
-    public async Task<ActionResult<ReportSummaryResponse>> GetSummary()
+    public async Task<ActionResult<ReportSummaryResponse>> GetSummary(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null)
     {
-        var totalCracks = await _db.Cracks.CountAsync();
-        var totalDetections = await _db.CrackDetections.CountAsync();
-        var totalMeasurements = await _db.CrackMeasurements.CountAsync();
-        var totalAlerts = await _db.Alertas.CountAsync();
-        var activeAlerts = await _db.Alertas.CountAsync(a => !a.Reconocida);
+        var cracksQuery = _db.Cracks.AsQueryable();
+        var detectionsQuery = _db.CrackDetections.AsQueryable();
+        var measurementsQuery = _db.CrackMeasurements.AsQueryable();
+        var alertsQuery = _db.Alertas.AsQueryable();
 
-        var avgWidth = totalMeasurements > 0
-            ? await _db.CrackMeasurements.AverageAsync(m => m.WidthPx)
+        if (startDate.HasValue)
+        {
+            var startUtc = DateTime.SpecifyKind(startDate.Value, DateTimeKind.Utc);
+            cracksQuery = cracksQuery.Where(c => c.FirstSeenAt >= startUtc);
+            detectionsQuery = detectionsQuery.Where(d => d.DetectedAt >= startUtc);
+            measurementsQuery = measurementsQuery.Where(m => m.MeasuredAt >= startUtc);
+            alertsQuery = alertsQuery.Where(a => a.Fecha >= startUtc);
+        }
+
+        if (endDate.HasValue)
+        {
+            var endOfDay = DateTime.SpecifyKind(endDate.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+            cracksQuery = cracksQuery.Where(c => c.FirstSeenAt <= endOfDay);
+            detectionsQuery = detectionsQuery.Where(d => d.DetectedAt <= endOfDay);
+            measurementsQuery = measurementsQuery.Where(m => m.MeasuredAt <= endOfDay);
+            alertsQuery = alertsQuery.Where(a => a.Fecha <= endOfDay);
+        }
+
+        var totalCracks = await cracksQuery.CountAsync();
+        var totalDetections = await detectionsQuery.CountAsync();
+        var totalMeasurements = await measurementsQuery.CountAsync();
+        var totalAlerts = await alertsQuery.CountAsync();
+        var activeAlerts = await alertsQuery.CountAsync(a => !a.Reconocida);
+
+        var validMeasurements = await measurementsQuery.CountAsync(m => m.WidthMm.HasValue);
+        var avgWidth = validMeasurements > 0
+            ? await measurementsQuery.Where(m => m.WidthMm.HasValue).AverageAsync(m => m.WidthMm!.Value)
             : 0;
 
         var maxGrowth = totalMeasurements > 0
-            ? await _db.CrackMeasurements.MaxAsync(m => m.GrowthPercent)
+            ? await measurementsQuery.MaxAsync(m => m.GrowthPercent)
             : 0;
 
         var lastDetection = totalDetections > 0
-            ? await _db.CrackDetections.MaxAsync(d => (DateTime?)d.DetectedAt)
+            ? await detectionsQuery.MaxAsync(d => (DateTime?)d.DetectedAt)
             : null;
 
         return new ReportSummaryResponse(
@@ -53,20 +79,38 @@ public class ReportsController : ControllerBase
     /// <summary>Tendencia de ancho promedio por día (para gráficos)</summary>
     [HttpGet("trends")]
     public async Task<ActionResult<List<ReportTrendPoint>>> GetTrends(
-        [FromQuery] int dias = 30)
+        [FromQuery] int dias = 30,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null)
     {
-        var cutoff = DateTime.UtcNow.AddDays(-dias);
+        var query = _db.CrackMeasurements.Where(m => m.WidthMm.HasValue);
 
-        var rawData = await _db.CrackMeasurements
-            .Where(m => m.MeasuredAt >= cutoff)
-            .Select(m => new { m.MeasuredAt.Date, m.WidthPx, m.CrackId })
+        if (startDate.HasValue)
+        {
+            var startUtc = DateTime.SpecifyKind(startDate.Value, DateTimeKind.Utc);
+            query = query.Where(m => m.MeasuredAt >= startUtc);
+        }
+        else
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-dias);
+            query = query.Where(m => m.MeasuredAt >= cutoff);
+        }
+
+        if (endDate.HasValue)
+        {
+            var endOfDay = DateTime.SpecifyKind(endDate.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+            query = query.Where(m => m.MeasuredAt <= endOfDay);
+        }
+
+        var rawData = await query
+            .Select(m => new { m.MeasuredAt.Date, WidthMm = m.WidthMm!.Value, m.CrackId })
             .ToListAsync();
 
         var measurements = rawData
             .GroupBy(m => m.Date)
             .Select(g => new ReportTrendPoint(
                 g.Key.ToString("yyyy-MM-dd"),
-                Math.Round(g.Average(m => m.WidthPx), 4),
+                Math.Round(g.Average(m => m.WidthMm), 4),
                 g.Select(m => m.CrackId).Distinct().Count()
             ))
             .OrderBy(t => t.Date)
@@ -77,9 +121,24 @@ public class ReportsController : ControllerBase
 
     /// <summary>Resumen de alertas agrupado por tipo</summary>
     [HttpGet("alerts")]
-    public async Task<ActionResult<List<ReportAlertSummary>>> GetAlertsSummary()
+    public async Task<ActionResult<List<ReportAlertSummary>>> GetAlertsSummary(
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null)
     {
-        var summary = await _db.Alertas
+        var query = _db.Alertas.AsQueryable();
+
+        if (startDate.HasValue)
+        {
+            var startUtc = DateTime.SpecifyKind(startDate.Value, DateTimeKind.Utc);
+            query = query.Where(a => a.Fecha >= startUtc);
+        }
+        if (endDate.HasValue)
+        {
+            var endOfDay = DateTime.SpecifyKind(endDate.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+            query = query.Where(a => a.Fecha <= endOfDay);
+        }
+
+        var summary = await query
             .GroupBy(a => a.Tipo)
             .Select(g => new ReportAlertSummary(
                 g.Key,

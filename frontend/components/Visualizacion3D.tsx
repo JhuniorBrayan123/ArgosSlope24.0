@@ -330,10 +330,10 @@ function FisuraLinea({
         >
           <div className="rounded-lg border border-dark-border bg-dark-surface/95 px-3 py-2 text-xs shadow-2xl backdrop-blur-sm">
             <p className="font-bold text-dark-accent">{crack.roiId}</p>
-            <p className="text-dark-secondary">
+            <p className="text-dark-textSecondary">
               {crack.largoMm.toFixed(1)} × {crack.anchoMm.toFixed(2)} mm
             </p>
-            <p className="text-dark-secondary">{crack.tipo}</p>
+            <p className="text-dark-textSecondary">{crack.tipo}</p>
           </div>
         </Html>
       )}
@@ -417,7 +417,7 @@ function LoadingFallback() {
     <div className="flex h-full items-center justify-center rounded-xl border border-dark-border bg-dark-surface">
       <div className="flex flex-col items-center gap-3">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-dark-accent border-t-transparent" />
-        <p className="text-sm text-dark-secondary">Cargando visualización 3D...</p>
+        <p className="text-sm text-dark-textSecondary">Cargando visualización 3D...</p>
       </div>
     </div>
   );
@@ -486,18 +486,18 @@ export default function Visualizacion3D({
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="inline-block h-2 w-2 rounded-full bg-[#00d4aa]" />
-            <span className="text-dark-secondary">Fina</span>
+            <span className="text-dark-textSecondary">Fina</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block h-2 w-2 rounded-full bg-[#f59e0b]" />
-            <span className="text-dark-secondary">Media</span>
+            <span className="text-dark-textSecondary">Media</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block h-2 w-2 rounded-full bg-[#ef4444]" />
-            <span className="text-dark-secondary">Gruesa</span>
+            <span className="text-dark-textSecondary">Gruesa</span>
           </div>
         </div>
-        <p className="mt-2 text-[10px] text-dark-secondary/60">
+        <p className="mt-2 text-[10px] text-dark-textSecondary/60">
           Arrastra para orbitar · Rueda para zoom
         </p>
       </div>
@@ -510,7 +510,7 @@ export default function Visualizacion3D({
           </p>
           <button
             onClick={() => setSelectedId(null)}
-            className="mt-1 text-dark-secondary hover:text-dark-text"
+            className="mt-1 text-dark-textSecondary hover:text-dark-text"
           >
             Limpiar selección
           </button>

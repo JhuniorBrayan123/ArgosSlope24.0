@@ -17,12 +17,16 @@ public class CrackConsolidationService : ICrackConsolidationService
 {
     private readonly AppDbContext _db;
     private readonly IFileStorageService _fileStorage;
+    private readonly IRiskEngine _riskEngine;
+    private readonly ILogger<CrackConsolidationService> _logger;
     private const double MaxCentroidDistancePx = 50.0;
 
-    public CrackConsolidationService(AppDbContext db, IFileStorageService fileStorage)
+    public CrackConsolidationService(AppDbContext db, IFileStorageService fileStorage, IRiskEngine riskEngine, ILogger<CrackConsolidationService> logger)
     {
         _db = db;
         _fileStorage = fileStorage;
+        _riskEngine = riskEngine;
+        _logger = logger;
     }
 
     public async Task ProcessDetectionAsync(MqttFisuraPayload payload)
@@ -142,6 +146,42 @@ public class CrackConsolidationService : ICrackConsolidationService
         }
 
         _db.CrackMeasurements.Add(measurement);
+
+        await _db.SaveChangesAsync();
+
+        // 6. Evaluar riesgos y generar alertas
+        var riskEvaluation = await _riskEngine.EvaluateAsync(targetCrack, measurement);
+        
+        targetCrack.RiskLevel = riskEvaluation.NivelRiesgo;
+        _db.Cracks.Update(targetCrack);
+
+        if (riskEvaluation.GenerarAlerta)
+        {
+            var tipoAlerta = riskEvaluation.NivelRiesgo; // critico, advertencia, informativo
+
+            // Evitar duplicar alertas no reconocidas del mismo tipo para esta fisura
+            var existingAlerta = await _db.Alertas.FirstOrDefaultAsync(a => 
+                a.CrackId == targetCrack.Id && 
+                a.Tipo == tipoAlerta && 
+                !a.Reconocida);
+
+            if (existingAlerta == null)
+            {
+                var alerta = new Alerta
+                {
+                    CrackId = targetCrack.Id,
+                    Tipo = tipoAlerta,
+                    Mensaje = riskEvaluation.MensajeAlerta,
+                    UmbralSuperado = riskEvaluation.ValorUmbralSuperado,
+                    ValorActual = Math.Max(measurement.WidthPx, measurement.GrowthPercent), // Aproximación, depende del factor principal
+                    Fecha = DateTime.UtcNow,
+                    Reconocida = false
+                };
+                
+                _db.Alertas.Add(alerta);
+                _logger.LogInformation("Nueva alerta generada para fisura {CrackCode}: {Nivel} - {Mensaje}", targetCrack.Code, tipoAlerta, riskEvaluation.MensajeAlerta);
+            }
+        }
 
         await _db.SaveChangesAsync();
     }

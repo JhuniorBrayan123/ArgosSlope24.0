@@ -45,7 +45,7 @@ function Tarjeta({
     <div className="rounded-lg border border-dark-border bg-dark-surface p-4">
       <div className="flex items-center gap-2">
         {icono && <span className="text-lg">{icono}</span>}
-        <p className="text-xs font-medium uppercase tracking-wider text-dark-secondary">
+        <p className="text-xs font-medium uppercase tracking-wider text-dark-textSecondary">
           {label}
         </p>
       </div>
@@ -122,7 +122,7 @@ function PanelVideo() {
           className={`rounded px-2 py-1 text-[11px] font-medium transition-colors ${
             useMjpeg
               ? 'bg-dark-accent text-black'
-              : 'bg-black/60 text-dark-secondary hover:text-white'
+              : 'bg-black/60 text-dark-textSecondary hover:text-white'
           }`}
         >
           MJPEG
@@ -132,7 +132,7 @@ function PanelVideo() {
           className={`rounded px-2 py-1 text-[11px] font-medium transition-colors ${
             !useMjpeg
               ? 'bg-dark-accent text-black'
-              : 'bg-black/60 text-dark-secondary hover:text-white'
+              : 'bg-black/60 text-dark-textSecondary hover:text-white'
           }`}
         >
           WebRTC
@@ -163,7 +163,7 @@ function PanelVideo() {
               {camaraStatus === 'connecting' && (
                 <div className="flex flex-col items-center gap-2">
                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-dark-accent border-t-transparent" />
-                  <span className="text-sm text-dark-secondary">Conectando...</span>
+                  <span className="text-sm text-dark-textSecondary">Conectando...</span>
                 </div>
               )}
               {camaraStatus === 'error' && (
@@ -179,7 +179,7 @@ function PanelVideo() {
               )}
               {camaraStatus === 'disconnected' && !signalingUrl && (
                 <div className="flex flex-col items-center gap-2">
-                  <span className="text-sm text-dark-secondary">Sin conexión</span>
+                  <span className="text-sm text-dark-textSecondary">Sin conexión</span>
                 </div>
               )}
             </div>
@@ -229,7 +229,7 @@ function Panel3D() {
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               modoNube
                 ? 'bg-dark-accent/20 text-dark-accent'
-                : 'bg-dark-surface text-dark-secondary hover:text-dark-text'
+                : 'bg-dark-surface text-dark-textSecondary hover:text-dark-text'
             }`}
           >
             ☁️ Nube de Puntos
@@ -239,7 +239,7 @@ function Panel3D() {
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
               modoHd
                 ? 'bg-dark-accent/20 text-dark-accent'
-                : 'bg-dark-surface text-dark-secondary hover:text-dark-text'
+                : 'bg-dark-surface text-dark-textSecondary hover:text-dark-text'
             }`}
             disabled={!capturaHdSeleccionada}
           >
@@ -269,7 +269,7 @@ function Panel3D() {
         )}
         {modo === 'modelo_hd' && !capturaHdSeleccionada && (
           <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-dark-secondary/60">
+            <p className="text-sm text-dark-textSecondary/60">
               Sin captura HD disponible. Presiona "Capturar Talud HD" para generar una.
             </p>
           </div>
@@ -325,7 +325,7 @@ function PanelAlertas() {
         <h3 className="text-sm font-semibold text-dark-text">
           Alertas en Vivo
           {alertas.length > 0 && (
-            <span className="ml-2 text-xs font-normal text-dark-secondary">
+            <span className="ml-2 text-xs font-normal text-dark-textSecondary">
               ({alertas.length})
             </span>
           )}
@@ -333,13 +333,13 @@ function PanelAlertas() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setAutoScroll(!autoScroll)}
-            className={`text-[11px] ${autoScroll ? 'text-dark-accent' : 'text-dark-secondary'}`}
+            className={`text-[11px] ${autoScroll ? 'text-dark-accent' : 'text-dark-textSecondary'}`}
           >
             Auto-scroll
           </button>
           <button
             onClick={limpiarAlertas}
-            className="text-[11px] text-dark-secondary hover:text-dark-text"
+            className="text-[11px] text-dark-textSecondary hover:text-dark-text"
           >
             Limpiar
           </button>
@@ -353,7 +353,7 @@ function PanelAlertas() {
       >
         {alertas.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-xs text-dark-secondary/40">
+            <p className="text-xs text-dark-textSecondary/40">
               Sin alertas aún. Los eventos aparecerán aquí automáticamente.
             </p>
           </div>
@@ -367,7 +367,7 @@ function PanelAlertas() {
                 <div className="flex items-center gap-2">
                   <span className="text-xs">{getIcono(a.tipo)}</span>
                   <p className="flex-1 text-xs text-dark-text">{a.mensaje}</p>
-                  <span className="text-[10px] text-dark-secondary/50">
+                  <span className="text-[10px] text-dark-textSecondary/50">
                     {new Date(a.timestamp).toLocaleTimeString('es-ES')}
                   </span>
                 </div>
@@ -412,7 +412,7 @@ export default function PanelPrincipal() {
           <h1 className="text-2xl font-bold text-dark-text">
             Panel Principal
           </h1>
-          <p className="mt-1 text-sm text-dark-secondary">
+          <p className="mt-1 text-sm text-dark-textSecondary">
             Monitoreo de deformación de talud en tiempo real
           </p>
         </div>
@@ -443,7 +443,7 @@ export default function PanelPrincipal() {
         <Tarjeta
           label="Capturas HD"
           valor={ultimaCapturaHd ? '1 disponible' : '0'}
-          color={ultimaCapturaHd ? 'text-emerald-400' : 'text-dark-secondary'}
+          color={ultimaCapturaHd ? 'text-emerald-400' : 'text-dark-textSecondary'}
           icono="📸"
         />
         <Tarjeta

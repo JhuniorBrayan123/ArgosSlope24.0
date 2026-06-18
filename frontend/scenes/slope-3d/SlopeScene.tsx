@@ -106,7 +106,7 @@ function LoadingFallback() {
     <div className="flex h-full w-full items-center justify-center rounded-xl border border-dark-border bg-dark-primary">
       <div className="flex flex-col items-center gap-3">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-dark-accent border-t-transparent" />
-        <p className="text-sm text-dark-secondary">
+        <p className="text-sm text-dark-textSecondary">
           Cargando visualización 3D...
         </p>
       </div>
@@ -232,7 +232,7 @@ export default function SlopeScene() {
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <p className="text-sm text-dark-secondary">{error}</p>
+          <p className="text-sm text-dark-textSecondary">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="rounded-md bg-dark-accent px-4 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity"

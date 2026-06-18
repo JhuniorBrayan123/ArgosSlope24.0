@@ -135,7 +135,7 @@ export default function MonitoreoLateral({
       
       <div className="flex-1 overflow-y-auto p-2">
         {fisuras.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center p-6 text-center text-dark-secondary">
+          <div className="flex h-full flex-col items-center justify-center p-6 text-center text-dark-textSecondary">
             <svg className="mb-2 h-8 w-8 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 13l4 4L19 7" />
             </svg>
@@ -151,7 +151,7 @@ export default function MonitoreoLateral({
                     {f.classification}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-dark-secondary">
+                <div className="grid grid-cols-2 gap-2 text-xs text-dark-textSecondary">
                   <div>
                     <span className="block text-[10px] uppercase opacity-70">Largo</span>
                     <span className="font-medium text-dark-text">

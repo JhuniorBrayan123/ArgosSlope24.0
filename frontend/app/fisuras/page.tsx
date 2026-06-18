@@ -34,7 +34,7 @@ export default function FisurasPage() {
           ) : (
             <>
               <h1 className="text-2xl font-bold text-dark-text">Fisuras</h1>
-              <p className="mt-1 text-sm text-dark-secondary">
+              <p className="mt-1 text-sm text-dark-textSecondary">
                 Gestión completa de fisuras detectadas: listado, detalle,
                 edición y eliminación
               </p>

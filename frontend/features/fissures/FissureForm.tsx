@@ -100,9 +100,9 @@ export default function FissureForm({
         tipo: existingFissure.tipo || '',
         orientacion: existingFissure.orientacion || '',
         coordenadas: existingFissure.coordenadas || '',
-        largoMm: String(existingFissure.largoMm || ''),
-        anchoMm: String(existingFissure.anchoMm || ''),
-        areaMm2: String(existingFissure.areaMm2 || ''),
+        largoMm: String(existingFissure.largo || ''),
+        anchoMm: String(existingFissure.ancho || ''),
+        areaMm2: String(existingFissure.area || ''),
       });
     }
   }, [existingFissure]);
@@ -202,7 +202,7 @@ export default function FissureForm({
 
   // ── Input styling helper ───────────────────────────────────────
   const inputClass = (field: keyof ValidationErrors) =>
-    `w-full rounded-lg border py-2 px-3 text-sm bg-dark-primary text-dark-text placeholder:text-dark-secondary focus:outline-none transition-colors ${
+    `w-full rounded-lg border py-2 px-3 text-sm bg-dark-primary text-dark-text placeholder:text-dark-textSecondary focus:outline-none transition-colors ${
       errors[field]
         ? 'border-dark-danger'
         : 'border-dark-border focus:border-dark-accent'
@@ -224,7 +224,7 @@ export default function FissureForm({
           </h2>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-dark-secondary transition-colors hover:bg-dark-hover hover:text-dark-text"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-dark-textSecondary transition-colors hover:bg-dark-hover hover:text-dark-text"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -236,7 +236,7 @@ export default function FissureForm({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* ROI ID */}
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-textSecondary">
               ROI ID <span className="text-dark-danger">*</span>
             </label>
             <input
@@ -253,7 +253,7 @@ export default function FissureForm({
 
           {/* Tipo */}
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-textSecondary">
               Tipo <span className="text-dark-danger">*</span>
             </label>
             <select
@@ -275,7 +275,7 @@ export default function FissureForm({
 
           {/* Orientación */}
           <div>
-            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-textSecondary">
               Orientación <span className="text-dark-danger">*</span>
             </label>
             <select
@@ -298,7 +298,7 @@ export default function FissureForm({
           {/* Coordenadas */}
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <label className="text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+              <label className="text-xs font-semibold uppercase tracking-wider text-dark-textSecondary">
                 Coordenadas (JSON)
               </label>
               <button
@@ -318,7 +318,7 @@ export default function FissureForm({
             />
             {showCoordsHelp && (
               <div className="mt-1 rounded-lg bg-dark-primary p-2">
-                <p className="text-[11px] text-dark-secondary">
+                <p className="text-[11px] text-dark-textSecondary">
                   Formato: array de objetos con coordenadas x, y, z. Ejemplo:
                 </p>
                 <pre className="mt-1 overflow-x-auto text-[11px] text-dark-accent">
@@ -337,7 +337,7 @@ export default function FissureForm({
           {/* Dimensions row */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-textSecondary">
                 Largo (mm) <span className="text-dark-danger">*</span>
               </label>
               <input
@@ -354,7 +354,7 @@ export default function FissureForm({
               )}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-textSecondary">
                 Ancho (mm) <span className="text-dark-danger">*</span>
               </label>
               <input
@@ -371,7 +371,7 @@ export default function FissureForm({
               )}
             </div>
             <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+              <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-dark-textSecondary">
                 Área (mm²)
               </label>
               <input
@@ -401,7 +401,7 @@ export default function FissureForm({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg bg-dark-hover px-5 py-2 text-sm font-semibold text-dark-secondary transition-colors hover:text-dark-text"
+              className="rounded-lg bg-dark-hover px-5 py-2 text-sm font-semibold text-dark-textSecondary transition-colors hover:text-dark-text"
             >
               Cancelar
             </button>

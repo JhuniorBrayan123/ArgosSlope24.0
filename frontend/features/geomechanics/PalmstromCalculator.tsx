@@ -26,7 +26,7 @@ export default function PalmstromCalculator({ onCalculated }: Props) {
 
       const payload = { discontinuityCount: count, lineLengthM: lengthM };
       const result = await geomechanicsService.calculatePalmstrom(payload);
-      onCalculated(result, { method: 'palmstrom', ...payload, ...result });
+      onCalculated(result, { ...payload, ...result, method: 'palmstrom' });
     } catch (err: any) {
       setError(err.message || 'Error al calcular RQD por Palmström');
     }

@@ -59,7 +59,7 @@ export default function FissureTrendChart() {
                   style={{ height: `${critPct}%` }}
                 />
               </div>
-              <span className="mt-2 text-[10px] text-dark-secondary">{date}</span>
+              <span className="mt-2 text-[10px] text-dark-textSecondary">{date}</span>
             </div>
           );
         })}

@@ -96,7 +96,7 @@ export const useAnalyticsStore = create<AnalyticsStore>()((set, get) => ({
 
       const res = await fetch(
         `${
-          process.env.NEXT_PUBLIC_DOTNET_API_URL || 'http://localhost:5000'
+          process.env.NEXT_PUBLIC_DOTNET_API_URL || 'http://localhost:5001'
         }/api/analytics?${params.toString()}`
       );
       if (!res.ok) {

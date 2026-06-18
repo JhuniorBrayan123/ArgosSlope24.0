@@ -5,27 +5,47 @@
 /* ── Google Fonts ─────────────────────────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── ARGOS SLOPE 4.0 — Design System Variables ───────────────── */
-:root {
-  --bg-primary:      #080C14;
-  --bg-secondary:    #0D1321;
-  --bg-surface:      #111827;
-  --bg-elevated:     #1C2333;
-  --bg-hover:        #1E2D45;
-  --border:          #1E293B;
-  --border-active:   #0EA5C5;
-  --accent:          #0EA5C5;
-  --accent-glow:     rgba(14,165,197,0.2);
-  --success:         #10B981;
-  --warning:         #F59E0B;
-  --danger:          #EF4444;
-  --critical:        #DC2626;
-  --text-primary:    #F1F5F9;
-  --text-secondary:  #94A3B8;
-  --text-muted:      #475569;
-  --sidebar-width:   240px;
-  --sidebar-collapsed: 64px;
-  --topbar-height:   56px;
+@layer base {
+  :root {
+    --bg-primary:      #FAFAFA;
+    --bg-secondary:    #FFFFFF;
+    --bg-surface:      #FFFFFF;
+    --bg-elevated:     #F4F4F5;
+    --bg-hover:        #E4E4E7;
+    --border:          #E4E4E7;
+    --border-active:   #EA580C;
+    --accent:          #EA580C;
+    --accent-glow:     rgba(234, 88, 12, 0.2);
+    --success:         #16A34A;
+    --warning:         #D97706;
+    --danger:          #DC2626;
+    --critical:        #B91C1C;
+    --text-primary:    #18181B;
+    --text-secondary:  #3F3F46;
+    --text-muted:      #71717A;
+    --sidebar-width:   240px;
+    --sidebar-collapsed: 64px;
+    --topbar-height:   56px;
+  }
+
+  .dark {
+    --bg-primary:      #09090B;
+    --bg-secondary:    #18181B;
+    --bg-surface:      #18181B;
+    --bg-elevated:     #27272A;
+    --bg-hover:        #3F3F46;
+    --border:          #27272A;
+    --border-active:   #FF6B00;
+    --accent:          #FF6B00;
+    --accent-glow:     rgba(255, 107, 0, 0.2);
+    --success:         #10B981;
+    --warning:         #F59E0B;
+    --danger:          #EF4444;
+    --critical:        #DC2626;
+    --text-primary:    #FAFAFA;
+    --text-secondary:  #A1A1AA;
+    --text-muted:      #71717A;
+  }
 }
 
 /* ── Base Reset ──────────────────────────────────────────────── */
@@ -90,7 +110,8 @@ body {
     @apply rounded-xl border border-dark-border bg-dark-surface shadow-card transition-all duration-200;
   }
   .argos-card:hover {
-    @apply border-dark-borderActive/30 shadow-card-hover;
+    border-color: rgba(14, 165, 197, 0.3);
+    @apply shadow-card-hover;
   }
 
   /* Metric card */
@@ -119,16 +140,20 @@ body {
 
   /* Risk badge */
   .risk-bajo {
-    @apply rounded-full bg-dark-success/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-dark-success;
+    background-color: rgba(16, 185, 129, 0.15);
+    @apply rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-dark-success;
   }
   .risk-medio {
-    @apply rounded-full bg-dark-warning/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-dark-warning;
+    background-color: rgba(245, 158, 11, 0.15);
+    @apply rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-dark-warning;
   }
   .risk-alto {
-    @apply rounded-full bg-dark-danger/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-dark-danger;
+    background-color: rgba(239, 68, 68, 0.15);
+    @apply rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-dark-danger;
   }
   .risk-critico {
-    @apply rounded-full bg-dark-critical/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-dark-critical;
+    background-color: rgba(220, 38, 38, 0.20);
+    @apply rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-dark-critical;
     animation: glow-pulse-danger 2s ease-in-out infinite;
   }
 
@@ -143,13 +168,16 @@ body {
     @apply flex items-center gap-2 rounded-lg border border-dark-border bg-dark-elevated px-4 py-2 text-sm font-medium text-dark-text transition-all duration-200;
   }
   .btn-secondary:hover {
-    @apply border-dark-borderActive/50 bg-dark-hover text-dark-text;
+    border-color: rgba(14, 165, 197, 0.5);
+    @apply bg-dark-hover text-dark-text;
   }
   .btn-danger {
-    @apply flex items-center gap-2 rounded-lg bg-dark-danger/10 border border-dark-danger/30 px-4 py-2 text-sm font-medium text-dark-danger transition-all duration-200;
+    background-color: rgba(239, 68, 68, 0.10);
+    border-color: rgba(239, 68, 68, 0.30);
+    @apply flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium text-dark-danger transition-all duration-200;
   }
   .btn-danger:hover {
-    @apply bg-dark-danger/20;
+    background-color: rgba(239, 68, 68, 0.20);
   }
 
   /* Nav item */
@@ -185,7 +213,8 @@ body {
     @apply transition-all duration-200 outline-none;
   }
   .argos-input:focus {
-    @apply border-dark-accent ring-1 ring-dark-accent/30;
+    @apply border-dark-accent;
+    box-shadow: 0 0 0 1px rgba(14, 165, 197, 0.3);
   }
 
   /* Skeleton loading */
@@ -198,7 +227,8 @@ body {
 
   /* Live indicator */
   .live-badge {
-    @apply flex items-center gap-1.5 rounded-full bg-dark-success/10 px-2.5 py-1 text-[11px] font-semibold text-dark-success;
+    background-color: rgba(16, 185, 129, 0.10);
+    @apply flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-dark-success;
   }
 
   /* Section header */
@@ -243,10 +273,13 @@ input[type="range"]::-webkit-slider-thumb {
   @apply border-b border-dark-border px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-dark-muted;
 }
 .argos-table td {
-  @apply border-b border-dark-border/40 px-4 py-3 text-dark-secondary;
+  border-bottom-width: 1px;
+  border-color: rgba(30, 41, 59, 0.4);
+  @apply px-4 py-3 text-dark-textSecondary;
 }
 .argos-table tr:hover td {
-  @apply bg-dark-hover/40 text-dark-text;
+  background-color: rgba(30, 45, 69, 0.4);
+  @apply text-dark-text;
 }
 
 /* ── Login Animations ────────────────────────────────────────── */

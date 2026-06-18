@@ -110,7 +110,7 @@ export default function SceneToolbar({
           className={`rounded-md p-2 transition-colors ${
             autoRotate
               ? 'bg-dark-accent/20 text-dark-accent'
-              : 'text-dark-secondary hover:bg-dark-hover hover:text-dark-text'
+              : 'text-dark-textSecondary hover:bg-dark-hover hover:text-dark-text'
           }`}
         >
           <RotateIcon />
@@ -123,7 +123,7 @@ export default function SceneToolbar({
         <button
           onClick={onResetView}
           title="Restablecer vista"
-          className="rounded-md p-2 text-dark-secondary hover:bg-dark-hover hover:text-dark-text transition-colors"
+          className="rounded-md p-2 text-dark-textSecondary hover:bg-dark-hover hover:text-dark-text transition-colors"
         >
           <ResetIcon />
         </button>
@@ -140,7 +140,7 @@ export default function SceneToolbar({
               className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                 viewMode === mode.value
                   ? 'bg-dark-accent text-white'
-                  : 'bg-dark-surface text-dark-secondary hover:bg-dark-hover hover:text-dark-text'
+                  : 'bg-dark-surface text-dark-textSecondary hover:bg-dark-hover hover:text-dark-text'
               }`}
             >
               {mode.label}
@@ -153,7 +153,7 @@ export default function SceneToolbar({
           <>
             <div className="h-6 w-px bg-dark-border" />
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-dark-secondary/70 whitespace-nowrap">
+              <span className="text-[10px] text-dark-textSecondary/70 whitespace-nowrap">
                 Línea de Tiempo
               </span>
               <input
@@ -164,7 +164,7 @@ export default function SceneToolbar({
                 onChange={handleTimelineChange}
                 className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-dark-border accent-dark-accent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-dark-accent"
               />
-              <span className="text-[10px] text-dark-secondary/70 min-w-[4.5rem] text-right tabular-nums">
+              <span className="text-[10px] text-dark-textSecondary/70 min-w-[4.5rem] text-right tabular-nums">
                 {timelineDate}
               </span>
             </div>

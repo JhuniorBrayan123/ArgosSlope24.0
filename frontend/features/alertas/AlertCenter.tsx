@@ -12,6 +12,8 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useAlertStore } from '@/stores/alert.store';
 import { useFissureStore } from '@/stores/fissure.store';
 import type { AlertaResponse } from '@/services/api-client';
+import EmptyState from '@/components/EmptyState';
+import { BellOff } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────
 
@@ -74,7 +76,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
         <span className="text-sm text-dark-text">{message}</span>
         <button
           onClick={onClose}
-          className="text-dark-secondary hover:text-dark-text"
+          className="text-dark-textSecondary hover:text-dark-text"
         >
           ✕
         </button>
@@ -225,9 +227,11 @@ export default function AlertCenter() {
     return (
       <div className="space-y-4">
         <StatsRow stats={{ total: 0, criticas: 0, pendientes: 0 }} />
-        <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-surface">
-          <p className="text-sm text-dark-secondary">No hay alertas registradas.</p>
-        </div>
+        <EmptyState 
+          icon={BellOff}
+          title="El sistema se encuentra estable"
+          description="No hay alertas registradas en este momento. Sigue monitoreando."
+        />
       </div>
     );
   }
@@ -274,7 +278,7 @@ export default function AlertCenter() {
           {filters.busqueda && (
             <button
               onClick={() => setFilters({ busqueda: '' })}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-secondary hover:text-dark-text"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-textSecondary hover:text-dark-text"
             >
               ✕
             </button>
@@ -323,7 +327,7 @@ export default function AlertCenter() {
             }}
             className="rounded-lg border border-dark-border bg-dark-primary px-3 py-2 text-sm text-dark-text outline-none focus:border-dark-accent [color-scheme:dark]"
           />
-          <span className="text-dark-secondary text-xs">a</span>
+          <span className="text-dark-textSecondary text-xs">a</span>
           <input
             type="date"
             value={filters.dateRange?.end ?? ''}
@@ -340,7 +344,7 @@ export default function AlertCenter() {
           {filters.dateRange && (
             <button
               onClick={() => setFilters({ dateRange: null })}
-              className="text-xs text-dark-secondary hover:text-dark-text"
+              className="text-xs text-dark-textSecondary hover:text-dark-text"
             >
               Limpiar
             </button>
@@ -351,7 +355,7 @@ export default function AlertCenter() {
       {/* ── Bulk actions ── */}
       {selection.size > 0 && (
         <div className="flex items-center gap-3 rounded-lg border border-dark-accent/30 bg-dark-accent/5 px-4 py-2">
-          <span className="text-xs text-dark-secondary">
+          <span className="text-xs text-dark-textSecondary">
             {selection.size} seleccionada(s)
           </span>
           <button
@@ -362,7 +366,7 @@ export default function AlertCenter() {
           </button>
           <button
             onClick={clearSelection}
-            className="rounded-lg border border-dark-border px-3 py-1.5 text-xs text-dark-secondary hover:text-dark-text"
+            className="rounded-lg border border-dark-border px-3 py-1.5 text-xs text-dark-textSecondary hover:text-dark-text"
           >
             Limpiar selección
           </button>
@@ -372,14 +376,14 @@ export default function AlertCenter() {
       {/* ── Alert list ── */}
       {paginatedAlerts.length === 0 ? (
         <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-surface">
-          <p className="text-sm text-dark-secondary">
+          <p className="text-sm text-dark-textSecondary">
             No hay alertas que coincidan con los filtros.
           </p>
         </div>
       ) : (
         <div className="space-y-2">
           {/* Header row with select all */}
-          <div className="flex items-center gap-3 rounded-lg border border-dark-border bg-dark-primary/50 px-4 py-2 text-xs font-medium text-dark-secondary">
+          <div className="flex items-center gap-3 rounded-lg border border-dark-border bg-dark-primary/50 px-4 py-2 text-xs font-medium text-dark-textSecondary">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -443,7 +447,7 @@ export default function AlertCenter() {
                         </span>
 
                         {alerta.fisuraId && (
-                          <span className="text-[10px] text-dark-secondary">
+                          <span className="text-[10px] text-dark-textSecondary">
                             Fisura #{alerta.fisuraId}
                           </span>
                         )}
@@ -461,7 +465,7 @@ export default function AlertCenter() {
                       </p>
 
                       {/* Meta row */}
-                      <div className="mt-1.5 flex items-center gap-3 text-[11px] text-dark-secondary">
+                      <div className="mt-1.5 flex items-center gap-3 text-[11px] text-dark-textSecondary">
                         <span>{formatFecha(alerta.fecha)}</span>
                         <span>
                           Valor: {alerta.valorActual.toFixed(2)} {unidadStr} | Umbral:{' '}
@@ -491,7 +495,7 @@ export default function AlertCenter() {
 
                       <button
                         onClick={() => handleEscalate(alerta.id)}
-                        className="rounded-lg border border-dark-border px-3 py-1.5 text-xs text-dark-secondary transition-colors hover:bg-dark-hover"
+                        className="rounded-lg border border-dark-border px-3 py-1.5 text-xs text-dark-textSecondary transition-colors hover:bg-dark-hover"
                         title="Escalar alerta"
                       >
                         Escalar
@@ -500,7 +504,7 @@ export default function AlertCenter() {
                       {/* Expand toggle */}
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : alerta.id)}
-                        className="text-dark-secondary hover:text-dark-text"
+                        className="text-dark-textSecondary hover:text-dark-text"
                       >
                         <svg
                           className={`h-4 w-4 transition-transform ${
@@ -548,8 +552,8 @@ export default function AlertCenter() {
                       <DetailField label="ID" value={`#${alerta.id}`} />
                     </div>
 
-                    <div className="mt-3 rounded-lg border border-dashed border-dark-border bg-dark-primary/20 p-3 text-xs text-dark-secondary">
-                      <p className="font-medium text-dark-secondary mb-1">Historial</p>
+                    <div className="mt-3 rounded-lg border border-dashed border-dark-border bg-dark-primary/20 p-3 text-xs text-dark-textSecondary">
+                      <p className="font-medium text-dark-textSecondary mb-1">Historial</p>
                       <p>
                         Alerta generada el {formatFecha(alerta.fecha)}.{' '}
                         {alerta.reconocida
@@ -571,7 +575,7 @@ export default function AlertCenter() {
           <button
             onClick={() => setPage(Math.max(1, pagination.page - 1))}
             disabled={pagination.page === 1}
-            className="rounded-lg border border-dark-border bg-dark-surface px-3 py-1.5 text-xs text-dark-secondary disabled:opacity-30"
+            className="rounded-lg border border-dark-border bg-dark-surface px-3 py-1.5 text-xs text-dark-textSecondary disabled:opacity-30"
           >
             Anterior
           </button>
@@ -586,14 +590,14 @@ export default function AlertCenter() {
             .map((p, idx, arr) => (
               <span key={p} className="flex items-center gap-1">
                 {idx > 0 && arr[idx - 1] !== p - 1 && (
-                  <span className="text-dark-secondary/50">...</span>
+                  <span className="text-dark-textSecondary/50">...</span>
                 )}
                 <button
                   onClick={() => setPage(p)}
                   className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
                     p === pagination.page
                       ? 'bg-dark-accent text-dark-primary'
-                      : 'border border-dark-border bg-dark-surface text-dark-secondary hover:bg-dark-hover'
+                      : 'border border-dark-border bg-dark-surface text-dark-textSecondary hover:bg-dark-hover'
                   }`}
                 >
                   {p}
@@ -604,7 +608,7 @@ export default function AlertCenter() {
           <button
             onClick={() => setPage(Math.min(totalPages, pagination.page + 1))}
             disabled={pagination.page === totalPages}
-            className="rounded-lg border border-dark-border bg-dark-surface px-3 py-1.5 text-xs text-dark-secondary disabled:opacity-30"
+            className="rounded-lg border border-dark-border bg-dark-surface px-3 py-1.5 text-xs text-dark-textSecondary disabled:opacity-30"
           >
             Siguiente
           </button>
@@ -616,7 +620,7 @@ export default function AlertCenter() {
         <div className="flex h-40 items-center justify-center rounded-xl border border-dark-border bg-dark-surface/80">
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-dark-accent border-t-transparent" />
-            <p className="text-sm text-dark-secondary">Cargando alertas…</p>
+            <p className="text-sm text-dark-textSecondary">Cargando alertas…</p>
           </div>
         </div>
       )}
@@ -634,15 +638,15 @@ function StatsRow({
   return (
     <div className="grid grid-cols-3 gap-3">
       <div className="rounded-lg border border-dark-border bg-dark-surface p-4">
-        <p className="text-xs text-dark-secondary">Total Alertas</p>
+        <p className="text-xs text-dark-textSecondary">Total Alertas</p>
         <p className="text-2xl font-bold text-dark-text">{stats.total}</p>
       </div>
       <div className="rounded-lg border border-dark-border bg-dark-surface p-4">
-        <p className="text-xs text-dark-secondary">Críticas</p>
+        <p className="text-xs text-dark-textSecondary">Críticas</p>
         <p className="text-2xl font-bold text-dark-danger">{stats.criticas}</p>
       </div>
       <div className="rounded-lg border border-dark-border bg-dark-surface p-4">
-        <p className="text-xs text-dark-secondary">Pendientes</p>
+        <p className="text-xs text-dark-textSecondary">Pendientes</p>
         <p className="text-2xl font-bold text-dark-warning">{stats.pendientes}</p>
       </div>
     </div>
@@ -660,7 +664,7 @@ function DetailField({
 }) {
   return (
     <div>
-      <p className="text-[10px] font-medium uppercase tracking-wider text-dark-secondary">
+      <p className="text-[10px] font-medium uppercase tracking-wider text-dark-textSecondary">
         {label}
       </p>
       <p className="mt-0.5 text-sm font-medium text-dark-text">{value}</p>

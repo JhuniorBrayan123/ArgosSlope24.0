@@ -256,7 +256,7 @@ export default function FisuraOverlay({
         style={{ pointerEvents: 'none' }}
       />
       {!connected && (
-        <div className="absolute bottom-2 left-2 rounded bg-dark-surface/80 px-2 py-0.5 text-xs text-dark-secondary">
+        <div className="absolute bottom-2 left-2 rounded bg-dark-surface/80 px-2 py-0.5 text-xs text-dark-textSecondary">
           MQTT: reconectando...
         </div>
       )}

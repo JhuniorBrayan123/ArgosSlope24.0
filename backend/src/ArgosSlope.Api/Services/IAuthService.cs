@@ -8,4 +8,6 @@ public interface IAuthService
     Task<LoginResponse?> RefreshAsync(string refreshToken, string? ipAddress, string? userAgent);
     Task RevokeTokenAsync(string refreshToken);
     Task<UserDto?> GetMeAsync(Guid userId);
+    Task<bool> RegisterAsync(RegisterRequest request);
+    Task<string?> RecoverPasswordAsync(RecoverPasswordRequest request);
 }

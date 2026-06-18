@@ -37,7 +37,7 @@ export default function SeccionNubePuntos() {
             <h2 className="text-lg font-bold text-dark-text">
               Nube de Puntos 3D
             </h2>
-            <p className="text-sm text-dark-secondary">
+            <p className="text-sm text-dark-textSecondary">
               Visualización de alertas 3D del dispositivo edge
             </p>
           </div>
@@ -56,7 +56,7 @@ export default function SeccionNubePuntos() {
           <h2 className="text-lg font-bold text-dark-text">
             Nube de Puntos 3D
           </h2>
-          <p className="text-sm text-dark-secondary">
+          <p className="text-sm text-dark-textSecondary">
             Visualización de alertas 3D del dispositivo edge
           </p>
         </div>
@@ -99,7 +99,7 @@ export default function SeccionNubePuntos() {
 
       {/* Image path footer (if present) */}
       {imagePath && (
-        <p className="text-[11px] text-dark-secondary/50">
+        <p className="text-[11px] text-dark-textSecondary/50">
           Captura: {imagePath}
         </p>
       )}

@@ -302,8 +302,8 @@ export default function VisorModelo3D({
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0f0f1a]/80">
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-dark-accent border-t-transparent" />
-            <p className="text-sm text-dark-secondary">Cargando modelo 3D...</p>
-            <p className="text-[11px] text-dark-secondary/40">
+            <p className="text-sm text-dark-textSecondary">Cargando modelo 3D...</p>
+            <p className="text-[11px] text-dark-textSecondary/40">
               Esto puede tomar unos segundos
             </p>
           </div>
@@ -315,7 +315,7 @@ export default function VisorModelo3D({
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0f0f1a]/80">
           <div className="flex flex-col items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-6 py-4">
             <span className="text-sm text-red-400">Error al cargar modelo</span>
-            <span className="max-w-xs text-center text-xs text-dark-secondary">
+            <span className="max-w-xs text-center text-xs text-dark-textSecondary">
               {errorMsg}
             </span>
           </div>
@@ -328,7 +328,7 @@ export default function VisorModelo3D({
           <p className="font-medium text-dark-accent">
             {pointCount.toLocaleString()} {esPly(url) ? 'puntos' : 'caras'}
           </p>
-          <p className="text-[10px] text-dark-secondary/40">
+          <p className="text-[10px] text-dark-textSecondary/40">
             Arrastra para orbitar · Rueda para zoom
           </p>
         </div>

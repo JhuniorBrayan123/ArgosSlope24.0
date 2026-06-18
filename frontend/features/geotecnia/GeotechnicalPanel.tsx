@@ -308,7 +308,7 @@ export default function GeotechnicalPanel() {
       {/* ── Results History ── */}
       {history.length > 0 && (
         <div className="rounded-xl border border-dark-border bg-dark-surface p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-dark-secondary">
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-dark-textSecondary">
             Historial de Cálculos
           </h3>
           <div className="space-y-2">
@@ -321,7 +321,7 @@ export default function GeotechnicalPanel() {
                   <TypeBadge type={entry.type} />
                   <span className="text-sm text-dark-text">{entry.label}</span>
                 </div>
-                <span className="text-[11px] text-dark-secondary">{entry.timestamp}</span>
+                <span className="text-[11px] text-dark-textSecondary">{entry.timestamp}</span>
               </div>
             ))}
           </div>
@@ -377,12 +377,12 @@ function RqdCard({
   return (
     <div className="rounded-xl border border-dark-border bg-dark-surface p-6">
       <h2 className="text-lg font-semibold text-dark-text">RQD</h2>
-      <p className="mt-0.5 text-xs text-dark-secondary">Rock Quality Designation</p>
+      <p className="mt-0.5 text-xs text-dark-textSecondary">Rock Quality Designation</p>
 
       <div className="mt-4 space-y-3">
         {/* Piece lengths */}
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-dark-secondary">
+          <label className="mb-1 block text-[11px] font-medium text-dark-textSecondary">
             Longitudes de piezas (cm)
           </label>
           <input
@@ -396,7 +396,7 @@ function RqdCard({
 
         {/* Core length */}
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-dark-secondary">
+          <label className="mb-1 block text-[11px] font-medium text-dark-textSecondary">
             Longitud del testigo (m)
           </label>
           <input
@@ -412,8 +412,8 @@ function RqdCard({
 
         {/* Min block (optional) */}
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-dark-secondary">
-            Bloque mínimo (cm) <span className="text-dark-secondary/50">— opcional</span>
+          <label className="mb-1 block text-[11px] font-medium text-dark-textSecondary">
+            Bloque mínimo (cm) <span className="text-dark-textSecondary/50">— opcional</span>
           </label>
           <input
             type="number"
@@ -443,7 +443,7 @@ function RqdCard({
             <p className="mt-1 text-sm font-medium text-dark-text">
               {result.classification}
             </p>
-            <p className="mt-0.5 text-[11px] text-dark-secondary">
+            <p className="mt-0.5 text-[11px] text-dark-textSecondary">
               {parseCommaNumbers(pieces).length} pieza(s) analizada(s)
             </p>
           </div>
@@ -486,11 +486,11 @@ function DeformationCard({
   return (
     <div className="rounded-xl border border-dark-border bg-dark-surface p-6">
       <h2 className="text-lg font-semibold text-dark-text">Deformación</h2>
-      <p className="mt-0.5 text-xs text-dark-secondary">Análisis de deformación del talud</p>
+      <p className="mt-0.5 text-xs text-dark-textSecondary">Análisis de deformación del talud</p>
 
       <div className="mt-4 space-y-3">
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-dark-secondary">
+          <label className="mb-1 block text-[11px] font-medium text-dark-textSecondary">
             Desplazamiento (px)
           </label>
           <input
@@ -505,7 +505,7 @@ function DeformationCard({
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-dark-secondary">
+          <label className="mb-1 block text-[11px] font-medium text-dark-textSecondary">
             Días transcurridos
           </label>
           <input
@@ -520,7 +520,7 @@ function DeformationCard({
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-dark-secondary">
+          <label className="mb-1 block text-[11px] font-medium text-dark-textSecondary">
             Distancia Z (m)
           </label>
           <input
@@ -535,7 +535,7 @@ function DeformationCard({
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-dark-secondary">
+          <label className="mb-1 block text-[11px] font-medium text-dark-textSecondary">
             Distancia focal (mm)
           </label>
           <input
@@ -561,19 +561,19 @@ function DeformationCard({
         {result && (
           <div className="rounded-lg border border-dark-border bg-dark-primary p-3 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-dark-secondary">Deformación</span>
+              <span className="text-[11px] text-dark-textSecondary">Deformación</span>
               <span className="text-sm font-bold text-dark-text">
                 {result.deformationMm.toFixed(4)} mm
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-dark-secondary">Velocidad</span>
+              <span className="text-[11px] text-dark-textSecondary">Velocidad</span>
               <span className="text-sm font-bold text-dark-text">
                 {result.rateMmPerDay.toFixed(4)} mm/día
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-dark-secondary">Clasificación</span>
+              <span className="text-[11px] text-dark-textSecondary">Clasificación</span>
               <span
                 className={`text-sm font-bold ${
                   result.status === 'Estable'
@@ -616,11 +616,11 @@ function GrowthCard({
   return (
     <div className="rounded-xl border border-dark-border bg-dark-surface p-6">
       <h2 className="text-lg font-semibold text-dark-text">Crecimiento</h2>
-      <p className="mt-0.5 text-xs text-dark-secondary">Verificación de crecimiento de fisuras</p>
+      <p className="mt-0.5 text-xs text-dark-textSecondary">Verificación de crecimiento de fisuras</p>
 
       <div className="mt-4 space-y-3">
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-dark-secondary">
+          <label className="mb-1 block text-[11px] font-medium text-dark-textSecondary">
             Mediciones (mm)
           </label>
           <input
@@ -630,13 +630,13 @@ function GrowthCard({
             placeholder="ej: 1.0, 1.2, 1.5, 1.8, 2.2"
             className="w-full rounded-lg border border-dark-border bg-dark-primary px-3 py-2 text-sm text-dark-text placeholder-dark-secondary/50 outline-none focus:border-dark-accent"
           />
-          <p className="mt-0.5 text-[10px] text-dark-secondary">
+          <p className="mt-0.5 text-[10px] text-dark-textSecondary">
             Valores separados por coma en orden cronológico
           </p>
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-dark-secondary">
+          <label className="mb-1 block text-[11px] font-medium text-dark-textSecondary">
             Umbral de crecimiento (%)
           </label>
           <input
@@ -661,26 +661,26 @@ function GrowthCard({
         {/* Result */}
         {result && result.totalMeasurements < 2 && (
           <div className="rounded-lg border border-dark-border bg-dark-primary p-3">
-            <p className="text-sm text-dark-secondary">Se requieren al menos 2 mediciones.</p>
+            <p className="text-sm text-dark-textSecondary">Se requieren al menos 2 mediciones.</p>
           </div>
         )}
 
         {result && result.totalMeasurements >= 2 && (
           <div className="rounded-lg border border-dark-border bg-dark-primary p-3 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-dark-secondary">Crecimiento máx.</span>
+              <span className="text-[11px] text-dark-textSecondary">Crecimiento máx.</span>
               <span className="text-sm font-bold text-dark-text">
                 {result.maxGrowthPercent.toFixed(2)}%
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-dark-secondary">Umbral</span>
+              <span className="text-[11px] text-dark-textSecondary">Umbral</span>
               <span className="text-sm font-bold text-dark-text">
                 {result.thresholdPercent}%
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-dark-secondary">Estado</span>
+              <span className="text-[11px] text-dark-textSecondary">Estado</span>
               <span
                 className={`text-sm font-bold ${
                   result.exceededThreshold ? 'text-dark-danger' : 'text-green-400'
@@ -690,7 +690,7 @@ function GrowthCard({
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-dark-secondary">Tendencia</span>
+              <span className="text-[11px] text-dark-textSecondary">Tendencia</span>
               <span
                 className={`text-sm font-bold ${
                   result.trendDirection === 'incrementando'
@@ -705,7 +705,7 @@ function GrowthCard({
                 {result.trendDirection === 'estable' && '→ Estable'}
               </span>
             </div>
-            <p className="text-[10px] text-dark-secondary">
+            <p className="text-[10px] text-dark-textSecondary">
               {result.totalMeasurements} medición(es) analizada(s)
             </p>
           </div>

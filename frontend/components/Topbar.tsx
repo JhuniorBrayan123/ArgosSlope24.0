@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 // ── Breadcrumb map ────────────────────────────────────────────────────
 
@@ -13,7 +14,6 @@ const ROUTE_LABELS: Record<string, string> = {
   'alertas':       'Alertas',
   'analitica':     'Analítica',
   'geomechanics':  'Geotecnia',
-  'visualizacion': 'Gemelo 3D',
   'reportes':      'Reportes',
   'configuracion': 'Configuración',
   'historial':     'Historial',
@@ -132,6 +132,9 @@ export default function Topbar() {
           {/* Badge */}
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-dark-danger" />
         </button>
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
         {/* Profile */}
         {user && (

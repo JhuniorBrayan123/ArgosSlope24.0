@@ -43,7 +43,7 @@ export default function HudsonCalculator({ onCalculated }: Props) {
 
       const payload = { jointFamilies: families };
       const result = await geomechanicsService.calculateHudson(payload);
-      onCalculated(result, { method: 'hudson', ...payload, ...result });
+      onCalculated(result, { ...payload, ...result, method: 'hudson' });
     } catch (err: any) {
       setError(err.message || 'Error al calcular RQD por Hudson');
     }

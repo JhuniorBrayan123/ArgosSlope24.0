@@ -51,7 +51,7 @@ function TrendArrow({ direction }: { direction: PrediccionData['trend_direction'
 
 function TttBadge({ ttt_days }: { ttt_days: number | null }) {
   if (ttt_days == null) {
-    return <span className="text-[11px] text-dark-secondary">Sin proyección</span>;
+    return <span className="text-[11px] text-dark-textSecondary">Sin proyección</span>;
   }
 
   let color: string;
@@ -196,7 +196,7 @@ export default function PanelAlertas() {
   if (error) {
     return (
       <div className="flex h-48 items-center justify-center rounded-xl border border-dark-border bg-dark-surface">
-        <p className="text-sm text-dark-secondary">
+        <p className="text-sm text-dark-textSecondary">
           No se pudieron cargar las alertas. Verifica la conexión.
         </p>
       </div>
@@ -208,15 +208,15 @@ export default function PanelAlertas() {
       {/* ── Stats ── */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-lg border border-dark-border bg-dark-surface p-3">
-          <p className="text-xs text-dark-secondary">Total Alertas</p>
+          <p className="text-xs text-dark-textSecondary">Total Alertas</p>
           <p className="text-xl font-bold text-dark-text">{stats.total}</p>
         </div>
         <div className="rounded-lg border border-dark-border bg-dark-surface p-3">
-          <p className="text-xs text-dark-secondary">Críticas</p>
+          <p className="text-xs text-dark-textSecondary">Críticas</p>
           <p className="text-xl font-bold text-dark-danger">{stats.criticas}</p>
         </div>
         <div className="rounded-lg border border-dark-border bg-dark-surface p-3">
-          <p className="text-xs text-dark-secondary">Pendientes</p>
+          <p className="text-xs text-dark-textSecondary">Pendientes</p>
           <p className="text-xl font-bold text-dark-warning">{stats.pendientes}</p>
         </div>
       </div>
@@ -224,7 +224,7 @@ export default function PanelAlertas() {
       {/* ── Predicciones ── */}
       {predicciones.length > 0 && (
         <div className="rounded-lg border border-dark-border bg-dark-surface p-4">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-textSecondary">
             Predicciones de Tendencia
           </h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -245,7 +245,7 @@ export default function PanelAlertas() {
                     <span className="text-xs font-semibold text-dark-text">
                       {p.roi_id}
                     </span>
-                    <span className="text-[10px] text-dark-secondary">
+                    <span className="text-[10px] text-dark-textSecondary">
                       #{p.crack_id}
                     </span>
                   </div>
@@ -258,7 +258,7 @@ export default function PanelAlertas() {
                     <TttBadge ttt_days={p.ttt_days} />
                   </div>
 
-                  <div className="flex items-center justify-between text-[11px] text-dark-secondary">
+                  <div className="flex items-center justify-between text-[11px] text-dark-textSecondary">
                     <span>Pendiente: {p.slope.toFixed(4)} mm/día</span>
                     <span>Confianza: {(p.confidence * 100).toFixed(0)}%</span>
                   </div>
@@ -309,7 +309,7 @@ export default function PanelAlertas() {
       {/* ── Lista ── */}
       {paginadas.length === 0 ? (
         <div className="flex h-32 items-center justify-center rounded-xl border border-dashed border-dark-border bg-dark-surface">
-          <p className="text-sm text-dark-secondary">
+          <p className="text-sm text-dark-textSecondary">
             {busqueda || filtroTipo !== 'todas' || filtroEstado !== 'todas'
               ? 'No hay alertas que coincidan con los filtros.'
               : 'No hay alertas registradas.'}
@@ -355,7 +355,7 @@ export default function PanelAlertas() {
 
                     {/* Fisura ID */}
                     {alerta.fisura_id && (
-                      <span className="text-[10px] text-dark-secondary">
+                      <span className="text-[10px] text-dark-textSecondary">
                         Fisura #{alerta.fisura_id}
                       </span>
                     )}
@@ -363,7 +363,7 @@ export default function PanelAlertas() {
 
                   <p className="text-sm text-dark-text">{alerta.mensaje}</p>
 
-                  <div className="mt-1.5 flex items-center gap-3 text-[11px] text-dark-secondary">
+                  <div className="mt-1.5 flex items-center gap-3 text-[11px] text-dark-textSecondary">
                     <span>
                       {new Date(alerta.fecha).toLocaleString('es-ES', {
                         day: '2-digit',
@@ -404,7 +404,7 @@ export default function PanelAlertas() {
           <button
             onClick={() => setPagina((p) => Math.max(1, p - 1))}
             disabled={pagina === 1}
-            className="rounded-lg border border-dark-border bg-dark-surface px-3 py-1.5 text-xs text-dark-secondary disabled:opacity-30"
+            className="rounded-lg border border-dark-border bg-dark-surface px-3 py-1.5 text-xs text-dark-textSecondary disabled:opacity-30"
           >
             Anterior
           </button>
@@ -414,14 +414,14 @@ export default function PanelAlertas() {
             .map((p, idx, arr) => (
               <span key={p} className="flex items-center gap-1">
                 {idx > 0 && arr[idx - 1] !== p - 1 && (
-                  <span className="text-dark-secondary/50">...</span>
+                  <span className="text-dark-textSecondary/50">...</span>
                 )}
                 <button
                   onClick={() => setPagina(p)}
                   className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
                     p === pagina
                       ? 'bg-dark-accent text-dark-primary'
-                      : 'border border-dark-border bg-dark-surface text-dark-secondary hover:bg-dark-hover'
+                      : 'border border-dark-border bg-dark-surface text-dark-textSecondary hover:bg-dark-hover'
                   }`}
                 >
                   {p}
@@ -432,7 +432,7 @@ export default function PanelAlertas() {
           <button
             onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
             disabled={pagina === totalPaginas}
-            className="rounded-lg border border-dark-border bg-dark-surface px-3 py-1.5 text-xs text-dark-secondary disabled:opacity-30"
+            className="rounded-lg border border-dark-border bg-dark-surface px-3 py-1.5 text-xs text-dark-textSecondary disabled:opacity-30"
           >
             Siguiente
           </button>

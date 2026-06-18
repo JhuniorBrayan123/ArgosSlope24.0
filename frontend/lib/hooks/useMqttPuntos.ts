@@ -105,10 +105,10 @@ export function useMqttPuntos(): MqttPuntosState {
 
     async function connect() {
       try {
-        // Dynamically import mqtt.js (ESM-compatible)
-        const mqtt = await import('mqtt');
+        const mqttModule = await import('mqtt');
+        const mqtt = mqttModule.default || mqttModule;
 
-        const client = mqtt.default.connect(MQTT_WS_URL, {
+        const client = mqtt.connect(MQTT_WS_URL, {
           protocolVersion: 4, // MQTT 3.1.1
           clean: true,
           reconnectPeriod: 5000,

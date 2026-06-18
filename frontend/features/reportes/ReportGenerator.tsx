@@ -71,7 +71,7 @@ function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-dark-border bg-dark-surface px-3 py-2 text-sm shadow-xl">
-      <p className="mb-1 font-medium text-dark-secondary">{label}</p>
+      <p className="mb-1 font-medium text-dark-textSecondary">{label}</p>
       {payload.map((entry: any, i: number) => (
         <p key={i} style={{ color: entry.color }} className="font-semibold">
           {entry.name}: {Number(entry.value).toFixed(4)} mm
@@ -256,11 +256,13 @@ export default function ReportGenerator() {
       setErrorNote(null);
       
       const dias = template === 'semanal' ? 7 : template === 'mensual' ? 30 : 14;
+      const startDate = dateRange.start;
+      const endDate = dateRange.end;
 
       const [summary, trends, alerts, fissuresRes] = await Promise.all([
-        reportsService.getSummary(),
-        reportsService.getTrends(dias),
-        reportsService.getAlertsSummary(),
+        reportsService.getSummary(startDate, endDate),
+        reportsService.getTrends(dias, startDate, endDate),
+        reportsService.getAlertsSummary(startDate, endDate),
         fissuresService.getAll({ page: 1, pageSize: 1000 })
       ]);
 
@@ -323,7 +325,7 @@ export default function ReportGenerator() {
       <div className="flex h-64 items-center justify-center rounded-xl border border-dark-border bg-dark-surface">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-dark-accent border-t-transparent" />
-          <p className="text-sm text-dark-secondary">Generando reporte agregado...</p>
+          <p className="text-sm text-dark-textSecondary">Generando reporte agregado...</p>
         </div>
       </div>
     );
@@ -337,11 +339,11 @@ export default function ReportGenerator() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-dark-danger">Error de Conexión</p>
-              <p className="mt-0.5 text-xs text-dark-secondary">{errorNote}</p>
+              <p className="mt-0.5 text-xs text-dark-textSecondary">{errorNote}</p>
             </div>
             <button
               onClick={() => setErrorNote(null)}
-              className="text-dark-secondary hover:text-dark-text"
+              className="text-dark-textSecondary hover:text-dark-text"
             >
               ✕
             </button>
@@ -367,7 +369,7 @@ export default function ReportGenerator() {
                 className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold ${
                   isActive
                     ? 'bg-dark-accent text-dark-primary'
-                    : 'bg-dark-primary text-dark-secondary'
+                    : 'bg-dark-primary text-dark-textSecondary'
                 }`}
               >
                 {t.icon === '7' ? (
@@ -387,7 +389,7 @@ export default function ReportGenerator() {
               <h3 className={`font-semibold ${isActive ? 'text-dark-accent' : 'text-dark-text'}`}>
                 {t.title}
               </h3>
-              <p className="mt-1 text-xs text-dark-secondary">{t.description}</p>
+              <p className="mt-1 text-xs text-dark-textSecondary">{t.description}</p>
             </button>
           );
         })}
@@ -396,21 +398,21 @@ export default function ReportGenerator() {
       {/* ── Period picker (for custom) ── */}
       {template === 'personalizado' && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dark-border bg-dark-surface p-4">
-          <span className="text-xs font-medium text-dark-secondary">Período:</span>
+          <span className="text-xs font-medium text-dark-textSecondary">Período:</span>
           <input
             type="date"
             value={dateRange.start}
             onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
             className="rounded-lg border border-dark-border bg-dark-primary px-3 py-2 text-sm text-dark-text outline-none focus:border-dark-accent [color-scheme:dark]"
           />
-          <span className="text-xs text-dark-secondary">a</span>
+          <span className="text-xs text-dark-textSecondary">a</span>
           <input
             type="date"
             value={dateRange.end}
             onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
             className="rounded-lg border border-dark-border bg-dark-primary px-3 py-2 text-sm text-dark-text outline-none focus:border-dark-accent [color-scheme:dark]"
           />
-          <span className="text-xs text-dark-secondary ml-2">
+          <span className="text-xs text-dark-textSecondary ml-2">
             {periodLabel}
           </span>
         </div>
@@ -419,7 +421,7 @@ export default function ReportGenerator() {
       {/* ── Period label banner ── */}
       {template !== 'personalizado' && (
         <div className="rounded-lg border border-dark-border bg-dark-surface px-4 py-3">
-          <p className="text-sm text-dark-secondary">
+          <p className="text-sm text-dark-textSecondary">
             Período: <span className="font-medium text-dark-text">{periodLabel}</span>
           </p>
         </div>
@@ -428,7 +430,7 @@ export default function ReportGenerator() {
       {/* ── Report Preview ── */}
       {reportData && (
         <div className="rounded-xl border border-dark-border bg-dark-surface p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-dark-secondary">
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-dark-textSecondary">
             Vista Previa del Reporte
           </h3>
 
@@ -443,28 +445,28 @@ export default function ReportGenerator() {
           {/* Stats section */}
           <div className="mt-4 grid grid-cols-3 gap-4">
             <div className="rounded-lg border border-dark-border bg-dark-primary/50 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-dark-secondary">Ancho Promedio</p>
+              <p className="text-[10px] uppercase tracking-wider text-dark-textSecondary">Ancho Promedio</p>
               <p className="mt-0.5 text-lg font-bold text-dark-text">{avgAncho.toFixed(2)} mm</p>
             </div>
             <div className="rounded-lg border border-dark-border bg-dark-primary/50 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-dark-secondary">Δ% Máximo</p>
+              <p className="text-[10px] uppercase tracking-wider text-dark-textSecondary">Δ% Máximo</p>
               <p className="mt-0.5 text-lg font-bold text-dark-danger">{maxDelta.toFixed(1)}%</p>
             </div>
             <div className="rounded-lg border border-dark-border bg-dark-primary/50 p-3">
-              <p className="text-[10px] uppercase tracking-wider text-dark-secondary">Velocidad Promedio</p>
+              <p className="text-[10px] uppercase tracking-wider text-dark-textSecondary">Velocidad Promedio</p>
               <p className="mt-0.5 text-lg font-bold text-dark-text">{avgVelocidad.toFixed(4)} mm/día</p>
             </div>
           </div>
 
           {/* Chart preview */}
           <div className="mt-6">
-            <p className="mb-3 text-xs font-medium text-dark-secondary">
+            <p className="mb-3 text-xs font-medium text-dark-textSecondary">
               Tendencia de Deformación — Ancho promedio por día ({reportData.trends.length} días con datos)
             </p>
             <div className="h-48 rounded-lg border border-dark-border bg-dark-primary/30 p-3">
-              {reportData.trends.length === 0 ? (
+              {reportData.trends.length <= 1 ? (
                 <div className="flex h-full items-center justify-center">
-                   <p className="text-sm text-dark-secondary">Sin datos en este período.</p>
+                   <p className="text-sm text-dark-textSecondary">Se requieren más mediciones para una tendencia confiable.</p>
                 </div>
               ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -499,9 +501,9 @@ export default function ReportGenerator() {
 
           {/* Alert summary */}
           <div className="mt-4">
-            <p className="mb-2 text-xs font-medium text-dark-secondary">Resumen de Alertas</p>
+            <p className="mb-2 text-xs font-medium text-dark-textSecondary">Resumen de Alertas</p>
             {reportData.alerts.length === 0 ? (
-              <p className="text-sm text-dark-secondary">No hay alertas en este período.</p>
+              <p className="text-sm text-dark-textSecondary">No hay alertas en este período.</p>
             ) : (
               <div className="space-y-2">
                 {reportData.alerts.map((a, i) => (
@@ -527,7 +529,7 @@ export default function ReportGenerator() {
                       >
                         {a.tipo}
                       </span>
-                      <span className="text-[11px] text-dark-secondary">Total agrupadas: {a.count}</span>
+                      <span className="text-[11px] text-dark-textSecondary">Total agrupadas: {a.count}</span>
                     </div>
                   </div>
                 ))}
@@ -577,7 +579,7 @@ function SummaryCard({
 }) {
   return (
     <div className="rounded-lg border border-dark-border bg-dark-primary/50 p-3">
-      <p className="text-[10px] uppercase tracking-wider text-dark-secondary">{label}</p>
+      <p className="text-[10px] uppercase tracking-wider text-dark-textSecondary">{label}</p>
       <p className={`mt-0.5 text-lg font-bold ${valueColor ?? 'text-dark-text'}`}>
         {value}
       </p>

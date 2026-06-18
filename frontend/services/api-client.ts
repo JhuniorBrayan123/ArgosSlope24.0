@@ -133,7 +133,7 @@ export interface ApiErrorResponse {
 // ── API Client ───────────────────────────────────────────────────────
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_DOTNET_API_URL || 'http://localhost:5000';
+  process.env.NEXT_PUBLIC_DOTNET_API_URL || 'http://localhost:5001';
 
 /**
  * Typed error class for API errors.

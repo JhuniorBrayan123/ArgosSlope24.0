@@ -193,7 +193,7 @@ export default function VideoEnVivo({
         {status === 'connecting' && (
           <div className="flex flex-col items-center gap-2">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-dark-accent border-t-transparent" />
-            <span className="text-sm text-dark-secondary">
+            <span className="text-sm text-dark-textSecondary">
               Conectando con la cámara...
             </span>
           </div>
@@ -202,7 +202,7 @@ export default function VideoEnVivo({
         {status === 'error' && (
           <div className="flex flex-col items-center gap-2 rounded-lg bg-dark-surface/80 p-4">
             <span className="text-sm text-red-400">Error de conexión</span>
-            <span className="max-w-xs text-center text-xs text-dark-secondary">
+            <span className="max-w-xs text-center text-xs text-dark-textSecondary">
               {errorMsg}
             </span>
             <button
@@ -216,7 +216,7 @@ export default function VideoEnVivo({
 
         {status === 'disconnected' && (
           <div className="flex flex-col items-center gap-2">
-            <span className="text-sm text-dark-secondary">
+            <span className="text-sm text-dark-textSecondary">
               Sin conexión
             </span>
             <button

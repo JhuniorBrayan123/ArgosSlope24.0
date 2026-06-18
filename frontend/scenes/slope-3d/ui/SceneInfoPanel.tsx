@@ -58,7 +58,7 @@ export default function SceneInfoPanel({ fissures }: SceneInfoPanelProps) {
         </div>
         <button
           onClick={() => selectCrack(null)}
-          className="text-dark-secondary/50 hover:text-dark-text transition-colors"
+          className="text-dark-textSecondary/50 hover:text-dark-text transition-colors"
           title="Limpiar selección"
         >
           <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -71,24 +71,24 @@ export default function SceneInfoPanel({ fissures }: SceneInfoPanelProps) {
       {/* Dimensions */}
       <div className="space-y-1 text-xs">
         <div className="flex justify-between">
-          <span className="text-dark-secondary">Largo</span>
-          <span className="font-mono text-dark-text">{selectedFissure.largoMm.toFixed(1)} mm</span>
+          <span className="text-dark-textSecondary">Largo</span>
+          <span className="font-mono text-dark-text">{selectedFissure.largo.toFixed(1)} mm</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-dark-secondary">Ancho</span>
-          <span className="font-mono text-dark-text">{selectedFissure.anchoMm.toFixed(2)} mm</span>
+          <span className="text-dark-textSecondary">Ancho</span>
+          <span className="font-mono text-dark-text">{selectedFissure.ancho.toFixed(2)} mm</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-dark-secondary">Área</span>
-          <span className="font-mono text-dark-text">{selectedFissure.areaMm2.toFixed(1)} mm²</span>
+          <span className="text-dark-textSecondary">Área</span>
+          <span className="font-mono text-dark-text">{selectedFissure.area.toFixed(1)} mm²</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-dark-secondary">Tipo</span>
+          <span className="text-dark-textSecondary">Tipo</span>
           <span className="capitalize text-dark-text">{tipoLabel}</span>
         </div>
         {selectedFissure.deltaPorcentaje !== null && (
           <div className="flex justify-between">
-            <span className="text-dark-secondary">Delta</span>
+            <span className="text-dark-textSecondary">Delta</span>
             <span className={`font-mono ${selectedFissure.deltaPorcentaje > 0 ? 'text-red-400' : 'text-dark-text'}`}>
               {selectedFissure.deltaPorcentaje > 0 ? '+' : ''}
               {selectedFissure.deltaPorcentaje.toFixed(1)}%
@@ -98,7 +98,7 @@ export default function SceneInfoPanel({ fissures }: SceneInfoPanelProps) {
       </div>
 
       {/* Fecha de detección */}
-      <p className="mt-2 text-[10px] text-dark-secondary/50">
+      <p className="mt-2 text-[10px] text-dark-textSecondary/50">
         {new Date(selectedFissure.fechaDeteccion).toLocaleString('es-ES', {
           day: '2-digit',
           month: 'short',

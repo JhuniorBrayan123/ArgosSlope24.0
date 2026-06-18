@@ -184,12 +184,12 @@ public class FisurasController : ControllerBase
             ImagenOriginal: lastDetection?.ImagePath ?? "",
             ImagenSegmentada: lastDetection?.MaskPath ?? "",
             DeltaPorcentaje: lastMedicion?.GrowthPercent,
-            EsCritica: (lastMedicion?.GrowthPercent ?? 0) > 5.0,
+            EsCritica: c.RiskLevel?.ToLower() == "critico",
             Unidad: lastMedicion?.IsCalibrated == true ? "mm" : "px",
             Calibrado: lastMedicion?.IsCalibrated ?? false,
             Confianza: 1.0,
             Origen: "real",
-            EstadoAlerta: c.RiskLevel,
+            EstadoAlerta: c.RiskLevel ?? "estable",
             DeviceId: "edge-01"
         );
     }

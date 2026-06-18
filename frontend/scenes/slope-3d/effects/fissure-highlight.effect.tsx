@@ -54,15 +54,15 @@ function transformFisuras(fisuras: FisuraResponse[]): CrackLine3D[] {
         const puntos = fissureCoordsTo3D(
           f.coordenadas,
           f.orientacion,
-          f.largoMm
+          f.largo
         );
         return {
           id: f.id,
           roiId: f.roiId,
           puntos,
           color: COLOR_FISURA[f.tipo] ?? '#888888',
-          largoMm: f.largoMm,
-          anchoMm: f.anchoMm,
+          largoMm: f.largo,
+          anchoMm: f.ancho,
           tipo: f.tipo ?? 'desconocido',
         };
       } catch {
@@ -168,10 +168,10 @@ function FisuraLinea3D({
         >
           <div className="rounded-lg border border-dark-border bg-dark-surface/95 px-3 py-2 text-xs shadow-2xl backdrop-blur-sm">
             <p className="font-bold text-dark-accent">{crack.roiId}</p>
-            <p className="text-dark-secondary">
+            <p className="text-dark-textSecondary">
               {crack.largoMm.toFixed(1)} × {crack.anchoMm.toFixed(2)} mm
             </p>
-            <p className="text-dark-secondary capitalize">{crack.tipo}</p>
+            <p className="text-dark-textSecondary capitalize">{crack.tipo}</p>
           </div>
         </Html>
       )}

@@ -85,6 +85,52 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task<bool> RegisterAsync(RegisterRequest request)
+    {
+        if (await _db.Users.AnyAsync(u => u.Email == request.Email))
+        {
+            return false;
+        }
+
+        var operatorRole = await _db.Roles.FirstOrDefaultAsync(r => r.Name == "Operador");
+        if (operatorRole == null)
+        {
+            throw new Exception("Role 'Operador' not found in database.");
+        }
+
+        var user = new AppUser
+        {
+            Email = request.Email,
+            FullName = request.FullName,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            RoleId = operatorRole.Id
+        };
+
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<string?> RecoverPasswordAsync(RecoverPasswordRequest request)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
+        if (user == null)
+        {
+            return null;
+        }
+
+        // Generate temporary password
+        var tempPassword = "Tmp" + Guid.NewGuid().ToString().Substring(0, 6).ToUpper() + "!";
+        
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(tempPassword);
+        user.UpdatedAt = DateTime.UtcNow;
+        
+        await _db.SaveChangesAsync();
+
+        return tempPassword;
+    }
+
     private async Task<LoginResponse> GenerateTokensAsync(AppUser user, bool rememberMe, string? ip, string? ua)
     {
         var jwtSecret = _config["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");

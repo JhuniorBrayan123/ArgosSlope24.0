@@ -68,6 +68,7 @@ Last updated: 2026-06-17
 | `openai-docs` | — | user | `C:\Users\USER\.codex\skills\.system\openai-docs\SKILL.md` |
 | `plugin-creator` | — | user | `C:\Users\USER\.codex\skills\.system\plugin-creator\SKILL.md` |
 | `preset` | — | user | `C:\Users\USER\.agents\skills\microsoft-foundry\models\deploy-model\preset\SKILL.md` |
+| `python-appservice-deploy` | — | user | `C:\Users\USER\.agents\skills\python-appservice-deploy\SKILL.md` |
 | `skill-creator` | Trigger: new skills, agent instructions, documenting AI usage patterns. Create LLM-first skills with valid frontmatter. | user | `C:\Users\USER\.config\opencode\skills\skill-creator\SKILL.md` |
 | `skill-installer` | — | user | `C:\Users\USER\.codex\skills\.system\skill-installer\SKILL.md` |
 | `slides` | — | user | `C:\Users\USER\.codex\skills\codex-primary-runtime\slides\SKILL.md` |

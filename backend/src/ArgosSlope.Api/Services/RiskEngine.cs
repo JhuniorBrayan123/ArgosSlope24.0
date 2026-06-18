@@ -107,64 +107,113 @@ public class RiskEngine : IRiskEngine
             }
         }
 
+        // Thresholds based on user request (temporarily in px as default if no mm, or unified)
+        // Ancho bajo: >= 20 px
+        // Ancho medio: >= 80 px
+        // Ancho critico: >= 150 px
+        // Delta medio: >= 10%
+        // Delta critico: >= 25%
+        // Velocidad critica: >= thresholds.VelocidadMmDiaCritico (e.g. 1.0)
+        
+        bool isCalibrated = ultimaMedicion?.IsCalibrated ?? false;
+        string unidadStr = isCalibrated ? "mm" : "px [Estimado]";
+
+        double anchoCritico = isCalibrated ? thresholds.AnchoCriticoMm : 150;
+        double anchoMedio = isCalibrated ? (thresholds.AnchoCriticoMm / 2.0) : 80;
+        double anchoBajo = isCalibrated ? (thresholds.AnchoCriticoMm / 5.0) : 20;
+
+        double largoMedio = isCalibrated ? 80 : 80; // Example
+        var largo = ultimaMedicion?.LengthMm ?? ultimaMedicion?.LengthPx ?? 0;
+
         // ── Evaluación multi-factor ──────────────────────────────────
 
-        // Factor 1: Ancho de fisura
-        if (Ancho >= thresholds.AnchoCriticoMm)
-        {
-            factores.Add($"Ancho ({Ancho:F2}mm) supera umbral ({thresholds.AnchoCriticoMm}mm)");
-        }
+        // RMR / RQD Placeholder - Preparado para integración futura con módulo geomecánico
+        int rmrClass = 1; // 1 to 5
+        bool rqdBajo = false;
+        bool hasSevereCracks = false;
 
-        // Factor 2: Crecimiento porcentual
-        if (crecimientoPct >= thresholds.CrecimientoPctCritico)
+        // Factor: Crítico
+        if (Ancho >= anchoCritico)
         {
-            factores.Add($"Crecimiento ({crecimientoPct:F1}%) supera umbral crítico ({thresholds.CrecimientoPctCritico}%)");
+            factores.Add($"Ancho ({Ancho:F2} {unidadStr}) supera umbral crítico ({anchoCritico} {unidadStr})");
             nivel = "critico";
             generarAlerta = true;
-            valorUmbral = crecimientoPct;
+            valorUmbral = anchoCritico;
         }
-        else if (crecimientoPct >= thresholds.CrecimientoPctAlerta)
+        else if (crecimientoPct >= thresholds.CrecimientoPctCritico || crecimientoPct >= 25)
         {
-            factores.Add($"Crecimiento ({crecimientoPct:F1}%) supera umbral de alerta ({thresholds.CrecimientoPctAlerta}%)");
-            nivel = "alto";
+            double deltaCritico = Math.Max(thresholds.CrecimientoPctCritico, 25);
+            factores.Add($"Crecimiento ({crecimientoPct:F1}%) supera umbral crítico ({deltaCritico}%)");
+            nivel = "critico";
             generarAlerta = true;
-            valorUmbral = crecimientoPct;
+            valorUmbral = deltaCritico;
         }
-
-        // Factor 3: Velocidad de crecimiento
-        if (velocidadMmDia >= thresholds.VelocidadMmDiaCritico)
+        else if (velocidadMmDia >= thresholds.VelocidadMmDiaCritico)
         {
-            factores.Add($"Velocidad ({velocidadMmDia:F2}mm/día) supera umbral crítico ({thresholds.VelocidadMmDiaCritico}mm/día)");
+            factores.Add($"Velocidad ({velocidadMmDia:F2} {unidadStr}/día) supera umbral crítico ({thresholds.VelocidadMmDiaCritico} {unidadStr}/día)");
             nivel = "critico";
             generarAlerta = true;
             valorUmbral = Math.Max(valorUmbral, velocidadMmDia);
         }
-        else if (velocidadMmDia >= thresholds.VelocidadMmDiaAlerta)
+        else if (rmrClass >= 4 || (rqdBajo && hasSevereCracks))
         {
-            factores.Add($"Velocidad ({velocidadMmDia:F2}mm/día) supera umbral de alerta ({thresholds.VelocidadMmDiaAlerta}mm/día)");
-            if (nivel != "critico")
-            {
-                nivel = "alto";
-                generarAlerta = true;
-            }
-            valorUmbral = Math.Max(valorUmbral, velocidadMmDia);
+            // Placeholder rule for RMR/RQD
+            factores.Add($"Clasificación RMR/RQD en estado crítico");
+            nivel = "critico";
+            generarAlerta = true;
+            valorUmbral = rmrClass;
+        }
+        // Factor: Advertencia (Medio)
+        else if (Ancho >= anchoMedio)
+        {
+            factores.Add($"Ancho ({Ancho:F2} {unidadStr}) supera umbral medio ({anchoMedio} {unidadStr})");
+            nivel = "advertencia";
+            generarAlerta = true;
+            valorUmbral = anchoMedio;
+        }
+        else if (largo >= largoMedio)
+        {
+            factores.Add($"Largo ({largo:F2} {unidadStr}) supera umbral medio ({largoMedio} {unidadStr})");
+            nivel = "advertencia";
+            generarAlerta = true;
+            valorUmbral = largoMedio;
+        }
+        else if (crecimientoPct >= thresholds.CrecimientoPctAlerta || crecimientoPct >= 10)
+        {
+            double deltaMedio = Math.Max(thresholds.CrecimientoPctAlerta, 10);
+            factores.Add($"Crecimiento ({crecimientoPct:F1}%) supera umbral medio ({deltaMedio}%)");
+            nivel = "advertencia";
+            generarAlerta = true;
+            valorUmbral = deltaMedio;
+        }
+        else if (rmrClass == 3 && Ancho >= anchoBajo) // rmr clase III con fisuras relevantes
+        {
+            factores.Add($"RMR Clase III con fisuras relevantes");
+            nivel = "advertencia";
+            generarAlerta = true;
+            valorUmbral = rmrClass;
+        }
+        // Factor: Informativo (Bajo)
+        else if (Ancho >= anchoBajo)
+        {
+            factores.Add($"Ancho ({Ancho:F2} {unidadStr}) supera umbral bajo ({anchoBajo} {unidadStr})");
+            nivel = "informativo";
+            generarAlerta = true;
+            valorUmbral = anchoBajo;
+        }
+        else if (mediciones.Count <= 1)
+        {
+            // New crack detected
+            factores.Add($"Fisura nueva detectada");
+            nivel = "informativo";
+            generarAlerta = true;
+            valorUmbral = 0;
         }
 
-        // Factor 4: Clasificación combinada
-        if (Ancho >= thresholds.AnchoCriticoMm && crecimientoPct > 0)
-        {
-            _logger.LogDebug("Riesgo combinado para {RoiId}: ancho={Ancho}mm, crecimiento={Crec}Pct, vel={Vel}mm/día",
-                fisura.Code, Ancho, crecimientoPct, velocidadMmDia);
-        }
-
-        // Determinar nivel final si hay factores pero no superó umbrales numéricos
+        // Determinar nivel final si hay factores pero no superó umbrales
         if (factores.Count == 0)
         {
-            nivel = "bajo";
-        }
-        else if (nivel == "bajo")
-        {
-            nivel = "medio";
+            nivel = "estable";
         }
 
         if (generarAlerta)

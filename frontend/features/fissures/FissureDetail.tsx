@@ -31,7 +31,7 @@ function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-dark-border bg-dark-surface px-3 py-2 text-sm shadow-xl">
-      <p className="mb-1 font-medium text-dark-secondary">{label}</p>
+      <p className="mb-1 font-medium text-dark-textSecondary">{label}</p>
       {payload.map((entry: any, i: number) => (
         <p key={i} style={{ color: entry.color }} className="font-semibold">
           {entry.name}: {Number(entry.value).toFixed(3)} mm
@@ -118,7 +118,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
       <div className="flex h-64 items-center justify-center rounded-xl border border-dark-border bg-dark-surface">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-dark-accent border-t-transparent" />
-          <p className="text-sm text-dark-secondary">Cargando detalle…</p>
+          <p className="text-sm text-dark-textSecondary">Cargando detalle…</p>
         </div>
       </div>
     );
@@ -139,7 +139,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
             </button>
             <button
               onClick={onBack}
-              className="rounded-lg bg-dark-hover px-4 py-2 text-sm font-semibold text-dark-secondary transition-colors hover:text-dark-text"
+              className="rounded-lg bg-dark-hover px-4 py-2 text-sm font-semibold text-dark-textSecondary transition-colors hover:text-dark-text"
             >
               Volver
             </button>
@@ -153,7 +153,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
   if (!selectedFissureDetail) {
     return (
       <div className="flex h-48 items-center justify-center rounded-xl border border-dark-border bg-dark-surface">
-        <p className="text-sm text-dark-secondary">Fisura no encontrada</p>
+        <p className="text-sm text-dark-textSecondary">Fisura no encontrada</p>
       </div>
     );
   }
@@ -165,7 +165,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
       {/* ── Back navigation ──────────────────────────────────────── */}
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-xs font-semibold text-dark-secondary transition-colors hover:text-dark-text"
+        className="flex items-center gap-1.5 text-xs font-semibold text-dark-textSecondary transition-colors hover:text-dark-text"
       >
         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -179,7 +179,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
           <h2 className="text-xl font-bold text-dark-text">
             Fisura #{fisura.id} — {fisura.roiId}
           </h2>
-          <p className="mt-0.5 text-xs text-dark-secondary">
+          <p className="mt-0.5 text-xs text-dark-textSecondary">
             Detectada el{' '}
             {new Date(fisura.fechaDeteccion).toLocaleDateString('es-ES', {
               day: '2-digit',
@@ -215,7 +215,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
             key={label}
             className="rounded-lg border border-dark-border bg-dark-primary p-3"
           >
-            <p className="text-[11px] font-medium uppercase tracking-wider text-dark-secondary">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-dark-textSecondary">
               {label}
             </p>
             <p className="mt-1 font-semibold text-dark-text">{value}</p>
@@ -223,7 +223,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
         ))}
         {fisura.deltaPorcentaje != null && (
           <div className="rounded-lg border border-dark-border bg-dark-primary p-3">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-dark-secondary">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-dark-textSecondary">
               Δ%
             </p>
             <p
@@ -237,7 +237,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
         )}
         {fisura.coordenadas && (
           <div className="col-span-full rounded-lg border border-dark-border bg-dark-primary p-3">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-dark-secondary">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-dark-textSecondary">
               Coordenadas
             </p>
             <pre className="mt-1 overflow-x-auto font-mono text-xs text-dark-text">
@@ -306,7 +306,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
             Histórico de Mediciones
           </h3>
           <div className="flex h-24 items-center justify-center rounded-lg bg-dark-primary">
-            <p className="text-xs text-dark-secondary">
+            <p className="text-xs text-dark-textSecondary">
               No hay mediciones registradas para esta fisura
             </p>
           </div>
@@ -330,7 +330,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-dark-textSecondary">
                     {a.tipo}
                   </span>
                   <span
@@ -342,7 +342,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-dark-text">{a.mensaje}</p>
-                <div className="mt-1 flex items-center gap-3 text-[11px] text-dark-secondary">
+                <div className="mt-1 flex items-center gap-3 text-[11px] text-dark-textSecondary">
                   <span>
                     {new Date(a.fecha).toLocaleString('es-ES')}
                   </span>
@@ -366,7 +366,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
             {fisura.imagenOriginal && (
               <div className="rounded-lg border border-dark-border bg-dark-primary overflow-hidden flex flex-col">
                 <div className="p-2 border-b border-dark-border bg-dark-surface">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-dark-secondary">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-dark-textSecondary">
                     Captura Original
                   </span>
                 </div>
@@ -380,7 +380,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
             {fisura.imagenSegmentada && (
               <div className="rounded-lg border border-dark-border bg-dark-primary overflow-hidden flex flex-col">
                 <div className="p-2 border-b border-dark-border bg-dark-surface">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-dark-secondary">
+                  <span className="text-[11px] font-medium uppercase tracking-wider text-dark-textSecondary">
                     Segmentación (Máscara)
                   </span>
                 </div>
@@ -394,7 +394,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
           </div>
         ) : (
           <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-dark-border bg-dark-primary">
-            <p className="text-xs text-dark-secondary">
+            <p className="text-xs text-dark-textSecondary">
               No hay fotos disponibles para esta captura
             </p>
           </div>
@@ -411,7 +411,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
           <button
             onClick={handleArchive}
             disabled={archiveLoading}
-            className="flex items-center gap-1.5 rounded-lg border border-dark-border bg-dark-primary px-4 py-2 text-sm font-semibold text-dark-secondary transition-colors hover:bg-dark-hover hover:text-dark-text disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-lg border border-dark-border bg-dark-primary px-4 py-2 text-sm font-semibold text-dark-textSecondary transition-colors hover:bg-dark-hover hover:text-dark-text disabled:opacity-50"
           >
             {archiveLoading ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-dark-secondary border-t-transparent" />
@@ -448,7 +448,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
             <h3 className="text-lg font-bold text-dark-text">
               ¿Eliminar fisura?
             </h3>
-            <p className="mt-2 text-sm text-dark-secondary">
+            <p className="mt-2 text-sm text-dark-textSecondary">
               Esta acción eliminará permanentemente la fisura #{fisura.id} (
               {fisura.roiId}) y todas sus mediciones asociadas. No se puede
               deshacer.
@@ -456,7 +456,7 @@ export default function FissureDetail({ fissureId, onBack }: FissureDetailProps)
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="rounded-lg bg-dark-hover px-4 py-2 text-sm font-semibold text-dark-secondary transition-colors hover:text-dark-text"
+                className="rounded-lg bg-dark-hover px-4 py-2 text-sm font-semibold text-dark-textSecondary transition-colors hover:text-dark-text"
               >
                 Cancelar
               </button>

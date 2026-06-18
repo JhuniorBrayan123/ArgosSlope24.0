@@ -1,0 +1,371 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+
+// ── Configuración ────────────────────────────────────────────────
+const ZONE_ID = 'talud-maqueta-01';
+
+// ── Tipos ────────────────────────────────────────────────────────
+interface AnalysisEntry {
+  id: string;
+  captureId: string;
+  zoneId: string;
+  isBaseImage: boolean;
+  analysisType: string | null;
+  processedImagePath: string | null;
+  analysisJson: string;
+  createdAt: string;
+}
+
+// ── Convierte ruta absoluta del backend a URL del frontend ──────
+function toImageUrl(filePath: string | null | undefined): string | null {
+  if (!filePath) return null;
+  const marker = 'diagnostics' + String.fromCharCode(92) + 'output' + String.fromCharCode(92);
+  const idx = filePath.indexOf(marker);
+  if (idx === -1) {
+    const marker2 = 'diagnostics/output/';
+    const idx2 = filePath.indexOf(marker2);
+    if (idx2 === -1) return null;
+    const relPath = filePath.substring(idx2 + marker2.length);
+    return `/api/monitoring-2d/diagnostics-output/${relPath}`;
+  }
+  const relPath = filePath.substring(idx + marker.length);
+  return `/api/monitoring-2d/diagnostics-output/${relPath}`;
+}
+
+function imgSrc(url: string | null): string | undefined {
+  if (!url) return undefined;
+  return url + '?t=' + Date.now();
+}
+
+// ── Etiquetas para las imágenes ──────────────────────────────────
+const IMAGE_LABELS: Record<string, string> = {
+  calibrada: 'Imagen Calibrada',
+  mask: 'Máscara Binaria',
+  skeleton: 'Skeleton',
+  familias_overlay: 'Familias Overlay',
+  comparacion_original: 'Base vs Actual',
+  comparacion_final: 'Resultado Comparación',
+  comparacion_skeletons: 'Diferencia Skeletons',
+  comparacion_topleft: 'Zoom Top-Left',
+};
+
+const DEFAULT_IMAGE_KEYS = ['calibrada', 'mask', 'skeleton', 'familias_overlay'];
+const COMPARISON_IMAGE_KEYS = ['comparacion_original', 'comparacion_final', 'comparacion_skeletons', 'comparacion_topleft'];
+
+// ── Parsear el JSON del análisis ─────────────────────────────────
+function parseAnalysis(json: string): any {
+  try { return JSON.parse(json); } catch { return {}; }
+}
+
+// ── Formatear fecha ──────────────────────────────────────────────
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-AR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+// ── Nombre legible del tipo de análisis ──────────────────────────
+function analysisTypeName(type: string | null): string {
+  switch (type) {
+    case 'base': return 'Base';
+    case 'current': return 'Actual';
+    case 'comparison': return 'Comparación';
+    default: return type || 'Análisis';
+  }
+}
+
+function analysisColor(type: string | null): string {
+  switch (type) {
+    case 'base': return 'text-cyan-400';
+    case 'current': return 'text-emerald-400';
+    case 'comparison': return 'text-amber-400';
+    default: return 'text-dark-muted';
+  }
+}
+
+function analysisBadgeColor(type: string | null): string {
+  switch (type) {
+    case 'base': return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
+    case 'current': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+    case 'comparison': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    default: return 'bg-dark-border/30 text-dark-muted border-dark-border/30';
+  }
+}
+
+// ================================================================
+//  PÁGINA PRINCIPAL
+// ================================================================
+
+export default function ResultadosPage() {
+  // ── Estado ──────────────────────────────────────────────────────
+  const [analyses, setAnalyses] = useState<AnalysisEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [activeImageTab, setActiveImageTab] = useState(0);
+
+  // ── Cargar análisis ─────────────────────────────────────────────
+  const fetchAnalyses = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/monitoring-2d/analyses/by-zone/${ZONE_ID}`);
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      const data: AnalysisEntry[] = await res.json();
+      setAnalyses(data);
+      if (selectedIndex >= data.length) setSelectedIndex(0);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedIndex]);
+
+  useEffect(() => { fetchAnalyses(); }, [fetchAnalyses]);
+
+  // ── Análisis seleccionado ───────────────────────────────────────
+  const selected = analyses[selectedIndex] || null;
+  const parsedData = selected ? parseAnalysis(selected.analysisJson) : null;
+  const images: Record<string, string> = parsedData?.images || {};
+
+  return (
+    <div className="h-[calc(100vh-56px)] flex flex-col bg-dark-primary">
+      {/* ── Cabecera ─────────────────────────────────────────────── */}
+      <div className="flex shrink-0 items-center justify-between px-4 py-3 border-b border-dark-border">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/monitoreo"
+            className="btn-secondary text-xs px-2 py-1.5"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Volver a Cámara
+          </Link>
+          <div>
+            <h1 className="text-lg font-bold text-dark-text">Resultados de Análisis</h1>
+            <p className="text-xs text-dark-muted">
+              {analyses.length} análisis guardados
+              {selected && <> · {analysisTypeName(selected.analysisType)}</>}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={fetchAnalyses}
+          className="btn-secondary text-xs"
+          disabled={loading}
+        >
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          {loading ? 'Cargando...' : 'Actualizar'}
+        </button>
+      </div>
+
+      <div className="flex-1 min-h-0 flex">
+        {/* ── Sidebar: Lista de análisis ──────────────────────────── */}
+        <aside className="w-72 shrink-0 border-r border-dark-border overflow-y-auto bg-dark-surface/30">
+          {loading && analyses.length === 0 && (
+            <div className="flex items-center justify-center h-32">
+              <svg className="h-5 w-5 animate-spin text-dark-accent" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </div>
+          )}
+
+          {error && (
+            <div className="p-4 text-xs text-dark-danger">
+              Error al cargar: {error}
+            </div>
+          )}
+
+          {!loading && analyses.length === 0 && !error && (
+            <div className="flex flex-col items-center justify-center h-40 gap-2 p-4">
+              <svg className="h-8 w-8 text-dark-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <p className="text-sm text-dark-muted text-center">Sin resultados aún</p>
+              <Link href="/monitoreo" className="text-xs text-dark-accent hover:underline">
+                Ir a la cámara para capturar
+              </Link>
+            </div>
+          )}
+
+          {analyses.map((a, i) => {
+            const parsed = parseAnalysis(a.analysisJson);
+            const total = parsed?.summary?.total_fisuras ?? parsed?.total_fisuras ?? '—';
+            return (
+              <button
+                key={a.id}
+                onClick={() => { setSelectedIndex(i); setActiveImageTab(0); }}
+                className={`w-full text-left px-3 py-2.5 border-b border-dark-border/30 transition-colors hover:bg-dark-elevated/50 ${
+                  i === selectedIndex ? 'bg-dark-elevated' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className={`text-[10px] font-bold uppercase tracking-wide ${analysisColor(a.analysisType)}`}>
+                    {analysisTypeName(a.analysisType)}
+                  </span>
+                  <span className="text-[10px] text-dark-muted">{formatDate(a.createdAt)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-dark-text font-semibold">{total} fisuras</span>
+                  <span className={`px-1.5 py-0.5 rounded text-[9px] border ${analysisBadgeColor(a.analysisType)}`}>
+                    {a.analysisType || '—'}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </aside>
+
+        {/* ── Main: Viewer de imágenes ────────────────────────────── */}
+        <main className="flex-1 flex flex-col min-w-0 p-4 overflow-y-auto">
+          {!selected && !loading && (
+            <div className="flex items-center justify-center flex-1 text-dark-muted text-sm">
+              Seleccioná un análisis de la lista
+            </div>
+          )}
+
+          {loading && selected && (
+            <div className="flex items-center justify-center flex-1">
+              <svg className="h-6 w-6 animate-spin text-dark-accent" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            </div>
+          )}
+
+          {selected && (
+            <>
+              {/* ── Navegación entre análisis ───────────────────────── */}
+              <div className="flex items-center justify-between mb-4 shrink-0">
+                <button
+                  onClick={() => { setSelectedIndex(i => Math.max(0, i - 1)); setActiveImageTab(0); }}
+                  disabled={selectedIndex === 0}
+                  className="btn-secondary text-xs px-2 py-1.5 disabled:opacity-30"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Anterior
+                </button>
+
+                <div className="flex items-center gap-2 text-xs text-dark-muted">
+                  <span className="text-dark-text font-semibold">{selectedIndex + 1}</span>
+                  <span>/ {analyses.length}</span>
+                </div>
+
+                <button
+                  onClick={() => { setSelectedIndex(i => Math.min(analyses.length - 1, i + 1)); setActiveImageTab(0); }}
+                  disabled={selectedIndex === analyses.length - 1}
+                  className="btn-secondary text-xs px-2 py-1.5 disabled:opacity-30"
+                >
+                  Siguiente
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* ── Info del análisis ──────────────────────────────── */}
+              <div className="flex items-center gap-3 mb-4 shrink-0">
+                <span className={`text-xs font-bold uppercase px-2 py-1 rounded border ${analysisBadgeColor(selected.analysisType)}`}>
+                  {analysisTypeName(selected.analysisType)}
+                </span>
+                <span className="text-xs text-dark-muted">{formatDate(selected.createdAt)}</span>
+                {parsedData?.summary?.total_fisuras !== undefined && (
+                  <span className="text-xs text-dark-text">
+                    <strong>{parsedData.summary.total_fisuras}</strong> fisuras · 
+                    <strong> {parsedData.summary.longitud_total_cm}</strong> cm total
+                  </span>
+                )}
+              </div>
+
+              {/* ── Tabs de imágenes ───────────────────────────────── */}
+              <div className="flex gap-1 border-b border-dark-border mb-4 shrink-0 overflow-x-auto">
+                {(selected.analysisType === 'comparison' ? COMPARISON_IMAGE_KEYS : DEFAULT_IMAGE_KEYS).map((key, i) => {
+                  const hasImage = !!images[key];
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setActiveImageTab(i)}
+                      disabled={!hasImage}
+                      className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
+                        !hasImage ? 'text-dark-border cursor-not-allowed' :
+                        i === activeImageTab
+                          ? 'border-dark-accent text-dark-accent'
+                          : 'border-transparent text-dark-muted hover:text-dark-text hover:border-dark-border/50'
+                      }`}
+                    >
+                      {IMAGE_LABELS[key]}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* ── Imagen seleccionada (grande) ───────────────────── */}
+              <div className="flex-1 min-h-0 rounded-xl border border-dark-border bg-[#0f1115] overflow-hidden flex items-center justify-center">
+                {(() => {
+                  const currentKeys = selected.analysisType === 'comparison' ? COMPARISON_IMAGE_KEYS : DEFAULT_IMAGE_KEYS;
+                  const currentKey = currentKeys[activeImageTab];
+                  const filePath = images[currentKey];
+                  const url = toImageUrl(filePath);
+                  if (!url) {
+                    return (
+                      <div className="flex flex-col items-center gap-2 text-dark-muted">
+                        <svg className="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-sm">Imagen no disponible para esta vista</span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <img
+                      src={imgSrc(url)}
+                      alt={IMAGE_LABELS[currentKey]}
+                      className="w-full h-full object-contain bg-black"
+                    />
+                  );
+                })()}
+              </div>
+
+              {/* ── Resumen ────────────────────────────────────────── */}
+              {parsedData?.summary && (
+                <div className="shrink-0 mt-4 rounded-lg border border-dark-border bg-dark-elevated p-3">
+                  <p className="text-xs font-semibold text-dark-text mb-2">Resumen</p>
+                  <div className="grid grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <span className="text-dark-muted">Total fisuras</span>
+                      <p className="text-dark-text font-bold">{parsedData.summary.total_fisuras}</p>
+                    </div>
+                    <div>
+                      <span className="text-dark-muted">Longitud total</span>
+                      <p className="text-dark-text font-bold">{parsedData.summary.longitud_total_cm} cm</p>
+                    </div>
+                    {parsedData.summary.familias && (
+                      <div>
+                        <span className="text-dark-muted">Familias</span>
+                        <p className="text-dark-text font-bold">
+                          {Object.entries(parsedData.summary.familias).map(([fam, data]: [string, any]) =>
+                            `${fam}: ${data.count}`
+                          ).join(' · ')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}

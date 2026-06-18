@@ -40,7 +40,7 @@ export default function BotonCapturaHD({
     return (
       <button
         disabled
-        className={`${baseStyle} cursor-not-allowed bg-dark-surface text-dark-secondary/50 ${className}`}
+        className={`${baseStyle} cursor-not-allowed bg-dark-surface text-dark-textSecondary/50 ${className}`}
         title="MQTT desconectado"
       >
         📡 Sin conexión

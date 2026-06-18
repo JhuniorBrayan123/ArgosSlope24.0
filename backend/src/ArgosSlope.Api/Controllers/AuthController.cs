@@ -56,6 +56,42 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Sesión cerrada correctamente." });
     }
 
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        try
+        {
+            var success = await _authService.RegisterAsync(request);
+            if (!success)
+            {
+                return BadRequest(new { message = "El correo ya está registrado." });
+            }
+            return Ok(new { message = "Usuario registrado exitosamente." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error interno del servidor.", detail = ex.Message });
+        }
+    }
+
+    [HttpPost("recover")]
+    public async Task<IActionResult> Recover([FromBody] RecoverPasswordRequest request)
+    {
+        try
+        {
+            var tempPassword = await _authService.RecoverPasswordAsync(request);
+            if (string.IsNullOrEmpty(tempPassword))
+            {
+                return NotFound(new { message = "Correo no encontrado o usuario inactivo." });
+            }
+            return Ok(new { message = "Contraseña temporal generada.", tempPassword = tempPassword });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error interno del servidor.", detail = ex.Message });
+        }
+    }
+
     [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetMe()

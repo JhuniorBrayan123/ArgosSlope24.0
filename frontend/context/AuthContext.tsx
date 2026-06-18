@@ -32,41 +32,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const API_URL = 'http://localhost:5000/api/auth';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL 
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api/auth` 
+    : 'http://localhost:5001/api/auth';
 
   useEffect(() => {
+    // Safety timeout: force loading off after 5s to prevent infinite loading
+    const safetyTimer = setTimeout(() => setIsLoading(false), 5000);
+
     // Check session on mount
     const checkSession = async () => {
-      const accessToken = localStorage.getItem('argos_access_token');
-      if (accessToken) {
-        try {
-          const res = await fetch(`${API_URL}/me`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
-          
-          if (res.ok) {
-            const userData = await res.json();
-            setUser({
-              id: userData.id,
-              name: userData.fullName,
-              email: userData.email,
-              role: userData.role,
-              lastLoginAt: userData.lastLoginAt
+      try {
+        const accessToken = localStorage.getItem('argos_access_token');
+        if (accessToken) {
+          try {
+            const res = await fetch(`${API_URL}/me`, {
+              headers: { Authorization: `Bearer ${accessToken}` }
             });
-          } else {
-            // Token might be expired, try to refresh
-            await attemptRefresh();
+            
+            if (res.ok) {
+              const userData = await res.json();
+              setUser({
+                id: userData.id,
+                name: userData.fullName,
+                email: userData.email,
+                role: userData.role,
+                lastLoginAt: userData.lastLoginAt
+              });
+            } else {
+              // Token might be expired, try to refresh
+              await attemptRefresh();
+            }
+          } catch {
+            clearSession();
           }
-        } catch {
-          clearSession();
+        } else {
+          await attemptRefresh(); // Try refresh if no access token but refresh token exists
         }
-      } else {
-        await attemptRefresh(); // Try refresh if no access token but refresh token exists
+      } catch {
+        clearSession();
+      } finally {
+        clearTimeout(safetyTimer);
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     checkSession();
+
+    return () => clearTimeout(safetyTimer);
   }, []);
 
   const attemptRefresh = async () => {
@@ -102,8 +115,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const PUBLIC_ROUTES = ['/login', '/register', '/recover'];
+
   useEffect(() => {
-    if (!isLoading && !user && pathname !== '/login') {
+    if (!isLoading && !user && !PUBLIC_ROUTES.includes(pathname)) {
       router.replace('/login');
     }
   }, [user, isLoading, pathname, router]);

@@ -61,7 +61,7 @@ export default function SceneLegend({ fissures }: SceneLegendProps) {
       <p className="mb-2 font-semibold text-dark-text">
         Fisuras
         {totalFissures > 0 && (
-          <span className="ml-1.5 text-dark-secondary/60 font-normal">
+          <span className="ml-1.5 text-dark-textSecondary/60 font-normal">
             ({totalFissures})
           </span>
         )}
@@ -73,16 +73,16 @@ export default function SceneLegend({ fissures }: SceneLegendProps) {
               className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
               style={{ backgroundColor: sev.color }}
             />
-            <span className="text-dark-secondary">{sev.label}</span>
+            <span className="text-dark-textSecondary">{sev.label}</span>
             {counts[sev.key] > 0 && (
-              <span className="ml-auto text-dark-secondary/50 tabular-nums">
+              <span className="ml-auto text-dark-textSecondary/50 tabular-nums">
                 {counts[sev.key]}
               </span>
             )}
           </div>
         ))}
       </div>
-      <p className="mt-2 text-[10px] text-dark-secondary/40">
+      <p className="mt-2 text-[10px] text-dark-textSecondary/40">
         Arrastra para orbitar · Rueda para zoom
       </p>
     </div>

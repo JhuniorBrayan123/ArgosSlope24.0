@@ -10,6 +10,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useFissureStore } from '@/stores/fissure.store';
 import type { FisuraResponse } from '@/services/api-client';
+import SeverityBadge from '@/components/SeverityBadge';
 
 // ── Column definition ────────────────────────────────────────────────
 interface Column {
@@ -157,7 +158,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
               className="h-8 w-12 object-cover rounded border border-dark-border bg-black/20" 
             />
           ) : (
-            <span className="text-xs text-dark-secondary">—</span>
+            <span className="text-xs text-dark-textSecondary">—</span>
           )
         ),
       },
@@ -170,7 +171,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
           const d = f.fechaDeteccion ? new Date(f.fechaDeteccion) : null;
           const isValid = d && !isNaN(d.getTime());
           return (
-            <span className="text-dark-secondary">
+            <span className="text-dark-textSecondary">
               {isValid
                 ? d.toLocaleDateString('es-ES', {
                     day: '2-digit',
@@ -192,7 +193,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
         render: (f) => (
           <span className="font-mono text-dark-text">
             {(f.largo ?? 0).toFixed(1)}{' '}
-            <span className="text-[10px] text-dark-secondary">
+            <span className="text-[10px] text-dark-textSecondary">
               {f.calibrado === false ? 'px [Est.]' : f.unidad || 'mm'}
             </span>
           </span>
@@ -206,7 +207,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
         render: (f) => (
           <span className="font-mono text-dark-text">
             {(f.ancho ?? 0).toFixed(2)}{' '}
-            <span className="text-[10px] text-dark-secondary">
+            <span className="text-[10px] text-dark-textSecondary">
               {f.calibrado === false ? 'px [Est.]' : f.unidad || 'mm'}
             </span>
           </span>
@@ -234,17 +235,9 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
         key: 'esCritica',
         label: 'Estado',
         sortable: true,
-        width: 'w-24',
+        width: 'w-28',
         render: (f) => (
-          <span
-            className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-              f.esCritica
-                ? 'bg-dark-danger/15 text-dark-danger'
-                : 'bg-dark-accent/15 text-dark-accent'
-            }`}
-          >
-            {f.esCritica ? 'Crítico' : 'Estable'}
-          </span>
+          <SeverityBadge critical={!!f.esCritica} value={f.deltaPorcentaje} />
         ),
       },
       {
@@ -294,7 +287,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
 
     return (
       <div className="flex items-center justify-between border-t border-dark-border px-4 py-3">
-        <p className="text-xs text-dark-secondary">
+        <p className="text-xs text-dark-textSecondary">
           Mostrando {(pagination.page - 1) * pagination.pageSize + 1}–
           {Math.min(pagination.page * pagination.pageSize, pagination.total)} de{' '}
           {pagination.total}
@@ -303,14 +296,14 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
           <button
             onClick={() => setPage(1)}
             disabled={pagination.page <= 1}
-            className="rounded-md px-2 py-1 text-xs text-dark-secondary transition-colors hover:bg-dark-hover hover:text-dark-text disabled:opacity-30"
+            className="rounded-md px-2 py-1 text-xs text-dark-textSecondary transition-colors hover:bg-dark-hover hover:text-dark-text disabled:opacity-30"
           >
             ««
           </button>
           <button
             onClick={() => setPage(pagination.page - 1)}
             disabled={pagination.page <= 1}
-            className="rounded-md px-2 py-1 text-xs text-dark-secondary transition-colors hover:bg-dark-hover hover:text-dark-text disabled:opacity-30"
+            className="rounded-md px-2 py-1 text-xs text-dark-textSecondary transition-colors hover:bg-dark-hover hover:text-dark-text disabled:opacity-30"
           >
             «
           </button>
@@ -321,7 +314,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
               className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
                 p === pagination.page
                   ? 'bg-dark-accent text-dark-primary'
-                  : 'text-dark-secondary hover:bg-dark-hover hover:text-dark-text'
+                  : 'text-dark-textSecondary hover:bg-dark-hover hover:text-dark-text'
               }`}
             >
               {p}
@@ -330,14 +323,14 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
           <button
             onClick={() => setPage(pagination.page + 1)}
             disabled={pagination.page >= totalPages}
-            className="rounded-md px-2 py-1 text-xs text-dark-secondary transition-colors hover:bg-dark-hover hover:text-dark-text disabled:opacity-30"
+            className="rounded-md px-2 py-1 text-xs text-dark-textSecondary transition-colors hover:bg-dark-hover hover:text-dark-text disabled:opacity-30"
           >
             »
           </button>
           <button
             onClick={() => setPage(totalPages)}
             disabled={pagination.page >= totalPages}
-            className="rounded-md px-2 py-1 text-xs text-dark-secondary transition-colors hover:bg-dark-hover hover:text-dark-text disabled:opacity-30"
+            className="rounded-md px-2 py-1 text-xs text-dark-textSecondary transition-colors hover:bg-dark-hover hover:text-dark-text disabled:opacity-30"
           >
             »»
           </button>
@@ -356,7 +349,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
       <div className="flex h-64 items-center justify-center rounded-xl border border-dark-border bg-dark-surface">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-dark-accent border-t-transparent" />
-          <p className="text-sm text-dark-secondary">Cargando fisuras…</p>
+          <p className="text-sm text-dark-textSecondary">Cargando fisuras…</p>
         </div>
       </div>
     );
@@ -386,7 +379,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
         {/* Search */}
         <div className="relative flex-1 max-w-xs">
           <svg
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dark-secondary"
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-dark-textSecondary"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -403,7 +396,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
             value={searchInput}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Buscar por ROI ID…"
-            className="w-full rounded-lg border border-dark-border bg-dark-primary py-2 pl-10 pr-3 text-sm text-dark-text placeholder:text-dark-secondary focus:border-dark-accent focus:outline-none"
+            className="w-full rounded-lg border border-dark-border bg-dark-primary py-2 pl-10 pr-3 text-sm text-dark-text placeholder:text-dark-textSecondary focus:border-dark-accent focus:outline-none"
           />
         </div>
 
@@ -413,7 +406,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
           className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-all ${
             showFilters || tipoFilter || estadoFilter
               ? 'bg-dark-accent/20 text-dark-accent'
-              : 'bg-dark-hover text-dark-secondary hover:bg-dark-border hover:text-dark-text'
+              : 'bg-dark-hover text-dark-textSecondary hover:bg-dark-border hover:text-dark-text'
           }`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -428,7 +421,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
         </button>
 
         {/* Count */}
-        <span className="text-xs text-dark-secondary">
+        <span className="text-xs text-dark-textSecondary">
           {pagination.total} fisuras
         </span>
       </div>
@@ -437,7 +430,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
       {showFilters && (
         <div className="flex flex-wrap items-center gap-3 border-b border-dark-border bg-dark-primary px-4 py-3">
           <div>
-            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-dark-secondary">
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-dark-textSecondary">
               Tipo
             </label>
             <select
@@ -454,7 +447,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-dark-secondary">
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-dark-textSecondary">
               Estado
             </label>
             <select
@@ -475,7 +468,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
                 setEstadoFilter('');
                 setFilters({ search: '', tipo: '', estado: '' });
               }}
-              className="self-end rounded-lg bg-dark-hover px-3 py-1.5 text-xs text-dark-secondary transition-colors hover:text-dark-text"
+              className="self-end rounded-lg bg-dark-hover px-3 py-1.5 text-xs text-dark-textSecondary transition-colors hover:text-dark-text"
             >
               Limpiar filtros
             </button>
@@ -488,7 +481,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
         <div className="flex h-48 items-center justify-center">
           <div className="text-center">
             <svg
-              className="mx-auto mb-2 h-8 w-8 text-dark-secondary"
+              className="mx-auto mb-2 h-8 w-8 text-dark-textSecondary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -500,11 +493,11 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
                 d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
               />
             </svg>
-            <p className="text-sm text-dark-secondary">
+            <p className="text-sm text-dark-textSecondary">
               No se encontraron fisuras
             </p>
             {(filters.search || filters.tipo || filters.estado) && (
-              <p className="mt-1 text-xs text-dark-secondary">
+              <p className="mt-1 text-xs text-dark-textSecondary">
                 Intente ajustar los filtros de búsqueda
               </p>
             )}
@@ -518,7 +511,7 @@ export default function FissureList({ onSelectFissure }: FissureListProps) {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-dark-border bg-dark-primary text-xs font-semibold uppercase tracking-wider text-dark-secondary">
+                <tr className="border-b border-dark-border bg-dark-primary text-xs font-semibold uppercase tracking-wider text-dark-textSecondary">
                   {columns.map((col) => (
                     <th
                       key={col.key}

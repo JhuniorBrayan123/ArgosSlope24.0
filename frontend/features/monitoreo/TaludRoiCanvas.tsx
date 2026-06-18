@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Stage, Layer, Rect, Transformer } from 'react-konva';
-import CrackOverlayLayer from './CrackOverlayLayer';
 
 interface TaludRoiCanvasProps {
   cracks?: any[];
@@ -10,7 +9,6 @@ interface TaludRoiCanvasProps {
   onRoiChange?: (roi: { x: number; y: number; w: number; h: number }) => void;
   width?: number;
   height?: number;
-  // Desplazamiento si el ROI analizado difiere del Canvas global
   roiOffset?: { x: number; y: number }; 
 }
 
@@ -24,9 +22,29 @@ export default function TaludRoiCanvas({
 }: TaludRoiCanvasProps) {
   const [roi, setRoi] = useState(roiConfig || { x: 50, y: 50, w: 200, h: 200 });
   const [isSelected, setIsSelected] = useState(false);
+  const [stageSize, setStageSize] = useState({ width, height });
+  const containerRef = useRef<HTMLDivElement>(null);
   
   const trRef = useRef<any>(null);
   const roiRef = useRef<any>(null);
+
+  // Hacer el canvas responsive al tamaño del contenedor
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width: w, height: h } = entry.contentRect;
+        if (w > 0 && h > 0) {
+          setStageSize({ width: w, height: h });
+        }
+      }
+    });
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (roiConfig) {
@@ -71,20 +89,15 @@ export default function TaludRoiCanvas({
   };
 
   return (
-    <div className="absolute inset-0 pointer-events-auto">
+    <div ref={containerRef} className="absolute inset-0 pointer-events-auto">
       <Stage 
-        width={width} 
-        height={height} 
+        width={stageSize.width} 
+        height={stageSize.height} 
         onMouseDown={(e) => {
           const clickedOnEmpty = e.target === e.target.getStage();
           if (clickedOnEmpty) setIsSelected(false);
         }}
       >
-        {/* Renderizamos las fisuras si las hay */}
-        {cracks.length > 0 && (
-           <CrackOverlayLayer cracks={cracks} />
-        )}
-        
         <Layer>
           {onRoiChange && (
             <>

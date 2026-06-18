@@ -33,7 +33,6 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/analitica',      label: 'Analítica',   icon: <Icon d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /> },
       { href: '/geomechanics',   label: 'Geotecnia',   icon: <Icon d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /> },
-      { href: '/visualizacion',  label: 'Gemelo 3D',   icon: <Icon d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />, badge: '3D' },
       { href: '/reportes',       label: 'Reportes',    icon: <Icon d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" d2="M14 2v6h6M16 13H8M16 17H8M10 9H8" /> },
     ],
   },
@@ -47,25 +46,7 @@ const navGroups: NavGroup[] = [
 
 // ── Logo Icon ──────────────────────────────────────────────────────────
 
-function ArgosLogo({ collapsed }: { collapsed: boolean }) {
-  return (
-    <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#00D1B2]/10 border border-[#00D1B2]/20">
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
-          <path d="M2 20 L9 6 L14 13 L18 9 L22 20 Z" stroke="#00D1B2" strokeWidth="1.5" strokeLinejoin="round" fill="rgba(0,209,178,0.1)" />
-          <path d="M2 20 L22 20" stroke="#00D1B2" strokeWidth="1.5" />
-          <circle cx="14" cy="13" r="1.2" fill="#FFFFFF" />
-        </svg>
-      </div>
-      {!collapsed && (
-        <div>
-          <p className="text-sm font-bold leading-none tracking-wide text-white">ARGOS SLOPE</p>
-          <p className="text-[10px] text-[#00D1B2] font-semibold tracking-widest mt-0.5">4.0</p>
-        </div>
-      )}
-    </div>
-  );
-}
+import Logo from './Logo';
 
 // ── System Status Footer ───────────────────────────────────────────────
 
@@ -88,8 +69,8 @@ function SystemStatus({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div className="space-y-2 px-3">
-      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7DD3FC] px-1 mb-1">Estado del Sistema</p>
-      <div className="rounded-lg border border-[#1E2D45]/50 bg-[#131B2B]/80 p-2.5 space-y-1.5 shadow-inner">
+      <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-dark-muted px-1 mb-1">Estado del Sistema</p>
+      <div className="rounded-lg border border-dark-border bg-dark-elevated p-2.5 space-y-1.5 shadow-inner">
         {statuses.map(s => (
           <div key={s.label} className="flex items-center justify-between">
             <span className="text-[11px] text-[#94A3B8]">{s.label}</span>
@@ -121,16 +102,16 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-[#1E2D45]/60 bg-gradient-to-b from-[#0B1220] to-[#05080E] shadow-[4px_0_24px_rgba(0,0,0,0.4)] transition-all duration-300 ease-in-out ${sidebarW}`}
+      className={`fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-dark-border bg-dark-secondary shadow-[4px_0_24px_rgba(0,0,0,0.1)] transition-all duration-300 ease-in-out ${sidebarW}`}
     >
       {/* Header */}
-      <div className={`flex h-14 shrink-0 items-center border-b border-[#1F2A44] px-3 ${collapsed ? 'justify-center' : 'justify-between'}`}>
-        <ArgosLogo collapsed={collapsed} />
+      <div className={`flex h-14 shrink-0 items-center border-b border-dark-border px-3 ${collapsed ? 'justify-center' : 'justify-between'}`}>
+        <Logo compact={collapsed} />
         {!collapsed && (
           <button
             id="sidebar-collapse-btn"
             onClick={() => setCollapsed(true)}
-            className="rounded-md p-1.5 text-[#8EA4C8] transition-colors hover:bg-white/5 hover:text-white"
+            className="rounded-md p-1.5 text-dark-textSecondary transition-colors hover:bg-dark-hover hover:text-dark-text"
             title="Colapsar sidebar"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -142,7 +123,7 @@ export default function Sidebar() {
           <button
             id="sidebar-expand-btn"
             onClick={() => setCollapsed(false)}
-            className="absolute -right-3 top-5 flex h-6 w-6 items-center justify-center rounded-full border border-[#1E2D45] bg-[#131B2B] text-[#8EA4C8] shadow-[0_0_12px_rgba(0,0,0,0.5)] transition-colors hover:text-[#00D1B2] hover:border-[#00D1B2]/50"
+            className="absolute -right-3 top-5 flex h-6 w-6 items-center justify-center rounded-full border border-dark-border bg-dark-surface text-dark-textSecondary shadow-card transition-colors hover:text-dark-accent hover:border-dark-accent/50"
             title="Expandir sidebar"
           >
             <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -157,7 +138,7 @@ export default function Sidebar() {
         {navGroups.map((group) => (
           <div key={group.label}>
             {!collapsed && (
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7DD3FC] mb-2 px-3">{group.label}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-dark-muted mb-2 px-3">{group.label}</p>
             )}
             <ul className="space-y-0.5">
               {group.items.map((item) => {
@@ -176,7 +157,7 @@ export default function Sidebar() {
                           {item.badge && (
                             <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
                               item.badge === 'LIVE'
-                                ? 'bg-[#00D1B2]/15 text-[#00D1B2]'
+                                ? 'bg-dark-accent/15 text-dark-accent'
                                 : item.badge === '3D'
                                 ? 'bg-indigo-500/15 text-indigo-400'
                                 : 'bg-dark-warning/15 text-dark-warning'
@@ -196,31 +177,31 @@ export default function Sidebar() {
       </nav>
 
       {/* System status */}
-      <div className="shrink-0 border-t border-[#1E2D45]/50 py-3 bg-white/[0.01]">
+      <div className="shrink-0 border-t border-dark-border py-3">
         <SystemStatus collapsed={collapsed} />
       </div>
 
       {/* User profile */}
       {user && (
-        <div className={`shrink-0 border-t border-[#1E2D45]/50 bg-[#080D18] p-3 shadow-inner ${collapsed ? 'flex justify-center' : ''}`}>
+        <div className={`shrink-0 border-t border-dark-border bg-dark-surface p-3 shadow-inner ${collapsed ? 'flex justify-center' : ''}`}>
           {collapsed ? (
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00D1B2] text-xs font-bold text-[#0B1220]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-dark-accent text-xs font-bold text-white">
               {user.name.charAt(0)}
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#00D1B2] text-xs font-bold text-[#0B1220]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-dark-accent text-xs font-bold text-white">
                 {user.name.charAt(0)}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-white">{user.name}</p>
-                <p className="truncate text-[10px] text-[#94A3B8]">{user.role}</p>
+                <p className="truncate text-xs font-semibold text-dark-text">{user.name}</p>
+                <p className="truncate text-[10px] text-dark-muted">{user.role}</p>
               </div>
               <button
                 id="logout-btn"
                 onClick={logout}
                 title="Cerrar sesión"
-                className="shrink-0 rounded p-1.5 text-[#8EA4C8] transition-colors hover:text-white hover:bg-white/5"
+                className="shrink-0 rounded p-1.5 text-dark-textSecondary transition-colors hover:text-dark-text hover:bg-dark-hover"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

@@ -60,7 +60,7 @@ export interface GeomechanicalEvaluationRequest {
   rmr?: any; // DTO completo
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 export const geomechanicsService = {
   async getCatalogs(): Promise<Record<string, RmrCatalogOption[]>> {

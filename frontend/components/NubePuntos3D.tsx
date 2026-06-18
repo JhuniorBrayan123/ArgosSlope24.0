@@ -302,14 +302,14 @@ function EmptyState() {
   return (
     <div className="flex h-full items-center justify-center">
       <div className="flex flex-col items-center gap-3 text-center max-w-sm px-4">
-        <svg className="h-12 w-12 text-dark-secondary/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+        <svg className="h-12 w-12 text-dark-textSecondary/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 10h6M9 14h6" />
         </svg>
-        <p className="text-sm font-medium text-dark-secondary/70">
+        <p className="text-sm font-medium text-dark-textSecondary/70">
           Esperando snapshot 3D real desde el Edge…
         </p>
-        <p className="text-[11px] text-dark-secondary/40">
+        <p className="text-[11px] text-dark-textSecondary/40">
           La reconstrucción 3D (malla texturizada + fisuras) aparecerá cuando el Edge publique
           en <span className="font-mono text-dark-accent/60">mineria/talud/alertas</span>
         </p>
@@ -365,10 +365,10 @@ function InfoOverlay({
         <p className="font-semibold text-amber-400">Malla demo (plano inclinado)</p>
       )}
       {cracks.length > 0 && (
-        <p className="mt-0.5 text-dark-secondary/80">{cracks.length} fisura{cracks.length !== 1 ? 's' : ''} proyectadas</p>
+        <p className="mt-0.5 text-dark-textSecondary/80">{cracks.length} fisura{cracks.length !== 1 ? 's' : ''} proyectadas</p>
       )}
       {timestamp && (
-        <p className="mt-1 text-dark-secondary/60">
+        <p className="mt-1 text-dark-textSecondary/60">
           {new Date(timestamp).toLocaleString('es-ES', {
             day: '2-digit', month: 'short',
             hour: '2-digit', minute: '2-digit', second: '2-digit',

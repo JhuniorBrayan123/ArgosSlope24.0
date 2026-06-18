@@ -24,6 +24,10 @@ namespace ArgosSlope.Api.Models
         [Column("is_base_image")]
         public bool IsBaseImage { get; set; } = false;
 
+        [Column("analysis_type")]
+        [MaxLength(20)]
+        public string? AnalysisType { get; set; }
+
         [Column("processed_image_path")]
         [MaxLength(500)]
         public string? ProcessedImagePath { get; set; }

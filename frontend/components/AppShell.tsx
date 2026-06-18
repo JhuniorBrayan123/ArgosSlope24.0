@@ -7,7 +7,7 @@ import Sidebar from '@/components/Sidebar';
 import Topbar from '@/components/Topbar';
 
 // Routes that bypass the shell (full-page)
-const PUBLIC_ROUTES = ['/login'];
+const PUBLIC_ROUTES = ['/login', '/register', '/recover'];
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() || '';
@@ -26,9 +26,9 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <div className="flex flex-col items-center gap-4">
           {/* Logo */}
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-dark-accent/10 border border-dark-accent/20 shadow-glow-accent animate-pulse-slow">
-            <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none">
-              <path d="M2 20 L9 6 L14 13 L18 9 L22 20 Z" stroke="#0EA5C5" strokeWidth="1.5" strokeLinejoin="round" fill="rgba(14,165,197,0.1)" />
-              <path d="M2 20 L22 20" stroke="#0EA5C5" strokeWidth="1.5" />
+            <svg viewBox="0 0 24 24" className="h-8 w-8 text-dark-accent" fill="none">
+              <path d="M2 20 L9 6 L14 13 L18 9 L22 20 Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" fill="currentColor" fillOpacity="0.1" />
+              <path d="M2 20 L22 20" stroke="currentColor" strokeWidth="1.5" />
             </svg>
           </div>
           <div className="text-center">

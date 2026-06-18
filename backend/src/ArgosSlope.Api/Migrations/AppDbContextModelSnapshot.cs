@@ -96,21 +96,21 @@ namespace ArgosSlope.Api.Migrations
                         new
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2026, 6, 17, 2, 35, 57, 938, DateTimeKind.Utc).AddTicks(7018),
+                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 760, DateTimeKind.Utc).AddTicks(3343),
                             Description = "Acceso total al sistema",
                             Name = "Administrador"
                         },
                         new
                         {
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            CreatedAt = new DateTime(2026, 6, 17, 2, 35, 57, 938, DateTimeKind.Utc).AddTicks(7028),
+                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 760, DateTimeKind.Utc).AddTicks(3346),
                             Description = "Operador de campo",
                             Name = "Operador"
                         },
                         new
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2026, 6, 17, 2, 35, 57, 938, DateTimeKind.Utc).AddTicks(7032),
+                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 760, DateTimeKind.Utc).AddTicks(3348),
                             Description = "Ingeniero geotécnico",
                             Name = "Geotécnico"
                         });
@@ -162,35 +162,35 @@ namespace ArgosSlope.Api.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            CreatedAt = new DateTime(2026, 6, 17, 2, 35, 58, 177, DateTimeKind.Utc).AddTicks(7884),
+                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6828),
                             Email = "admin@argos.mine",
                             FullName = "Admin ARGOS",
                             IsActive = true,
-                            PasswordHash = "$2a$11$EwKy6unmq7uYuf7uencBCuoMHV1ONVRqC.tuaP6ireV69txq0MkoG",
+                            PasswordHash = "$2a$11$8Ir4uPmCfJ4jQosxB93UEOnbxZ3f/tJmGmUReMJ8xTekKSymthM2G",
                             RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            UpdatedAt = new DateTime(2026, 6, 17, 2, 35, 58, 177, DateTimeKind.Utc).AddTicks(7891)
+                            UpdatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6833)
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            CreatedAt = new DateTime(2026, 6, 17, 2, 35, 58, 177, DateTimeKind.Utc).AddTicks(7926),
+                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6862),
                             Email = "operador@argos.mine",
                             FullName = "Operador Campo",
                             IsActive = true,
-                            PasswordHash = "$2a$11$EwKy6unmq7uYuf7uencBCuoMHV1ONVRqC.tuaP6ireV69txq0MkoG",
+                            PasswordHash = "$2a$11$8Ir4uPmCfJ4jQosxB93UEOnbxZ3f/tJmGmUReMJ8xTekKSymthM2G",
                             RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            UpdatedAt = new DateTime(2026, 6, 17, 2, 35, 58, 177, DateTimeKind.Utc).AddTicks(7927)
+                            UpdatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6862)
                         },
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
-                            CreatedAt = new DateTime(2026, 6, 17, 2, 35, 58, 177, DateTimeKind.Utc).AddTicks(7934),
+                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6864),
                             Email = "geotecnico@argos.mine",
                             FullName = "Ing. Geotécnico",
                             IsActive = true,
-                            PasswordHash = "$2a$11$EwKy6unmq7uYuf7uencBCuoMHV1ONVRqC.tuaP6ireV69txq0MkoG",
+                            PasswordHash = "$2a$11$8Ir4uPmCfJ4jQosxB93UEOnbxZ3f/tJmGmUReMJ8xTekKSymthM2G",
                             RoleId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            UpdatedAt = new DateTime(2026, 6, 17, 2, 35, 58, 177, DateTimeKind.Utc).AddTicks(7935)
+                            UpdatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6865)
                         });
                 });
 
@@ -598,6 +598,11 @@ namespace ArgosSlope.Api.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb")
                         .HasColumnName("analysis_json");
+
+                    b.Property<string>("AnalysisType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("analysis_type");
 
                     b.Property<string>("CaptureId")
                         .IsRequired()

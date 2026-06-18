@@ -35,22 +35,31 @@ export const reportsService = {
   /**
    * Get aggregated summary for the reports dashboard.
    */
-  getSummary(): Promise<ReportSummaryResponse> {
-    return apiClient.get<ReportSummaryResponse>('/api/reports/summary');
+  getSummary(startDate?: string, endDate?: string): Promise<ReportSummaryResponse> {
+    const params: Record<string, string> = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return apiClient.get<ReportSummaryResponse>('/api/reports/summary', params);
   },
 
   /**
    * Get average width trend by day.
    */
-  getTrends(dias: number = 30): Promise<ReportTrendPoint[]> {
-    return apiClient.get<ReportTrendPoint[]>('/api/reports/trends', { dias: dias.toString() });
+  getTrends(dias: number = 30, startDate?: string, endDate?: string): Promise<ReportTrendPoint[]> {
+    const params: Record<string, string> = { dias: dias.toString() };
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return apiClient.get<ReportTrendPoint[]>('/api/reports/trends', params);
   },
 
   /**
    * Get alerts summary grouped by type.
    */
-  getAlertsSummary(): Promise<ReportAlertSummary[]> {
-    return apiClient.get<ReportAlertSummary[]>('/api/reports/alerts');
+  getAlertsSummary(startDate?: string, endDate?: string): Promise<ReportAlertSummary[]> {
+    const params: Record<string, string> = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return apiClient.get<ReportAlertSummary[]>('/api/reports/alerts', params);
   },
 };
 

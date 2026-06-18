@@ -9,10 +9,8 @@ import alertsService from '@/services/alerts.service';
 
 interface DashStats {
   totalFisuras: number;
-  fisurasActivas: number;
   fisurasHoy: number;
   alertasCriticas: number;
-  alertasTotales: number;
   anchoPromedio: number;
   maxDelta: number;
   riesgoGeneral: 'bajo' | 'medio' | 'alto' | 'critico';
@@ -61,7 +59,7 @@ function MetricCard({
       </div>
       <div>
         <p className="text-2xl font-bold text-dark-text">{value}</p>
-        <p className="mt-0.5 text-xs font-medium text-dark-secondary">{label}</p>
+        <p className="mt-0.5 text-xs font-medium text-dark-textSecondary">{label}</p>
         {sub && <p className="mt-1 text-[10px] text-dark-muted">{sub}</p>}
       </div>
     </div>
@@ -155,6 +153,8 @@ function AlertRow({ tipo, mensaje, fecha }: { tipo: string; mensaje: string; fec
   );
 }
 
+const API_URL = process.env.NEXT_PUBLIC_DOTNET_API_URL || 'http://localhost:5001';
+
 // ── Dashboard Page ─────────────────────────────────────────────────────
 
 export default function DashboardPage() {
@@ -165,50 +165,30 @@ export default function DashboardPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [fisuras, alertas] = await Promise.all([
-          fissuresService.getAll(),
-          alertsService.getAll(),
+        const [dashRes, alertasRes] = await Promise.all([
+          fetch(`${API_URL}/api/dashboard/summary`),
+          fetch(`${API_URL}/api/alertas/summary`),
         ]);
 
-        const today = new Date().toISOString().split('T')[0];
-        const hoy = fisuras.filter(f => f.fechaDeteccion?.startsWith(today));
-        const criticas = alertas.filter(a => a.tipo === 'critico');
-        const avgAncho = fisuras.length > 0
-          ? fisuras.reduce((s, f) => s + (f.ancho ?? 0), 0) / fisuras.length
-          : 0;
-        const maxDelta = fisuras.length > 0
-          ? Math.max(0, ...fisuras.map(f => f.deltaPorcentaje ?? 0))
-          : 0;
-
-        const riesgo: DashStats['riesgoGeneral'] =
-          maxDelta > 20 || criticas.length > 2 ? 'critico'
-          : maxDelta > 10 || criticas.length > 0 ? 'alto'
-          : maxDelta > 5 ? 'medio'
-          : 'bajo';
-
-        setStats({
-          totalFisuras: fisuras.length,
-          fisurasActivas: fisuras.filter(f => f.estadoAlerta !== 'inactiva').length,
-          fisurasHoy: hoy.length,
-          alertasCriticas: criticas.length,
-          alertasTotales: alertas.length,
-          anchoPromedio: avgAncho,
-          maxDelta,
-          riesgoGeneral: riesgo,
-        });
-        setAlerts(alertas.slice(0, 4));
-      } catch {
-        // Demo fallback
-        setStats({
-          totalFisuras: 36339, fisurasActivas: 312, fisurasHoy: 47,
-          alertasCriticas: 1, alertasTotales: 3,
-          anchoPromedio: 0.012, maxDelta: 20.2,
-          riesgoGeneral: 'alto',
-        });
-        setAlerts([{
-          tipo: 'critico', fecha: new Date().toLocaleDateString('es-PE'),
-          mensaje: 'Crecimiento (20.2%) supera umbral crítico (10%)',
-        }]);
+        if (dashRes.ok) {
+          const d = await dashRes.json();
+          setStats({
+            totalFisuras: d.total_fisuras,
+            fisurasHoy: d.fisuras_hoy,
+            alertasCriticas: d.alertas_criticas,
+            anchoPromedio: d.apertura_promedio_mm,
+            maxDelta: d.delta_maximo_porcentaje,
+            riesgoGeneral: d.riesgo_actual,
+          });
+        }
+        
+        if (alertasRes.ok) {
+          const a = await alertasRes.json();
+          setAlerts(a.items.slice(0, 4));
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        // Evitar el fallback de datos mock, dejar que falle silenciosamente o maneje estado vacío
       } finally {
         setLoading(false);
       }
@@ -246,6 +226,10 @@ export default function DashboardPage() {
             <div key={i} className="skeleton h-32 rounded-xl" />
           ))}
         </div>
+      ) : !stats ? (
+        <div className="flex items-center justify-center h-32 text-sm text-dark-muted">
+          No hay datos cargados
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
@@ -259,7 +243,7 @@ export default function DashboardPage() {
           <MetricCard
             label="Alertas Críticas"
             value={stats!.alertasCriticas}
-            sub={`${stats!.alertasTotales} alertas en total`}
+            sub={`${stats!.alertasCriticas} críticas activas`}
             accent={stats!.alertasCriticas > 0 ? 'danger' : 'success'}
             icon={<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>}
           />
@@ -297,11 +281,11 @@ export default function DashboardPage() {
             </div>
             {loading ? (
               <div className="skeleton mx-auto h-24 w-24 rounded-full" />
-            ) : (
+            ) : stats ? (
               <div className="flex justify-center">
-                <RiskGauge level={stats!.riesgoGeneral} />
+                <RiskGauge level={stats.riesgoGeneral} />
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* System status */}
@@ -315,8 +299,8 @@ export default function DashboardPage() {
                 { label: 'MQTT HiveMQ', status: 'Conectado', online: true  },
                 { label: 'Base de datos',status: 'Estable',  online: true  },
               ].map(s => (
-                <div key={s.label} className="flex items-center justify-between rounded-lg px-3 py-2 bg-dark-primary/50">
-                  <span className="text-xs text-dark-secondary">{s.label}</span>
+                <div key={s.label} className="flex items-center justify-between rounded-lg px-3 py-2 bg-dark-elevated">
+                  <span className="text-xs text-dark-textSecondary">{s.label}</span>
                   <div className="flex items-center gap-1.5">
                     <span className={s.online ? 'status-dot-online' : 'status-dot-warning'} />
                     <span className="text-[10px] text-dark-success">{s.status}</span>

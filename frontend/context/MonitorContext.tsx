@@ -176,8 +176,9 @@ export function MonitorProvider({ children }: { children: ReactNode }) {
 
     async function connectMqtt() {
       try {
-        const mqtt = await import('mqtt');
-        const client = mqtt.default.connect(MQTT_WS_URL, {
+        const mqttModule = await import('mqtt');
+        const mqtt = mqttModule.default || mqttModule;
+        const client = mqtt.connect(MQTT_WS_URL, {
           protocolVersion: 4,
           clean: true,
           reconnectPeriod: 5000,

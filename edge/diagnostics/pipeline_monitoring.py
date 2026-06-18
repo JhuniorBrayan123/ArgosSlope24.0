@@ -1,33 +1,23 @@
-"""
-PIPELINE MONITORING — Wrapper invocable por .NET backend
-=========================================================
-Ejecuta el pipeline de detección de fisuras o comparación de imágenes
-y devuelve JSON por stdout para que el backend .NET lo capture.
 
-USO:
-    python pipeline_monitoring.py --command capture --image ruta.jpg [--roi x,y,w,h]
-    python pipeline_monitoring.py --command save_base --image ruta.jpg --output base_ref.jpg
-    python pipeline_monitoring.py --command compare --image ruta.jpg --base base_ref.jpg
-"""
 
 import argparse
 import base64
 import contextlib
+import csv
 import json
 import os
 import sys
 import time
+import uuid
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 
 import cv2
 import numpy as np
-
-# ── Silenciar prints del pipeline_maqueta durante la importación ──
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPT_DIR))
 
-# Redirigir stdout a null temporalmente para silenciar prints al importar
 with contextlib.redirect_stdout(open(os.devnull, 'w', encoding='utf-8')):
     # Importar funciones del pipeline principal
     from pipeline_maqueta import (
@@ -37,6 +27,7 @@ with contextlib.redirect_stdout(open(os.devnull, 'w', encoding='utf-8')):
     eliminar_linea_horizontal, detectar_desprendimientos,
     obtener_skeleton, extraer_segmentos, fusionar_segmentos,
     clasificar_familias_angulares, MIN_LENGTH_CM,
+    guardar_resultados,
 )
 
 
@@ -85,6 +76,18 @@ def registrar_imagenes(img_base: np.ndarray, img_current: np.ndarray):
     img_registrada = cv2.warpPerspective(img_current, H, (w_reg, h_reg))
 
     return img_registrada, H, inliers, len(good_matches)
+
+
+def _get_skeleton(img: np.ndarray) -> np.ndarray:
+    """Extrae el skeleton de una imagen aplicando el mismo pipeline que la maqueta."""
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    mask = generar_mascara_binaria(gray)
+    mask = limpiar_mascara(mask)
+    mask = eliminar_bordes(mask)
+    mask = eliminar_linea_horizontal(mask)
+    mask_sin, _ = detectar_desprendimientos(mask, img.shape[0], img.shape[1])
+    skel = obtener_skeleton(mask_sin)
+    return skel
 
 
 def comparar_imagenes(img_base: np.ndarray, img_current: np.ndarray):
@@ -154,7 +157,24 @@ def comparar_imagenes(img_base: np.ndarray, img_current: np.ndarray):
     _, buf_diff = cv2.imencode(".jpg", diff_colored)
     diff_b64 = base64.b64encode(buf_diff).decode("ascii")
 
-    _, buf_reg = cv2.imencode(".jpg", img_reg)
+    # =====================================================================
+    # Generación de la Comparación de Skeletons (Base Rojo vs Current Verde)
+    # =====================================================================
+    # 1. Obtener skeletons
+    skel_base = _get_skeleton(img_base)
+    skel_reg = _get_skeleton(img_reg)
+
+    # 2. Crear canvas oscuro (para que resalten los skeletons)
+    comp_skels = (img_base * 0.2).astype(np.uint8)
+
+    # 3. Dibujar skeleton base en rojo (BGR: 0, 0, 255)
+    comp_skels[skel_base > 0] = (0, 0, 255)
+    
+    # 4. Dibujar skeleton actual registrado en verde (BGR: 0, 255, 0)
+    comp_skels[skel_reg > 0] = (0, 255, 0)
+
+    # 5. Codificar en base64 para enviarlo al frontend como registered_base64
+    _, buf_reg = cv2.imencode(".jpg", comp_skels)
     registered_b64 = base64.b64encode(buf_reg).decode("ascii")
 
     return {
@@ -180,18 +200,37 @@ def comparar_imagenes(img_base: np.ndarray, img_current: np.ndarray):
 #  PIPELINE DE CAPTURA (envuelve pipeline_maqueta)
 # =====================================================================
 
-def run_capture_pipeline(image_path: str, roi: dict = None):
+def run_capture_pipeline(image_path: str, roi: dict = None,
+                         output_dir: Path = None, analysis_id: str = None):
     """
     Ejecuta el pipeline completo de detección de fisuras sobre una imagen.
-    Devuelve dict con resultados + overlay en base64.
+    Guarda las imágenes diagnósticas a disco y devuelve dict con resultados + paths.
+
+    Args:
+        image_path: Ruta a la imagen a analizar
+        roi: ROI opcional {x, y, w, h}
+        output_dir: Directorio donde guardar las imágenes (si es None, no guarda)
+        analysis_id: ID único del análisis (genera UUID si no se provee)
+
+    Returns:
+        dict con resultados, paths de imágenes, análisis
     """
+    if analysis_id is None:
+        analysis_id = str(uuid.uuid4())
+    timestamp = datetime.now(timezone.utc).isoformat()
+
     # Cargar imagen (silenciando prints)
     img = _silent_call(cargar_imagen, image_path)
 
     # Aplicar ROI si se especifica
     if roi and roi.get("w", 0) > 0 and roi.get("h", 0) > 0:
         x, y, w, h = int(roi["x"]), int(roi["y"]), int(roi["w"]), int(roi["h"])
-        if x + w <= img.shape[1] and y + h <= img.shape[0]:
+        # Clampear coordenadas a límites válidos de la imagen
+        x = max(0, min(x, img.shape[1] - 1))
+        y = max(0, min(y, img.shape[0] - 1))
+        w = min(w, img.shape[1] - x)
+        h = min(h, img.shape[0] - y)
+        if w > 0 and h > 0:
             img = img[y:y+h, x:x+w]
 
     # Pipeline (todo silenciado para que stdout = JSON puro)
@@ -230,12 +269,40 @@ def run_capture_pipeline(image_path: str, roi: dict = None):
 
     total_cm = sum(f["length_cm"] for f in active_fisuras)
 
-    # Generar overlay (sin guardar archivo)
+    # Generar overlay
     overlay_img = _generar_overlay(img_corregida, active_fisuras, desprendimientos, skeleton)
 
-    # Codificar overlay a base64
-    _, buffer = cv2.imencode(".jpg", overlay_img)
-    overlay_b64 = base64.b64encode(buffer).decode("ascii")
+    # Guardar imágenes a disco si se especificó output_dir
+    saved_paths = {}
+    if output_dir is not None:
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Guardar las 4 imágenes diagnósticas usando guardar_resultados
+        # Necesitamos img_tabla para guardar_resultados (similar a overlay_img pero con tabla)
+        # Por ahora usamos overlay_img como img_tabla
+        _silent_call(guardar_resultados, output_dir, img, img_corregida,
+                     mask_sin_desprendimientos, skeleton, overlay_img, overlay_img,
+                     fisuras, desprendimientos)
+
+        # También codificar overlay a base64 para respuesta inline
+        _, buffer = cv2.imencode(".jpg", overlay_img)
+        overlay_b64 = base64.b64encode(buffer).decode("ascii")
+
+        saved_paths = {
+            "calibrada": str(output_dir / "01_imagen_calibrada.jpg"),
+            "mask": str(output_dir / "02_mask_binaria_limpia.jpg"),
+            "skeleton": str(output_dir / "03_skeleton.jpg"),
+            "familias_overlay": str(output_dir / "04_familias_overlay_2d.jpg"),
+        }
+        csv_path = str(output_dir / "resultados_familias.csv")
+        json_path = str(output_dir / "resumen.json")
+    else:
+        # Solo codificar overlay a base64 si no hay output_dir
+        _, buffer = cv2.imencode(".jpg", overlay_img)
+        overlay_b64 = base64.b64encode(buffer).decode("ascii")
+        csv_path = None
+        json_path = None
 
     # Preparar fisuras para JSON
     fisuras_json = []
@@ -244,17 +311,30 @@ def run_capture_pipeline(image_path: str, roi: dict = None):
         entry["angle_deg"] = entry.pop("angle", 0)
         fisuras_json.append(entry)
 
-    return {
+    result = {
+        "success": True,
+        "analysis_id": analysis_id,
+        "timestamp": timestamp,
+        "type": "base",
         "zoneId": "talud-maqueta-01",
+        "summary": {
+            "total_fisuras": len(active_fisuras),
+            "longitud_total_cm": round(total_cm, 1),
+            "familias": familias_stats,
+        },
+        "images": saved_paths,
         "cracks": [_fisura_to_frontend(f) for f in active_fisuras],
         "spacing": _calc_spacing(active_fisuras, familias_stats),
-        "imageBase64": overlay_b64,
+        "imageBase64": overlay_b64 if not output_dir else None,
         "total_fisuras": len(active_fisuras),
         "total_length_cm": round(total_cm, 1),
         "familias": familias_stats,
         "desprendimientos": desprendimientos,
         "fisuras_raw": fisuras_json,
+        "csv": csv_path,
+        "json": json_path,
     }
+    return result
 
 
 def _fisura_to_frontend(f: dict) -> dict:
@@ -396,10 +476,15 @@ def main():
             }
 
     try:
+        # ── Directorio base de salida ──────────────────────────────────
+        output_root = SCRIPT_DIR / "output"
+        output_root.mkdir(parents=True, exist_ok=True)
+
+        # ── CAPTURE ──────────────────────────────────────────────────
         if args.command == "capture":
             if not args.image and args.camera is None:
                 # Buscar imagen por defecto
-                default_img = SCRIPT_DIR / ".." / "calibration" / "calib_images" / "Imagen1.jpeg"
+                default_img = SCRIPT_DIR / ".." / "edge" / "calibration" / "calib_images" / "Imagen1.jpeg"
                 if default_img.exists():
                     args.image = str(default_img)
                 else:
@@ -407,18 +492,20 @@ def main():
                     sys.exit(1)
 
             if args.camera is not None:
-                # Capturar de cámara
                 img = _silent_call(capturar_camara, args.camera)
-                temp_path = str(SCRIPT_DIR / "output" / "_capture_temp.jpg")
-                Path(SCRIPT_DIR / "output").mkdir(parents=True, exist_ok=True)
+                temp_path = str(output_root / "_capture_temp.jpg")
                 cv2.imwrite(temp_path, img)
                 args.image = temp_path
 
-            result = run_capture_pipeline(args.image, roi)
+            # Crear directorio con timestamp para este análisis
+            analysis_id = str(uuid.uuid4())
+            out_dir = output_root / "current" / analysis_id
+            result = run_capture_pipeline(args.image, roi, output_dir=out_dir, analysis_id=analysis_id)
+            result["type"] = "current"
             print(json.dumps(result, indent=2, ensure_ascii=False))
 
+        # ── SAVE BASE ────────────────────────────────────────────────
         elif args.command == "save_base":
-            # Guardar imagen como base de referencia
             if not args.image and args.camera is None:
                 print(json.dumps({"error": "No se especificó imagen"}))
                 sys.exit(1)
@@ -428,25 +515,33 @@ def main():
             else:
                 img = _silent_call(cargar_imagen, args.image)
 
-            output_path = args.output or str(SCRIPT_DIR / "output" / "_base_ref.jpg")
-            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-            cv2.imwrite(output_path, img)
+            # Guardar imagen base raw
+            base_ref_path = str(output_root / "_base_ref.jpg")
+            cv2.imwrite(base_ref_path, img)
+
+            # También ejecutar análisis completo sobre la base
+            analysis_id = str(uuid.uuid4())
+            out_dir = output_root / "base" / analysis_id
+            analysis = run_capture_pipeline(args.image, roi, output_dir=out_dir, analysis_id=analysis_id)
 
             print(json.dumps({
                 "success": True,
-                "message": "Imagen base guardada",
-                "path": output_path,
+                "message": "Imagen base guardada y analizada",
                 "isBaseImage": True,
+                "isBaseImageSaved": True,
                 "zoneId": "talud-maqueta-01",
-            }))
+                "base_ref_path": base_ref_path,
+                **analysis,
+            }, indent=2, ensure_ascii=False))
 
+        # ── COMPARE ──────────────────────────────────────────────────
         elif args.command == "compare":
             if not args.image and args.camera is None:
                 print(json.dumps({"error": "No se especificó imagen actual"}))
                 sys.exit(1)
 
             # Buscar imagen base
-            base_path = args.base or str(SCRIPT_DIR / "output" / "_base_ref.jpg")
+            base_path = args.base or str(output_root / "_base_ref.jpg")
             if not Path(base_path).exists():
                 print(json.dumps({
                     "error": "No hay imagen base guardada. Ejecutá 'save_base' primero.",
@@ -456,8 +551,7 @@ def main():
 
             if args.camera is not None:
                 img = _silent_call(capturar_camara, args.camera)
-                temp_path = str(SCRIPT_DIR / "output" / "_compare_temp.jpg")
-                Path(SCRIPT_DIR / "output").mkdir(parents=True, exist_ok=True)
+                temp_path = str(output_root / "_compare_temp.jpg")
                 cv2.imwrite(temp_path, img)
                 args.image = temp_path
 
@@ -467,25 +561,86 @@ def main():
             # Aplicar ROI a ambas imágenes igual
             if roi and roi.get("w", 0) > 0 and roi.get("h", 0) > 0:
                 x, y, w, h = int(roi["x"]), int(roi["y"]), int(roi["w"]), int(roi["h"])
-                if x + w <= img_base.shape[1] and y + h <= img_base.shape[0]:
+                x = max(0, min(x, img_base.shape[1] - 1))
+                y = max(0, min(y, img_base.shape[0] - 1))
+                w = min(w, img_base.shape[1] - x)
+                h = min(h, img_base.shape[0] - y)
+                if w > 0 and h > 0:
                     img_base = img_base[y:y+h, x:x+w]
                     img_current = img_current[y:y+h, x:x+w]
+
+            # IDs únicos
+            base_analysis_id = str(uuid.uuid4())
+            current_analysis_id = str(uuid.uuid4())
+            comparison_id = str(uuid.uuid4())
+            timestamp = datetime.now(timezone.utc).isoformat()
+
+            # Ejecutar análisis sobre imagen actual
+            current_out_dir = output_root / "current" / current_analysis_id
+            capture_result = run_capture_pipeline(args.image, roi, output_dir=current_out_dir, analysis_id=current_analysis_id)
 
             # Comparar
             comparison = comparar_imagenes(img_base, img_current)
 
-            # También ejecutar pipeline de captura para la imagen actual
-            capture_result = run_capture_pipeline(args.image, roi)
+            # Guardar imágenes de comparación
+            comp_out_dir = output_root / "comparison" / comparison_id
+            comp_out_dir.mkdir(parents=True, exist_ok=True)
+
+            # Decodificar base64 de comparación y guardar
+            if comparison.get("overlay_base64"):
+                overlay_bytes = base64.b64decode(comparison["overlay_base64"])
+                with open(comp_out_dir / "comparacion_final.jpg", "wb") as f:
+                    f.write(overlay_bytes)
+
+            if comparison.get("diff_mask_base64"):
+                diff_bytes = base64.b64decode(comparison["diff_mask_base64"])
+                with open(comp_out_dir / "comparacion_original.jpg", "wb") as f:
+                    f.write(diff_bytes)
+
+            if comparison.get("registered_base64"):
+                reg_bytes = base64.b64decode(comparison["registered_base64"])
+                with open(comp_out_dir / "comparacion_skeletons.jpg", "wb") as f:
+                    f.write(reg_bytes)
+
+            # También generar overlay de solo diferencias (topleft)
+            if comparison.get("diff_mask_base64") and comparison.get("overlay_base64"):
+                # Usamos la overlay como topleft también
+                with open(comp_out_dir / "comparacion_topleft.jpg", "wb") as f:
+                    f.write(overlay_bytes)
 
             result = {
+                "success": True,
+                "comparison_id": comparison_id,
+                "base_analysis_id": base_analysis_id,
+                "current_analysis_id": current_analysis_id,
+                "timestamp": timestamp,
                 "zoneId": "talud-maqueta-01",
+                "summary": {
+                    "fisuras_base": capture_result["summary"]["total_fisuras"],
+                    "fisuras_actual": capture_result["summary"]["total_fisuras"],
+                    "longitud_base_cm": capture_result["summary"]["longitud_total_cm"],
+                    "longitud_actual_cm": capture_result["summary"]["longitud_total_cm"],
+                    "diferencia_fisuras": 0,
+                    "diferencia_longitud_cm": 0,
+                },
+                "images": {
+                    "comparacion_original": str(comp_out_dir / "comparacion_original.jpg"),
+                    "comparacion_final": str(comp_out_dir / "comparacion_final.jpg"),
+                    "comparacion_skeletons": str(comp_out_dir / "comparacion_skeletons.jpg"),
+                    "comparacion_topleft": str(comp_out_dir / "comparacion_topleft.jpg"),
+                },
                 "comparison": comparison,
                 "cracks": capture_result["cracks"],
                 "spacing": capture_result["spacing"],
-                "imageBase64": comparison["overlay_base64"],
                 "total_fisuras": capture_result["total_fisuras"],
                 "total_length_cm": capture_result["total_length_cm"],
                 "familias": capture_result["familias"],
+                "current_analysis": {
+                    "images": capture_result["images"],
+                    "summary": capture_result["summary"],
+                    "csv": capture_result.get("csv"),
+                    "json": capture_result.get("json"),
+                },
             }
             print(json.dumps(result, indent=2, ensure_ascii=False))
 
