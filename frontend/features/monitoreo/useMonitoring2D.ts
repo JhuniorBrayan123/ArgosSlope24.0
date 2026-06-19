@@ -188,7 +188,13 @@ export function useMonitoring2D(mqttUrl: string, zoneId: string) {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        const text = await response.text();
+        throw new Error(text?.slice(0, 200) || `Error ${response.status} del servidor`);
+      }
 
       if (!response.ok) {
         throw new Error(data.message || data.title || `Error ${response.status}`);

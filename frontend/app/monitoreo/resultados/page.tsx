@@ -54,7 +54,7 @@ const IMAGE_LABELS: Record<string, string> = {
   comparacion_original: 'Base vs Actual',
   comparacion_final: 'Resultado Comparación',
   comparacion_skeletons: 'Diferencia Skeletons',
-  comparacion_topleft: 'Zoom Top-Left',
+  comparacion_topleft: 'Área Afectada',
 };
 
 const DEFAULT_IMAGE_KEYS = ['calibrada', 'mask', 'skeleton', 'familias_overlay'];

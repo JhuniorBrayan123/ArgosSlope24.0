@@ -689,7 +689,55 @@ export function ComparacionView({
       )}
 
       {/* ════════════════════════════════════════════════════════════ */}
-      {/*  SECTION 5 — Comparación por familias                      */}
+      {/*  SECTION 5 — Imágenes del Pipeline de Comparación          */}
+      {/* ════════════════════════════════════════════════════════════ */}
+      {(() => {
+        const COMPARISON_IMAGE_KEYS = ['comparacion_original', 'comparacion_final', 'comparacion_topleft', 'comparacion_skeletons'];
+        const COMPARISON_LABELS: Record<string, string> = {
+          comparacion_original: 'Original',
+          comparacion_final: 'Comparación Final',
+          comparacion_topleft: 'Área Afectada',
+          comparacion_skeletons: 'Diferencia Skeletons',
+        };
+        const available = COMPARISON_IMAGE_KEYS.filter((k) => images[k]);
+        if (available.length === 0) return null;
+        return (
+          <div className="rounded-xl border border-dark-border bg-dark-elevated p-4">
+            <h3 className="text-sm font-semibold text-dark-text mb-3 flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-dark-accent" />
+              Imágenes del Pipeline de Comparación
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {available.map((key) => {
+                const url = toImageUrl(images[key]);
+                return (
+                  <div key={key}>
+                    <p className="text-[10px] uppercase tracking-wide text-dark-muted mb-1">
+                      {COMPARISON_LABELS[key] || key}
+                    </p>
+                    <div className="rounded-lg border border-dark-border bg-[#0f1115] overflow-hidden aspect-video flex items-center justify-center">
+                      {url ? (
+                        <img
+                          src={imgSrc(url)}
+                          alt={COMPARISON_LABELS[key] || key}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-xs text-dark-muted">
+                          No disponible
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ════════════════════════════════════════════════════════════ */}
+      {/*  SECTION 6 — Comparación por familias                      */}
       {/* ════════════════════════════════════════════════════════════ */}
       {deltas && deltas.familyDeltas.length > 0 && (
         <div className="rounded-xl border border-dark-border bg-dark-elevated p-4">
@@ -766,7 +814,7 @@ export function ComparacionView({
       )}
 
       {/* ════════════════════════════════════════════════════════════ */}
-      {/*  SECTION 6 — Conclusión técnica                            */}
+      {/*  SECTION 7 — Conclusión técnica                            */}
       {/* ════════════════════════════════════════════════════════════ */}
       {deltas && (
         <div className="rounded-xl border border-dark-border bg-dark-elevated p-4">
