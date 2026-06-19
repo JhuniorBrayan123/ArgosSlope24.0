@@ -13,7 +13,7 @@ import { useAlertStore } from '@/stores/alert.store';
 import { useFissureStore } from '@/stores/fissure.store';
 import type { AlertaResponse } from '@/services/api-client';
 import EmptyState from '@/components/EmptyState';
-import { BellOff } from 'lucide-react';
+import { BellOff, BellPlus } from 'lucide-react';
 
 // ── Constants ──────────────────────────────────────────────────────────
 
@@ -111,11 +111,20 @@ export default function AlertCenter() {
   const [ackedIds, setAckedIds] = useState<Set<number>>(new Set());
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   // Fetch alerts on mount
   useEffect(() => {
     fetchAlerts();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-generate from URL param
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('autoGenerate') === 'true') {
+      // auto-generation is triggered by page.tsx, not here
+    }
+  }, []);
 
   // ── Filtered + sorted alerts ─────────────────────────────────────
   const filteredAlerts = useMemo(() => {
@@ -263,6 +272,28 @@ export default function AlertCenter() {
 
       {/* ── Stats Row ── */}
       <StatsRow stats={stats} />
+
+      {/* ── Generate alerts button ── */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={async () => {
+            setGenerating(true);
+            const { generateAlertsFromAnalysis } = useAlertStore.getState();
+            const count = await generateAlertsFromAnalysis('latest');
+            setGenerating(false);
+            if (count > 0) {
+              setToastMessage(`${count} alerta(s) generada(s) desde el análisis`);
+            } else {
+              setToastMessage('No se generaron nuevas alertas');
+            }
+          }}
+          disabled={generating}
+          className="rounded-lg bg-dark-accent/10 px-4 py-2 text-xs font-semibold text-dark-accent transition-colors hover:bg-dark-accent/20 disabled:opacity-50 flex items-center gap-2"
+        >
+          <BellPlus className="h-4 w-4" />
+          {generating ? 'Generando...' : 'Generar alertas desde análisis'}
+        </button>
+      </div>
 
       {/* ── Filters ── */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-dark-border bg-dark-surface p-4">

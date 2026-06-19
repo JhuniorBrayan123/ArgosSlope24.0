@@ -18,12 +18,15 @@ export interface ReportSummaryResponse {
   avgWidthPx: number;
   maxGrowthPercent: number;
   lastDetectionAt: string | null;
+  totalLengthCm?: number;
+  families?: Record<string, { count: number; total_cm: number }>;
 }
 
 export interface ReportTrendPoint {
   date: string;
   avgWidthPx: number;
   crackCount: number;
+  measurementCount?: number;
 }
 
 export interface ReportAlertSummary {

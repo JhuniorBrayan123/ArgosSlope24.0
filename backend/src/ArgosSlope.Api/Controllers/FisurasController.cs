@@ -16,7 +16,6 @@ public class FisurasController : ControllerBase
         _repo = repo;
     }
 
-    /// <summary>Listar fisuras con paginación</summary>
     [HttpGet]
     public async Task<ActionResult<PagedResponse<FisuraResponse>>> GetAll(
         [FromQuery] int page = 1,
@@ -34,7 +33,6 @@ public class FisurasController : ControllerBase
         );
     }
 
-    /// <summary>Obtener detalle de una fisura por ID</summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<FisuraDetalleResponse>> GetById(int id)
     {
@@ -213,6 +211,7 @@ public class FisurasController : ControllerBase
         Mensaje: a.Mensaje,
         UmbralSuperado: a.UmbralSuperado,
         ValorActual: a.ValorActual,
-        Reconocida: a.Reconocida
+        Reconocida: a.Reconocida,
+        AnalysisId: a.AnalysisId
     );
 }

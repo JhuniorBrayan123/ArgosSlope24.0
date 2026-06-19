@@ -64,6 +64,34 @@ public class ReportsController : ControllerBase
             ? await detectionsQuery.MaxAsync(d => (DateTime?)d.DetectedAt)
             : null;
 
+        // ── Compute new metrics ────────────────────────────────────
+        // Total length from measurements with LengthMm (convert mm → cm)
+        var lengthData = await measurementsQuery
+            .Where(m => m.LengthMm.HasValue)
+            .Select(m => new { m.CrackId, m.LengthMm, m.MeasuredAt })
+            .ToListAsync();
+
+        double totalLengthCm = 0;
+        if (lengthData.Count > 0)
+        {
+            totalLengthCm = lengthData
+                .GroupBy(m => m.CrackId)
+                .Select(g => g.OrderByDescending(m => m.MeasuredAt).First().LengthMm!.Value)
+                .Sum() / 10.0;
+        }
+
+        // Families breakdown from CrackDetection.FamilyId
+        var familiesRaw = await detectionsQuery
+            .Where(d => d.FamilyId != null && d.FamilyId != "")
+            .GroupBy(d => d.FamilyId)
+            .Select(g => new { Family = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var families = familiesRaw.ToDictionary(
+            g => g.Family,
+            g => (object)new { count = g.Count, total_cm = 0.0 }
+        );
+
         return new ReportSummaryResponse(
             TotalCracks: totalCracks,
             TotalDetections: totalDetections,
@@ -72,7 +100,9 @@ public class ReportsController : ControllerBase
             ActiveAlerts: activeAlerts,
             AvgWidthPx: Math.Round(avgWidth, 2),
             MaxGrowthPercent: Math.Round(maxGrowth, 1),
-            LastDetectionAt: lastDetection
+            LastDetectionAt: lastDetection,
+            TotalLengthCm: Math.Round(totalLengthCm, 1),
+            Families: families
         );
     }
 
@@ -111,7 +141,8 @@ public class ReportsController : ControllerBase
             .Select(g => new ReportTrendPoint(
                 g.Key.ToString("yyyy-MM-dd"),
                 Math.Round(g.Average(m => m.WidthMm), 4),
-                g.Select(m => m.CrackId).Distinct().Count()
+                g.Select(m => m.CrackId).Distinct().Count(),
+                g.Count()
             ))
             .OrderBy(t => t.Date)
             .ToList();

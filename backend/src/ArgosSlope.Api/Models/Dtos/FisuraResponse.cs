@@ -48,7 +48,8 @@ public record AlertaResponse(
     string Mensaje,
     double UmbralSuperado,
     double ValorActual,
-    bool Reconocida
+    bool Reconocida,
+    string? AnalysisId = null
 );
 
 public record ResumenResponse(
@@ -88,13 +89,16 @@ public record ReportSummaryResponse(
     int ActiveAlerts,
     double AvgWidthPx,
     double MaxGrowthPercent,
-    DateTime? LastDetectionAt
+    DateTime? LastDetectionAt,
+    double TotalLengthCm = 0,
+    object? Families = null
 );
 
 public record ReportTrendPoint(
     string Date,
     double AvgWidthPx,
-    int CrackCount
+    int CrackCount,
+    int MeasurementCount = 0
 );
 
 public record ReportAlertSummary(

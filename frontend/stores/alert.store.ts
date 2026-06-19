@@ -49,6 +49,8 @@ export interface AlertStore {
   acknowledgeAlerta: (id: number) => Promise<void>;
   /** Acknowledge multiple selected alerts */
   acknowledgeMultiple: () => Promise<void>;
+  /** Generate alerts from an analysis comparison */
+  generateAlertsFromAnalysis: (analysisId: string) => Promise<number>;
   /** Escalate an alert (placeholder for future escalation logic) */
   escalateAlerta: (id: number) => Promise<void>;
   /** Update filters (resets page to 1) */
@@ -145,6 +147,27 @@ export const useAlertStore = create<AlertStore>()((set, get) => ({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al reconocer alertas';
       set({ error: message });
+    }
+  },
+
+  generateAlertsFromAnalysis: async (analysisId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await fetch(`/api/alertas/generate-from-analysis?analysisId=${analysisId}`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      // Refresh alert list
+      get().fetchAlerts();
+      return data.generated as number;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al generar alertas';
+      set({ error: message, loading: false });
+      return 0;
     }
   },
 

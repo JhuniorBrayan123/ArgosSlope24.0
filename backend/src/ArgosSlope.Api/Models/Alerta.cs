@@ -19,4 +19,10 @@ public class Alerta
     public bool Reconocida { get; set; }
 
     public Crack? Crack { get; set; }
+
+    // ── Analysis-level alert fields ────────────────────────────────
+    public string? AnalysisId { get; set; }
+    public string? ComparisonType { get; set; } // "base_vs_current", "growth"
+    public int? NuevasFisuras { get; set; }
+    public double? DeltaLengthCm { get; set; }
 }

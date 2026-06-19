@@ -54,11 +54,11 @@ function TrendTooltip({ active, payload, label }: any) {
     <div className="rounded-lg border border-dark-border bg-dark-surface px-3 py-2 text-sm shadow-xl">
       <p className="mb-1 font-medium text-dark-textSecondary">{label}</p>
       <p className="font-semibold text-dark-accent">
-        Ancho Promedio: {Number(payload[0].value).toFixed(2)} mm
+        Mediciones: {Number(payload[0].value).toFixed(0)}
       </p>
       {payload[1] && (
         <p className="font-semibold text-dark-text mt-1">
-          Fisuras medidas: {payload[1].value}
+          Fisuras: {payload[1].value}
         </p>
       )}
     </div>
@@ -248,13 +248,15 @@ export default function AnalyticsDashboard() {
             </p>
           </div>
           <div className="rounded-xl border border-dark-border bg-dark-surface p-5 transition-shadow hover:shadow-lg">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-dark-textSecondary">Ancho Promedio</p>
-            <p className="mt-2 text-3xl font-bold text-dark-text">{summary?.avgWidthPx.toFixed(2) || '0.00'} mm</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-dark-textSecondary">Mediciones Realizadas</p>
+            <p className="mt-2 text-3xl font-bold text-dark-text">{summary?.totalMeasurements || 0}</p>
           </div>
           <div className="rounded-xl border border-dark-border bg-dark-surface p-5 transition-shadow hover:shadow-lg">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-dark-textSecondary">Crecimiento Máximo</p>
-            <p className={`mt-2 text-3xl font-bold ${(summary?.maxGrowthPercent || 0) > 5 ? 'text-dark-danger' : 'text-dark-warning'}`}>
-              {summary?.maxGrowthPercent.toFixed(1) || '0.0'}%
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-dark-textSecondary">Familias Detectadas</p>
+            <p className="mt-2 text-3xl font-bold text-dark-text">
+              {summary?.families
+                ? Object.keys(summary.families).length
+                : '—'}
             </p>
           </div>
         </div>
@@ -265,7 +267,7 @@ export default function AnalyticsDashboard() {
           {/* Trend Chart */}
           <div className="lg:col-span-2 rounded-xl border border-dark-border bg-dark-surface p-5">
             <h2 className="mb-6 text-sm font-semibold text-dark-text uppercase tracking-wider">
-              Evolución de Ancho Promedio
+              Evolución de Mediciones
             </h2>
             <div className="h-64">
               {trends.length === 0 ? (
@@ -276,7 +278,7 @@ export default function AnalyticsDashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={trends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="colorWidth" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="colorMeasurements" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#00d4aa" stopOpacity={0.3}/>
                         <stop offset="95%" stopColor="#00d4aa" stopOpacity={0}/>
                       </linearGradient>
@@ -297,11 +299,11 @@ export default function AnalyticsDashboard() {
                     <Tooltip content={<TrendTooltip />} />
                     <Area 
                       type="monotone" 
-                      dataKey="avgWidthPx" 
+                      dataKey="measurementCount" 
                       stroke="#00d4aa" 
                       strokeWidth={3}
                       fillOpacity={1} 
-                      fill="url(#colorWidth)" 
+                      fill="url(#colorMeasurements)" 
                     />
                   </AreaChart>
                 </ResponsiveContainer>
