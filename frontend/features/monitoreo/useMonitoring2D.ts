@@ -188,12 +188,21 @@ export function useMonitoring2D(mqttUrl: string, zoneId: string) {
         body: JSON.stringify(body),
       });
 
+      // Leer body UNA SOLA VEZ (como texto), después parsear
+      const bodyText = await response.text();
       let data: any;
       try {
-        data = await response.json();
+        data = JSON.parse(bodyText);
       } catch {
-        const text = await response.text();
-        throw new Error(text?.slice(0, 200) || `Error ${response.status} del servidor`);
+        // Body no-JSON: proxy timeout (NextJS dev devuelve HTML 500)
+        if ((response.status === 500 || response.status === 502 || response.status === 504)
+            && (command === 'capture' || command === 'save_base_image')) {
+          // Proxy cortó — MQTT entregará el resultado después
+          setStatusMessage('⏳ Procesando imagen...');
+          setTimeout(() => { setCurrentLoading(false); setBaseLoading(false); }, 120_000);
+          return;
+        }
+        throw new Error(bodyText?.slice(0, 200) || `Error ${response.status} del servidor`);
       }
 
       if (!response.ok) {
@@ -218,6 +227,20 @@ export function useMonitoring2D(mqttUrl: string, zoneId: string) {
       setTimeout(() => setStatusMessage(''), 4000);
     } catch (error: any) {
       console.error('[2D Monitor] Error:', error);
+
+      // ── Timeout de red / proxy: la data llega vía MQTT ─────────
+      const isNetworkError =
+        error.message?.includes('socket hang up') ||
+        error.message?.includes('ECONNRESET') ||
+        error.message?.includes('fetch failed') ||
+        error.name === 'AbortError';
+
+      if (isNetworkError && (command === 'capture' || command === 'save_base_image')) {
+        setStatusMessage('⏳ Procesando imagen...');
+        setTimeout(() => { setCurrentLoading(false); setBaseLoading(false); }, 120_000);
+        return;
+      }
+
       setStatusMessage(`❌ ${error.message}`);
 
       if (command === 'save_base_image') {

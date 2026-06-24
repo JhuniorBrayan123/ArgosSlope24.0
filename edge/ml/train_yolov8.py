@@ -1,23 +1,5 @@
 #!/usr/bin/env python3
-"""
-ARGOS SLOPE 4.0 — YOLOv8 Training Script for Crack Detection.
 
-Entrena un modelo YOLOv8 para detectar fisuras en taludes mineros.
-Exporta automáticamente a ONNX para inferencia en edge (Raspberry Pi).
-
-Requisitos:
-    pip install ultralytics opencv-python numpy pyyaml
-
-Uso:
-    # Entrenar desde cero:
-    python ml/train_yolov8.py --data ml/dataset/data.yaml --epochs 100
-
-    # Continuar entrenamiento desde checkpoint:
-    python ml/train_yolov8.py --resume ml/models/weights/last.pt --epochs 50
-
-    # Solo exportar modelo existente a ONNX:
-    python ml/train_yolov8.py --export ml/models/weights/best.pt
-"""
 
 from __future__ import annotations
 
@@ -35,23 +17,7 @@ logger = logging.getLogger("train_yolov8")
 
 
 def create_default_data_yaml(output_path: Path) -> Path:
-    """
-    Crea un archivo data.yaml por defecto para el dataset de fisuras.
-
-    Estructura esperada del dataset::
-
-        ml/dataset/
-        ├── data.yaml
-        ├── train/
-        │   ├── images/    # imágenes de entrenamiento
-        │   └── labels/    # etiquetas YOLO .txt
-        └── val/
-            ├── images/    # imágenes de validación
-            └── labels/    # etiquetas YOLO .txt
-
-    Returns:
-        Ruta al archivo data.yaml.
-    """
+    
     content = """
 # ARGOS SLOPE 4.0 — Crack Detection Dataset
 # Formato YOLOv8
@@ -237,12 +203,12 @@ def main() -> None:
     # ── Export only ──
     if args.export:
         onnx_path = export_to_onnx(args.export, args.imgsz)
-        print(f"\n✅ ONNX model: {onnx_path}")
+        print(f"\n ONNX model: {onnx_path}")
         return
 
     if args.export_tflite:
         tflite_path = export_to_tflite(args.export_tflite, args.imgsz)
-        print(f"\n✅ TFLite model: {tflite_path}")
+        print(f"\n TFLite model: {tflite_path}")
         return
 
     # ── Train ──
@@ -272,9 +238,9 @@ def main() -> None:
     onnx = export_to_onnx(best, args.imgsz)
 
     print(f"\n{'═' * 60}")
-    print(f"  ✅ Entrenamiento completo")
-    print(f"  📦 Modelo PyTorch: {best}")
-    print(f"  📦 Modelo ONNX:    {onnx}")
+    print(f"   Entrenamiento completo")
+    print(f"   Modelo PyTorch: {best}")
+    print(f"   Modelo ONNX:    {onnx}")
     print(f"{'═' * 60}")
 
 

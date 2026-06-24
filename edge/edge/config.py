@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 # Cargar .env del raíz del proyecto (ArgosSlope4.0/.env)
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
-load_dotenv(_PROJECT_ROOT / ".env", override=False)
+load_dotenv(_PROJECT_ROOT / ".env", override=True)
 
 
 @dataclass

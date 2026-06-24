@@ -27,7 +27,7 @@ public class AlertasController : ControllerBase
         var alertas = await _repo.GetAlertasAsync(soloNoReconocidas);
         return alertas.Select(a => new AlertaResponse(
             Id: a.Id,
-            CrackId: a.CrackId,
+            FisuraId: a.CrackId,
             Fecha: a.Fecha,
             Tipo: a.Tipo,
             Mensaje: a.Mensaje,
@@ -46,7 +46,7 @@ public class AlertasController : ControllerBase
 
         return new AlertaResponse(
             Id: alerta.Id,
-            CrackId: alerta.CrackId,
+            FisuraId: alerta.CrackId,
             Fecha: alerta.Fecha,
             Tipo: alerta.Tipo,
             Mensaje: alerta.Mensaje,
@@ -75,7 +75,7 @@ public class AlertasController : ControllerBase
 
         return CreatedAtAction(nameof(GetAll), new AlertaResponse(
             Id: created.Id,
-            CrackId: created.CrackId,
+            FisuraId: created.CrackId,
             Fecha: created.Fecha,
             Tipo: created.Tipo,
             Mensaje: created.Mensaje,

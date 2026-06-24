@@ -1,10 +1,3 @@
-"""
-ARGOS SLOPE 4.0 — Debug Drawer for pipeline stage visualisation.
-
-Annotates frames with detection results and rejected contours at each
-pipeline stage so operators can visually inspect and tune parameters
-during development or on-site troubleshooting.
-"""
 
 from __future__ import annotations
 
@@ -19,7 +12,6 @@ from edge.detector.fisura_detector import CrackResult
 
 logger = logging.getLogger(__name__)
 
-# ── BGR colour constants ───────────────────────────────────────────────
 _COLOR_GREEN = (0, 255, 0)
 _COLOR_RED = (0, 0, 255)
 _COLOR_YELLOW = (0, 255, 255)
@@ -28,30 +20,15 @@ _COLOR_BLACK = (0, 0, 0)
 
 
 class DebugDrawer:
-    """Annotate frames with pipeline-stage overlays for visual debugging.
-
-    Usage::
-
-        drawer = DebugDrawer(enabled=True, output_dir="debug_output")
-        annotated = drawer.draw_pipeline_stage(
-            frame, "post_detection", cracks, rejected
-        )
-        drawer.save_stage(annotated, "final", frame_count)
-    """
+   
 
     def __init__(
         self, enabled: bool = False, output_dir: str = "debug_output"
     ) -> None:
-        """
-        Args:
-            enabled: When ``False``, ``draw_pipeline_stage`` returns the
-                image unchanged.
-            output_dir: Directory where annotated frames are saved.
-        """
+        
         self._enabled = enabled
         self._output_dir = Path(output_dir)
 
-    # ── Public API ──────────────────────────────────────────────────
 
     def draw_pipeline_stage(
         self,

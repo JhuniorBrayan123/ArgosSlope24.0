@@ -43,9 +43,17 @@ const IMAGE_LABELS: Record<string, string> = {
   mask: 'Máscara Binaria',
   skeleton: 'Skeleton',
   familias_overlay: 'Familias Overlay',
+  comparacion_original: 'Base vs Actual',
+  comparacion_final: 'Comparación Final',
+  comparacion_skeletons: 'Diferencia Skeletons',
+  comparacion_topleft: 'Área Afectada',
 };
 
-const SORT_ORDER = ['calibrada', 'mask', 'skeleton', 'familias_overlay'];
+// Mostrar imágenes del pipeline primero, después las de comparación
+const SORT_ORDER = [
+  'calibrada', 'mask', 'skeleton', 'familias_overlay',
+  'comparacion_original', 'comparacion_final', 'comparacion_topleft', 'comparacion_skeletons',
+];
 
 // ── Props ─────────────────────────────────────────────────────────────
 

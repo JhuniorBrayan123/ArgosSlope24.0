@@ -488,7 +488,7 @@ def main():
                 if default_img.exists():
                     args.image = str(default_img)
                 else:
-                    print(json.dumps({"error": "No se especificó imagen ni cámara"}))
+                    print(json.dumps({"error": "No se especificó imagen ni cámara"}), flush=True)
                     sys.exit(1)
 
             if args.camera is not None:
@@ -502,12 +502,12 @@ def main():
             out_dir = output_root / "current" / analysis_id
             result = run_capture_pipeline(args.image, roi, output_dir=out_dir, analysis_id=analysis_id)
             result["type"] = "current"
-            print(json.dumps(result, indent=2, ensure_ascii=False))
+            print(json.dumps(result, ensure_ascii=False, separators=(",", ":")), flush=True)
 
         # ── SAVE BASE ────────────────────────────────────────────────
         elif args.command == "save_base":
             if not args.image and args.camera is None:
-                print(json.dumps({"error": "No se especificó imagen"}))
+                print(json.dumps({"error": "No se especificó imagen"}), flush=True)
                 sys.exit(1)
 
             if args.camera is not None:
@@ -532,12 +532,12 @@ def main():
                 "zoneId": "talud-maqueta-01",
                 "base_ref_path": base_ref_path,
                 **analysis,
-            }, indent=2, ensure_ascii=False))
+            }, ensure_ascii=False, separators=(",", ":")), flush=True)
 
         # ── COMPARE ──────────────────────────────────────────────────
         elif args.command == "compare":
             if not args.image and args.camera is None:
-                print(json.dumps({"error": "No se especificó imagen actual"}))
+                print(json.dumps({"error": "No se especificó imagen actual"}), flush=True)
                 sys.exit(1)
 
             # Buscar imagen base
@@ -546,7 +546,7 @@ def main():
                 print(json.dumps({
                     "error": "No hay imagen base guardada. Ejecutá 'save_base' primero.",
                     "code": "NO_BASE_IMAGE"
-                }))
+                }), flush=True)
                 sys.exit(1)
 
             if args.camera is not None:
@@ -642,13 +642,13 @@ def main():
                     "json": capture_result.get("json"),
                 },
             }
-            print(json.dumps(result, indent=2, ensure_ascii=False))
+            print(json.dumps(result, ensure_ascii=False, separators=(",", ":")), flush=True)
 
     except Exception as e:
         print(json.dumps({
             "error": str(e),
             "error_type": type(e).__name__,
-        }))
+        }), flush=True)
         sys.exit(1)
 
 

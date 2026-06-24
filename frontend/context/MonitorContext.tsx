@@ -1,12 +1,4 @@
-/**
- * @deprecated This context provider is preserved for backward compatibility.
- * The MonitorProvider was removed from layout.js in Phase 1 (PR 1/5), and no
- * active page uses it as of Phase 5 (PR 5/5). It remains here because
- * legacy components (PanelPrincipal, BotonCapturaHD) still import useMonitor.
- * New code should manage MQTT/monitor state via Zustand stores (e.g., an
- * mqttStore). To remove: migrate all consumers to store-based state, then
- * delete this file and its exports.
- */
+
 'use client';
 
 import {

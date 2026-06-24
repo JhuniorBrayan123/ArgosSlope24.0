@@ -205,7 +205,7 @@ public class FisurasController : ControllerBase
 
     private static AlertaResponse MapToAlertaResponse(Alerta a) => new(
         Id: a.Id,
-        CrackId: a.CrackId ?? 0,
+        FisuraId: a.CrackId,
         Fecha: a.Fecha,
         Tipo: a.Tipo,
         Mensaje: a.Mensaje,

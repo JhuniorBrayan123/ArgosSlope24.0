@@ -1,18 +1,4 @@
-"""
-ARGOS SLOPE 4.0 — Crack Surface Projector.
 
-Projects 2D crack bounding boxes onto the 3D mesh surface.
-
-Instead of looking up a single depth pixel (unreliable, noisy), the projector:
-    1. Takes the median depth inside the crack's bounding box in the depth map.
-    2. Looks up the nearest vertex in the grid mesh (already centred/scaled).
-    3. Emits x3d, y3d, z3d aligned with the mesh coordinate system.
-    4. Sets surface_valid=True only when a reliable depth exists.
-
-The same 2D x, y, w, h coordinates are always emitted so the frontend can
-draw bounding boxes on the 2D image overlay (Vista2DTalud) even when 3D
-is not available.
-"""
 
 from __future__ import annotations
 
@@ -25,14 +11,10 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-# ── Result ───────────────────────────────────────────────────────────
-
 
 @dataclass
 class ProjectedCrack:
-    """A crack detection projected onto the mesh surface."""
 
-    # ── 2D (always present) ──────────────────────────────────────────
     roi_id: str = ""
     x: int = 0
     y: int = 0
@@ -42,27 +24,16 @@ class ProjectedCrack:
     length_mm: Optional[float] = None
     width_mm: Optional[float] = None
 
-    # ── 3D (present only when surface_valid) ────────────────────────
     x3d: Optional[float] = None
     y3d: Optional[float] = None
     z3d: Optional[float] = None
     surface_valid: bool = False
 
 
-# ── Projector ─────────────────────────────────────────────────────────
 
 
 class CrackSurfaceProjector:
-    """
-    Projects crack bounding boxes onto the 3D mesh.
-
-    Args:
-        fx, fy, cx, cy: Camera intrinsics (pixels).
-        mesh_centroid: Centroid array [cx, cy, cz] subtracted on Edge (metres).
-        mesh_scale: Scale factor applied after centring on Edge.
-    """
-
-    # Minimum fraction of bbox depth samples that must be valid
+   
     MIN_BBOX_VALID_FRACTION = 0.2
 
     def __init__(
@@ -87,19 +58,7 @@ class CrackSurfaceProjector:
         depth: np.ndarray,
         frame_shape: tuple[int, int],
     ) -> list[ProjectedCrack]:
-        """
-        Project a list of CrackResult / dict detections onto the surface.
-
-        Args:
-            cracks: List of CrackResult objects or dicts with x, y, width/w,
-                    height/h, roi_id, classification, length_mm, width_mm.
-            depth: Post-processed depth map (H, W) float32.
-                   Values at invalid pixels should be 0.
-            frame_shape: (height, width) of the original ROI frame.
-
-        Returns:
-            List of ProjectedCrack with 2D + optional 3D coordinates.
-        """
+       
         dh, dw = depth.shape[:2] if depth is not None else frame_shape
         results: list[ProjectedCrack] = []
 

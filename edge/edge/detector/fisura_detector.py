@@ -16,12 +16,7 @@ from edge.config import config
 
 logger = logging.getLogger(__name__)
 
-# Calibration file path (can be overridden for testing)
 CALIBRATION_PATH = Path("calibration/calibration.json")
-
-
-# ── Data types ─────────────────────────────────────────────────────────
-
 
 @dataclass
 class GeometricFilterConfig:
@@ -38,40 +33,25 @@ class CrackClassification(str, Enum):
    
 
     NONE = "none"
-    FINA = "fina"          # < 0.3 mm
-    MEDIA = "media"        # 0.3 – 1.0 mm
-    GRUESA = "gruesa"      # > 1.0 mm
+    FINA = "fina"         
+    MEDIA = "media"     
+    GRUESA = "gruesa"     
 
 
 @dataclass
 class CrackResult:
-    """
-    Result of a single crack detection.
-
-    Maps to the ``fisura`` table in PostgreSQL and the MQTT telemetry
-    payload sent to the .NET backend.
-    """
-
+    
     roi_id: str = field(default_factory=lambda: f"CRK-{uuid.uuid4().hex[:8].upper()}")
-    """Unique ROI identifier for this crack."""
 
-    # ── Bounding box (pixels) ──
     x: int = 0
-    """Top-left X coordinate in the original frame."""
     y: int = 0
-    """Top-left Y coordinate in the original frame."""
     width: int = 0
-    """Width of the bounding box in pixels."""
     height: int = 0
-    """Height of the bounding box in pixels."""
 
-    # ── Centroids ──
     center_x: int = 0
     """Center X in pixels (relative to original frame)."""
     center_y: int = 0
     """Center Y in pixels (relative to original frame)."""
-
-    # ── Measurements (mm) ──
     length_mm: float = 0.0
     """Estimated crack length in mm."""
     width_mm: float = 0.0
@@ -79,11 +59,9 @@ class CrackResult:
     area_mm2: float = 0.0
     """Crack surface area in mm²."""
 
-    # ── Classification ──
     classification: CrackClassification = CrackClassification.NONE
     """Width-based crack classification."""
 
-    # ── Metadata ──
     orientation_deg: float = 0.0
     """Orientation angle in degrees (0 = horizontal)."""
     confidence: float = 0.0
@@ -93,7 +71,6 @@ class CrackResult:
     track_id: Optional[int] = None
     """Persistent track ID for temporal tracking (assigned by CrackTracker)."""
     
-    # ── Contexto de la Demo 2D ──
     unidad: str = "px"
     """Unidad de medida: 'px' o 'mm'"""
     calibrado: bool = False
@@ -130,10 +107,6 @@ class CrackResult:
             d["track_id"] = self.track_id
         return d
 
-
-# ── Detector interface ────────────────────────────────────────────────
-
-
 class BaseDetector:
     """Abstract base for all crack detection backends."""
 
@@ -149,9 +122,6 @@ class BaseDetector:
             Empty list when no cracks are found.
         """
         raise NotImplementedError
-
-
-# ── OpenCV pipeline ───────────────────────────────────────────────────
 
 
 class OpenCvDetector(BaseDetector):
@@ -177,7 +147,6 @@ class OpenCvDetector(BaseDetector):
         self._morph_ksize = config.morph_ksize
         self._min_area = config.min_contour_area_px
 
-        # ── Geometric Filter Config ──────────────────────────────────
         self._filter_config = GeometricFilterConfig(
             enabled=config.geometric_filtering_enabled,
             min_aspect_ratio=config.filter_min_aspect_ratio,
@@ -186,13 +155,10 @@ class OpenCvDetector(BaseDetector):
             min_convexity=config.filter_min_convexity,
         )
 
-        # ── Calibration scale (pixels_per_mm) ────────────────────────
         self._pixels_per_mm: Optional[float] = None
         self._fx_px: Optional[float] = None
         self._scale_available: bool = False
         self._load_calibration_scale()
-
-        # Fallback theoretical pixel-to-mm ratio (DEPRECATED: used only when calibration unavailable)
         self._focal_mm = config.focal_length_mm
         self._distance_mm = config.sensor_distance_m * 1000.0  # m → mm
         self._pixel_um = config.sensor_pixel_um

@@ -1,0 +1,17 @@
+# ARGOS SLOPE 4.0 — Raspberry Pi Streamer Dependencies
+# ====================================================
+# Solo lo necesario para transmitir video. Nada de OpenCV pesado,
+# torch, aiortc ni open3d.
+#
+# CSI camera:   picamera2 (viene preinstalado en Raspberry Pi OS)
+# USB camera:   opencv-python-headless
+#
+# Instalación:
+#   pip3 install -r requirements-rpi.txt
+
+# Para cámara USB (si usás --usb):
+opencv-python-headless>=4.8.0
+
+# Nota: picamera2 viene preinstalado en Raspberry Pi OS (Bookworm).
+# Si no lo tenés:
+#   sudo apt install -y python3-picamera2

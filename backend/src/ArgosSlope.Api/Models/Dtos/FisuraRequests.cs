@@ -1,9 +1,5 @@
 namespace ArgosSlope.Api.Models.Dtos;
 
-/// <summary>
-/// Request para registrar una nueva fisura desde la API REST
-/// (alternativa a la ingesta MQTT)
-/// </summary>
 public record RegistrarFisuraRequest(
     string RoiId,
     double Largo,
@@ -14,28 +10,17 @@ public record RegistrarFisuraRequest(
     string? Coordenadas
 );
 
-/// <summary>
-/// Request para registrar una nueva medición desde la API REST
-/// </summary>
 public record RegistrarMedicionRequest(
     double Largo,
     double Ancho,
     double Area
 );
-
-/// <summary>
-/// Request para registrar una alerta manual desde la API REST
-/// </summary>
 public record RegistrarAlertaRequest(
     string Tipo,
     string Mensaje,
     double UmbralSuperado,
     double ValorActual
 );
-
-/// <summary>
-/// Payload MQTT para snapshot/image
-/// </summary>
 public class MqttSnapshotPayload
 {
     public string Event { get; set; } = string.Empty;

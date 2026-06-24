@@ -31,9 +31,18 @@ namespace ArgosSlope.Api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AnalysisId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ComparisonType")
+                        .HasColumnType("text");
+
                     b.Property<int?>("CrackId")
                         .HasColumnType("integer")
                         .HasColumnName("crack_id");
+
+                    b.Property<double?>("DeltaLengthCm")
+                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("timestamp with time zone")
@@ -43,6 +52,9 @@ namespace ArgosSlope.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("mensaje");
+
+                    b.Property<int?>("NuevasFisuras")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("Reconocida")
                         .HasColumnType("boolean")
@@ -96,21 +108,21 @@ namespace ArgosSlope.Api.Migrations
                         new
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 760, DateTimeKind.Utc).AddTicks(3343),
+                            CreatedAt = new DateTime(2026, 6, 19, 13, 21, 53, 400, DateTimeKind.Utc).AddTicks(7282),
                             Description = "Acceso total al sistema",
                             Name = "Administrador"
                         },
                         new
                         {
                             Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 760, DateTimeKind.Utc).AddTicks(3346),
+                            CreatedAt = new DateTime(2026, 6, 19, 13, 21, 53, 400, DateTimeKind.Utc).AddTicks(7293),
                             Description = "Operador de campo",
                             Name = "Operador"
                         },
                         new
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 760, DateTimeKind.Utc).AddTicks(3348),
+                            CreatedAt = new DateTime(2026, 6, 19, 13, 21, 53, 400, DateTimeKind.Utc).AddTicks(7294),
                             Description = "Ingeniero geotécnico",
                             Name = "Geotécnico"
                         });
@@ -162,35 +174,35 @@ namespace ArgosSlope.Api.Migrations
                         new
                         {
                             Id = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6828),
+                            CreatedAt = new DateTime(2026, 6, 19, 13, 21, 53, 521, DateTimeKind.Utc).AddTicks(1158),
                             Email = "admin@argos.mine",
                             FullName = "Admin ARGOS",
                             IsActive = true,
-                            PasswordHash = "$2a$11$8Ir4uPmCfJ4jQosxB93UEOnbxZ3f/tJmGmUReMJ8xTekKSymthM2G",
+                            PasswordHash = "$2a$11$N9zaF.4qPGc8l.priWZ28OqY1H/3vp2Le0GUw.6X53LukHwJJqQ/O",
                             RoleId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            UpdatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6833)
+                            UpdatedAt = new DateTime(2026, 6, 19, 13, 21, 53, 521, DateTimeKind.Utc).AddTicks(1163)
                         },
                         new
                         {
                             Id = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6862),
+                            CreatedAt = new DateTime(2026, 6, 19, 13, 21, 53, 521, DateTimeKind.Utc).AddTicks(1185),
                             Email = "operador@argos.mine",
                             FullName = "Operador Campo",
                             IsActive = true,
-                            PasswordHash = "$2a$11$8Ir4uPmCfJ4jQosxB93UEOnbxZ3f/tJmGmUReMJ8xTekKSymthM2G",
+                            PasswordHash = "$2a$11$N9zaF.4qPGc8l.priWZ28OqY1H/3vp2Le0GUw.6X53LukHwJJqQ/O",
                             RoleId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            UpdatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6862)
+                            UpdatedAt = new DateTime(2026, 6, 19, 13, 21, 53, 521, DateTimeKind.Utc).AddTicks(1186)
                         },
                         new
                         {
                             Id = new Guid("cccccccc-cccc-cccc-cccc-cccccccccccc"),
-                            CreatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6864),
+                            CreatedAt = new DateTime(2026, 6, 19, 13, 21, 53, 521, DateTimeKind.Utc).AddTicks(1189),
                             Email = "geotecnico@argos.mine",
                             FullName = "Ing. Geotécnico",
                             IsActive = true,
-                            PasswordHash = "$2a$11$8Ir4uPmCfJ4jQosxB93UEOnbxZ3f/tJmGmUReMJ8xTekKSymthM2G",
+                            PasswordHash = "$2a$11$N9zaF.4qPGc8l.priWZ28OqY1H/3vp2Le0GUw.6X53LukHwJJqQ/O",
                             RoleId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            UpdatedAt = new DateTime(2026, 6, 17, 11, 25, 20, 881, DateTimeKind.Utc).AddTicks(6865)
+                            UpdatedAt = new DateTime(2026, 6, 19, 13, 21, 53, 521, DateTimeKind.Utc).AddTicks(1189)
                         });
                 });
 

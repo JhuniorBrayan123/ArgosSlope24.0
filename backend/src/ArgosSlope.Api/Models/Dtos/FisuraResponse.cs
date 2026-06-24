@@ -42,7 +42,7 @@ public record MedicionResponse(
 
 public record AlertaResponse(
     int Id,
-    int? CrackId,
+    int? FisuraId,
     DateTime Fecha,
     string Tipo,
     string Mensaje,

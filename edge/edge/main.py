@@ -3,7 +3,7 @@
 ARGOS SLOPE 4.0 — Edge Processing Main Loop (Raspberry Pi / Laptop).
 
 Orchestrates:
-  1. Camera capture (USB camera, PiCamera, or video file)
+   1. Camera capture (USB camera, PiCamera, MJPEG stream URL, or video file)
   2. Crack detection via OpenCV or ONNX model
   3. MQTT publish of telemetry and fissure data
   4. Shared frame buffer for WebRTC live streaming
@@ -25,6 +25,7 @@ Usage:
 
 from __future__ import annotations
 
+import io
 import logging
 import os
 import sys
@@ -144,14 +145,25 @@ def open_camera(source: str) -> cv2.VideoCapture:
     Open a camera source and return a VideoCapture.
 
     Args:
-        source: ``"0"``, ``"1"`` for USB cameras, or a file path for videos.
+        source: ``"0"``, ``"1"`` for USB cameras, an ``http://...`` URL for
+                MJPEG streams (RPi streamer), or a file path for videos.
 
     Returns:
         Configured VideoCapture.
 
     Raises:
         RuntimeError: If the camera/video cannot be opened.
+        FileNotFoundError: If a video file path does not exist.
     """
+
+    # ── 1. MJPEG stream URL (RPi streamer) ─────────────────────────
+    if source.startswith("http://") or source.startswith("https://"):
+        logger.info("Opening MJPEG stream (direct fallback reader): %s", source)
+        cap = _MjpegCapture(source)
+        logger.info("Camera opened: source=%s (MJPEG stream)", source)
+        return cap
+
+    # ── 2. USB camera index ────────────────────────────────────────
     if source.isdigit():
         index = int(source)
         cap: cv2.VideoCapture | None = None
@@ -188,35 +200,50 @@ def open_camera(source: str) -> cv2.VideoCapture:
 
         if cap is None or not cap.isOpened():
             raise RuntimeError(f"Cannot open camera source: {source}")
-    else:
-        path = Path(source)
-        if not path.exists():
-            raise FileNotFoundError(f"Video file not found: {source}")
-        cap = cv2.VideoCapture(str(path))
+
+        # Set resolution and verify the stream still delivers frames
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, config.frame_width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config.frame_height)
+        cap.set(cv2.CAP_PROP_FPS, config.fps)
+
+        ret, _ = cap.read()
+        if not ret:
+            logger.warning(
+                "Camera read failed at %dx%d — retrying with native resolution.",
+                config.frame_width,
+                config.frame_height,
+            )
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            ret, _ = cap.read()
+            if not ret:
+                cap.release()
+                raise RuntimeError(
+                    f"Camera source {source} opened but cannot read frames."
+                )
+
+        actual_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        actual_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        actual_fps = cap.get(cv2.CAP_PROP_FPS)
+
+        logger.info(
+            "Camera opened: source=%s, resolution=%dx%d, FPS=%.1f",
+            source,
+            actual_w,
+            actual_h,
+            actual_fps,
+        )
+
+        return cap
+
+    # ── 3. Video file path ─────────────────────────────────────────
+    path = Path(source)
+    if not path.exists():
+        raise FileNotFoundError(f"Video file not found: {source}")
+    cap = cv2.VideoCapture(str(path))
 
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open camera source: {source}")
-
-    # Set resolution and verify the stream still delivers frames
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, config.frame_width)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config.frame_height)
-    cap.set(cv2.CAP_PROP_FPS, config.fps)
-
-    ret, _ = cap.read()
-    if not ret:
-        logger.warning(
-            "Camera read failed at %dx%d — retrying with native resolution.",
-            config.frame_width,
-            config.frame_height,
-        )
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        ret, _ = cap.read()
-        if not ret:
-            cap.release()
-            raise RuntimeError(
-                f"Camera source {source} opened but cannot read frames."
-            )
 
     actual_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     actual_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -231,6 +258,134 @@ def open_camera(source: str) -> cv2.VideoCapture:
     )
 
     return cap
+
+
+class _MjpegCapture(cv2.VideoCapture):
+    """
+    Fallback MJPEG stream reader for when cv2.VideoCapture(url) fails.
+
+    Wraps ``urllib``-based MJPEG parsing into a ``cv2.VideoCapture``-compatible
+    interface so the rest of the pipeline works unchanged.
+    """
+
+    def __init__(self, url: str) -> None:
+        # No-arg super() init — we override all methods.
+        super().__init__()
+        self._url = url
+        self._stream: Optional[io.BufferedIOBase] = None
+        self._boundary = b"--frame"
+        self._buffer = b""
+        self._frame_count = 0
+        self._opened = False
+        self._width = 640
+        self._height = 480
+
+        self._connect()
+
+    def _connect(self) -> None:
+        """(Re)connect to the MJPEG stream."""
+        import urllib.request
+
+        try:
+            req = urllib.request.Request(self._url)
+            self._stream = urllib.request.urlopen(req, timeout=10)
+            self._opened = True
+            self._buffer = b""
+            logger.info("MJPEG reader connected to %s", self._url)
+        except Exception as exc:
+            logger.error("MJPEG reader connect failed: %s", exc)
+            self._opened = False
+            self._stream = None
+
+    def isOpened(self) -> bool:
+        return self._opened
+
+    def _read_frame_from_stream(self) -> tuple[bool, Optional[np.ndarray]]:
+        """Read one JPEG frame from the MJPEG stream."""
+        import urllib.error
+
+        if self._stream is None:
+            return False, None
+
+        try:
+            while True:
+                chunk = self._stream.read(4096)
+                if not chunk:
+                    # Stream closed — attempt reconnect
+                    logger.warning("MJPEG stream closed, reconnecting...")
+                    self._stream.close()
+                    self._connect()
+                    if self._stream is None:
+                        return False, None
+                    continue
+
+                self._buffer += chunk
+
+                # Look for JPEG frame markers (FF D8 ... FF D9)
+                end = self._buffer.find(b"\xff\xd9")
+                if end >= 0:
+                    # Find the start of this JPEG (after the last boundary)
+                    start = self._buffer.find(b"\xff\xd8")
+                    if start >= 0 and start < end:
+                        jpeg_bytes = self._buffer[start : end + 2]
+                        self._buffer = self._buffer[end + 2 :]
+
+                        # Decode JPEG to numpy array
+                        arr = np.frombuffer(jpeg_bytes, dtype=np.uint8)
+                        frame = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+                        if frame is not None:
+                            self._frame_count += 1
+                            h, w = frame.shape[:2]
+                            self._width = w
+                            self._height = h
+                            return True, frame
+
+                # Prevent unbounded buffer growth
+                if len(self._buffer) > 5 * 1024 * 1024:  # 5 MB
+                    self._buffer = self._buffer[-1024 * 1024 :]  # keep last 1 MB
+
+        except (urllib.error.URLError, ConnectionError, OSError, TimeoutError) as exc:
+            logger.warning("MJPEG stream read error: %s — reconnecting...", exc)
+            try:
+                self._stream.close()
+            except Exception:
+                pass
+            self._connect()
+            return False, None
+
+        return False, None
+
+    def read(self) -> tuple[bool, Optional[np.ndarray]]:
+        ret, frame = self._read_frame_from_stream()
+        if ret:
+            return True, frame
+        # Retry once after a short delay
+        import time
+        time.sleep(0.1)
+        return self._read_frame_from_stream()
+
+    def get(self, prop_id: int) -> float:
+        if prop_id == cv2.CAP_PROP_FRAME_WIDTH:
+            return float(self._width)
+        elif prop_id == cv2.CAP_PROP_FRAME_HEIGHT:
+            return float(self._height)
+        elif prop_id == cv2.CAP_PROP_FPS:
+            return 15.0
+        return 0.0
+
+    def set(self, prop_id: int, value: float) -> bool:
+        # MJPEG streams don't support property changes — silently ignore.
+        return False
+
+    def release(self) -> None:
+        self._opened = False
+        if self._stream is not None:
+            try:
+                self._stream.close()
+            except Exception:
+                pass
+            self._stream = None
+        logger.info("MJPEG reader released (%d frames read)", self._frame_count)
 
 
 def apply_roi(frame: np.ndarray, roi_str: str) -> np.ndarray:

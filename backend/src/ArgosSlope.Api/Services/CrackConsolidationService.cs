@@ -127,9 +127,9 @@ public class CrackConsolidationService : ICrackConsolidationService
         {
             CrackId = targetCrack.Id,
             MeasuredAt = timestamp,
-            LengthPx = payload.Largo,
-            WidthPx = payload.Ancho,
-            AreaPx2 = payload.Area,
+            LengthMm = payload.Largo,
+            WidthMm = payload.Ancho,
+            AreaMm2 = payload.Area,
             IsCalibrated = payload.Calibrado,
             GrowthPercent = 0 // Se actualizaría asíncronamente o en el RiskEngine
         };
@@ -140,9 +140,13 @@ public class CrackConsolidationService : ICrackConsolidationService
             .OrderByDescending(m => m.MeasuredAt)
             .FirstOrDefaultAsync();
 
-        if (prevMeasurement != null && prevMeasurement.LengthPx > 0)
+        if (prevMeasurement != null)
         {
-            measurement.GrowthPercent = ((payload.Largo - prevMeasurement.LengthPx) / prevMeasurement.LengthPx) * 100;
+            var prevLength = prevMeasurement.LengthMm ?? prevMeasurement.LengthPx;
+            if (prevLength > 0)
+            {
+                measurement.GrowthPercent = ((payload.Largo - prevLength) / prevLength) * 100;
+            }
         }
 
         _db.CrackMeasurements.Add(measurement);

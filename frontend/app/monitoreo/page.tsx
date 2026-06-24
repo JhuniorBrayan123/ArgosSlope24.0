@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import CamaraUSB, { CamaraUSBHandle } from '@/components/CamaraUSB';
+import CamaraMJPEG, { CamaraMJPEGHandle } from '@/components/CamaraMJPEG';
 import { useMonitoring2D } from '@/features/monitoreo/useMonitoring2D';
 import GeomechanicsModal from '@/features/monitoreo/GeomechanicsModal';
 
@@ -12,11 +12,37 @@ const TaludRoiCanvas = dynamic(() => import('@/features/monitoreo/TaludRoiCanvas
 
 // ── Configuración ────────────────────────────────────────────────
 const DEFAULT_MQTT_URL = process.env.NEXT_PUBLIC_MQTT_WS_URL || 'ws://192.168.1.100:9001';
+const MJPEG_STREAM_URL = (process.env.NEXT_PUBLIC_MJPEG_URL || 'http://localhost:8082') + '/stream';
 const ZONE_ID = 'talud-maqueta-01';
+
+// ── Mapear ROI del canvas (pantalla) a coordenadas nativas de la imagen ──
+function mapRoiToImage(
+  roi: { x: number; y: number; w: number; h: number },
+  containerWidth: number,
+  containerHeight: number,
+  naturalWidth: number,
+  naturalHeight: number,
+): { x: number; y: number; w: number; h: number } {
+  // Calcular cómo se posiciona la imagen con object-contain:
+  // escala para que quepa dentro del contenedor manteniendo aspect ratio
+  const scale = Math.min(containerWidth / naturalWidth, containerHeight / naturalHeight);
+  const displayW = naturalWidth * scale;
+  const displayH = naturalHeight * scale;
+  const offsetX = (containerWidth - displayW) / 2;
+  const offsetY = (containerHeight - displayH) / 2;
+
+  // Mapear ROI: pantalla → imagen nativa
+  return {
+    x: Math.max(0, Math.round((roi.x - offsetX) / scale)),
+    y: Math.max(0, Math.round((roi.y - offsetY) / scale)),
+    w: Math.max(10, Math.round(roi.w / scale)),
+    h: Math.max(10, Math.round(roi.h / scale)),
+  };
+}
 
 export default function MonitoreoPage() {
   const [mqttUrl, setMqttUrl] = useState(DEFAULT_MQTT_URL);
-  const camRef = useRef<CamaraUSBHandle>(null);
+  const camRef = useRef<CamaraMJPEGHandle>(null);
   const [showConfig, setShowConfig] = useState(false);
   const [showGeotechModal, setShowGeotechModal] = useState(false);
   const [tempMqtt, setTempMqtt] = useState(mqttUrl);
@@ -43,6 +69,23 @@ export default function MonitoreoPage() {
     setShowConfig(false);
   }, [tempMqtt]);
 
+  // ── Escalar ROI de coordenadas del canvas a coordenadas de la imagen nativa ──
+  const scaleRoi = useCallback((rawRoi: typeof roi): typeof roi => {
+    try {
+      const info = camRef.current?.getImageDisplayInfo();
+      if (!info) return rawRoi;
+      return mapRoiToImage(
+        rawRoi,
+        info.containerWidth,
+        info.containerHeight,
+        info.naturalWidth,
+        info.naturalHeight,
+      );
+    } catch {
+      return rawRoi;
+    }
+  }, []);
+
   const handleCapture = useCallback(async () => {
     let imageBase64: string | undefined;
     try {
@@ -50,8 +93,9 @@ export default function MonitoreoPage() {
     } catch (e) {
       console.warn('[Monitoreo] No se pudo capturar frame:', e);
     }
-    sendCommand('capture', roi, imageBase64);
-  }, [roi, sendCommand]);
+    const scaledRoi = scaleRoi(roi);
+    sendCommand('capture', scaledRoi, imageBase64);
+  }, [roi, scaleRoi, sendCommand]);
 
   const handleSaveBase = useCallback(async () => {
     let imageBase64: string | undefined;
@@ -60,8 +104,9 @@ export default function MonitoreoPage() {
     } catch (e) {
       console.warn('[Monitoreo] No se pudo capturar frame:', e);
     }
-    sendCommand('save_base_image', roi, imageBase64);
-  }, [roi, sendCommand]);
+    const scaledRoi = scaleRoi(roi);
+    sendCommand('save_base_image', scaledRoi, imageBase64);
+  }, [roi, scaleRoi, sendCommand]);
 
   const handleCompare = useCallback(async () => {
     let imageBase64: string | undefined;
@@ -70,8 +115,9 @@ export default function MonitoreoPage() {
     } catch (e) {
       console.warn('[Monitoreo] No se pudo capturar frame:', e);
     }
-    sendCommand('compare_detachment', roi, imageBase64);
-  }, [roi, sendCommand]);
+    const scaledRoi = scaleRoi(roi);
+    sendCommand('compare_detachment', scaledRoi, imageBase64);
+  }, [roi, scaleRoi, sendCommand]);
 
   // ── Render ─────────────────────────────────────────────────────────
   return (
@@ -127,8 +173,12 @@ export default function MonitoreoPage() {
         {/* Cámara — ocupa todo el espacio disponible */}
         <div className="relative flex-1 rounded-xl border border-dark-border bg-[#0f1115] overflow-hidden">
           <div className="absolute inset-0">
-            <CamaraUSB
+            {/* Video en vivo desde el Edge (stream MJPEG) */}
+            <CamaraMJPEG
               ref={camRef}
+              streamUrl={MJPEG_STREAM_URL}
+              width={854}
+              height={480}
               className="w-full h-full object-contain"
             />
             <TaludRoiCanvas

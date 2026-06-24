@@ -489,14 +489,11 @@ def extraer_segmentos(skeleton: np.ndarray) -> list:
                 bx, by = bxs.min(), bys.min()
                 bw, bh = bxs.max() - bx + 1, bys.max() - by + 1
                 
-                # Endpoints
-                endpoint_mask = np.zeros_like(branch_mask)
-                for py in range(1, h - 1):
-                    for px in range(1, w - 1):
-                        if branch_mask[py, px]:
-                            nb = np.count_nonzero(branch_mask[py-1:py+2, px-1:px+2]) - 1
-                            if nb <= 1:
-                                endpoint_mask[py, px] = 255
+                # Endpoints (vectorizado con OpenCV)
+                kernel = np.ones((3, 3), dtype=np.float32)
+                kernel[1, 1] = 0
+                nb = cv2.filter2D(branch_mask.astype(np.float32), -1, kernel)
+                endpoint_mask = ((branch_mask > 0) & (nb <= 1)).astype(np.uint8) * 255
                 
                 end_pts = np.column_stack(np.where(endpoint_mask > 0))
                 if len(end_pts) >= 2:
@@ -538,14 +535,11 @@ def extraer_segmentos(skeleton: np.ndarray) -> list:
                 except cv2.error:
                     angle = 0.0
             
-            # Endpoints (1 vecino)
-            endpoint_mask = np.zeros_like(segment_skel)
-            for py in range(1, h - 1):
-                for px in range(1, w - 1):
-                    if segment_skel[py, px]:
-                        nb = np.count_nonzero(segment_skel[py-1:py+2, px-1:px+2]) - 1
-                        if nb <= 1:
-                            endpoint_mask[py, px] = 255
+            # Endpoints (vectorizado con OpenCV)
+            kernel = np.ones((3, 3), dtype=np.float32)
+            kernel[1, 1] = 0
+            nb = cv2.filter2D(segment_skel.astype(np.float32), -1, kernel)
+            endpoint_mask = ((segment_skel > 0) & (nb <= 1)).astype(np.uint8) * 255
             
             end_pts = np.column_stack(np.where(endpoint_mask > 0))
             if len(end_pts) >= 2:

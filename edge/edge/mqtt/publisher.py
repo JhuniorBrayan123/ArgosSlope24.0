@@ -1,21 +1,3 @@
-"""
-ARGOS SLOPE 4.0 — MQTT Publisher for Crack Telemetry.
-
-Publishes crack detection results and system health telemetry to an
-MQTT broker. The .NET backend subscribes to these topics.
-
-Topic Structure:
-    argos/{device_id}/fisura        # Individual crack detection (JSON)
-    argos/{device_id}/telemetry     # System health heartbeat (JSON)
-    argos/{device_id}/snapshot      # Base64-encoded frame (optional)
-
-Usage:
-    publisher = MqttPublisher()
-    publisher.connect()
-    publisher.publish_fisura(crack_result)
-    publisher.publish_telemetry(fps, cpu, temp)
-    publisher.disconnect()
-"""
 
 from __future__ import annotations
 
@@ -29,8 +11,6 @@ from typing import Any, Optional
 
 import cv2
 import numpy as np
-
-# paho-mqtt is an optional dependency; fail gracefully at import time
 try:
     import paho.mqtt.client as mqtt
 except ImportError:
@@ -44,16 +24,6 @@ logger = logging.getLogger(__name__)
 
 
 class MqttPublisher:
-    """
-    MQTT publisher for edge crack telemetry.
-
-    Connects to the configured broker and publishes on topics:
-      - ``{prefix}/fisura`` — per-crack detection result
-      - ``{prefix}/telemetry`` — periodic health stats
-      - ``{prefix}/snapshot`` — base64 JPEG frame (optional)
-
-    Parameters are read from ``edge.config.config`` by default.
-    """
 
     def __init__(self) -> None:
         self._broker = config.mqtt_broker

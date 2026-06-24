@@ -84,12 +84,8 @@ async def handle_mjpeg(request: web.Request) -> web.StreamResponse:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 1,
                 )
             else:
-                # Dibujar detecciones (recuadros rojos)
-                for d in detections:
-                    x, y, w, h = d.x, d.y, d.width, d.height
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
-                    cv2.putText(frame, d.roi_id, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-
+                # Stream en vivo: frame CRUDO sin detecciones.
+                # Las detecciones se muestran solo al capturar (MQTT snapshot).
                 # Redimensionar si es necesario
                 h_f, w_f = frame.shape[:2]
                 if w_f != 640 or h_f != 480:

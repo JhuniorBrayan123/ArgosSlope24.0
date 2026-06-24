@@ -106,14 +106,14 @@ public class ReportsController : ControllerBase
         );
     }
 
-    /// <summary>Tendencia de ancho promedio por día (para gráficos)</summary>
+    /// <summary>Tendencia de mediciones por día (para gráficos)</summary>
     [HttpGet("trends")]
     public async Task<ActionResult<List<ReportTrendPoint>>> GetTrends(
         [FromQuery] int dias = 30,
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null)
     {
-        var query = _db.CrackMeasurements.Where(m => m.WidthMm.HasValue);
+        var query = _db.CrackMeasurements.AsQueryable();
 
         if (startDate.HasValue)
         {
@@ -133,14 +133,16 @@ public class ReportsController : ControllerBase
         }
 
         var rawData = await query
-            .Select(m => new { m.MeasuredAt.Date, WidthMm = m.WidthMm!.Value, m.CrackId })
+            .Select(m => new { m.MeasuredAt.Date, WidthMm = (double?)m.WidthMm, m.CrackId })
             .ToListAsync();
 
         var measurements = rawData
             .GroupBy(m => m.Date)
             .Select(g => new ReportTrendPoint(
                 g.Key.ToString("yyyy-MM-dd"),
-                Math.Round(g.Average(m => m.WidthMm), 4),
+                g.Any(m => m.WidthMm.HasValue)
+                    ? Math.Round(g.Where(m => m.WidthMm.HasValue).Average(m => m.WidthMm!.Value), 4)
+                    : 0,
                 g.Select(m => m.CrackId).Distinct().Count(),
                 g.Count()
             ))

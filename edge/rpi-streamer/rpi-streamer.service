@@ -1,0 +1,62 @@
+# ARGOS SLOPE 4.0 — RPi Camera Streamer Systemd Service
+# ======================================================
+# Instalación:
+#   sudo cp rpi-streamer.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable rpi-streamer
+#   sudo systemctl start rpi-streamer
+#
+# Ver estado:
+#   sudo systemctl status rpi-streamer
+#
+# Ver logs:
+#   journalctl -u rpi-streamer -f
+#
+# Configuración (opcional):
+#   sudo nano /etc/default/rpi-streamer
+
+[Unit]
+Description=ARGOS SLOPE 4.0 — RPi Camera MJPEG Streamer
+Documentation=https://github.com/tu-usuario/ArgosSlope4.0
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jhunior
+Group=jhunior
+WorkingDirectory=/home/jhunior/rpi-streamer
+
+# ── Archivo de configuración ──────────────────────────────────────────────
+# Editar /etc/default/rpi-streamer para cambiar parámetros.
+# Si el archivo no existe, se usan los defaults (CSI, puerto 5000, 640x480).
+#
+# Variables disponibles:
+#   CAMERA_FLAGS=--usb --index 0    # para cámara USB
+#   Extra flags:                     # --port, --width, --height
+EnvironmentFile=-/etc/default/rpi-streamer
+
+# ── Comando: CAMERA_FLAGS viene del env file; vacío = modo CSI ───────────
+ExecStart=/usr/bin/python3 /home/jhunior/rpi-streamer/stream.py \
+    ${CAMERA_FLAGS} \
+    --port 5000 \
+    --width 640 \
+    --height 480
+
+# ── Reinicio automático ──────────────────────────────────────────────────
+Restart=always
+RestartSec=10
+StartLimitInterval=300
+StartLimitBurst=5
+
+# ── Seguridad y saneamiento ──────────────────────────────────────────────
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rpi-streamer
+NoNewPrivileges=true
+ProtectHome=read-only
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
